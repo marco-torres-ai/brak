@@ -17,6 +17,7 @@ import cv2
 import numpy as np
 
 from backend.core.config import MUSE_SPARK_MODEL
+from backend.core import prompts
 from backend.core.muse_api import chat_json
 from backend.core.muse_client import get_cached_result, set_cached_result
 from backend.core.token_tracker import TokenTracker
@@ -63,6 +64,17 @@ CHECK_SCHEMA: Dict[str, Any] = {
 CHOICE_SYSTEM_PROMPT = """Para cada producto recibes su nombre esperado y una imagen con varios recortes candidatos del mismo producto, rotulados con letras (A, B, C, D, E) y mostrados sobre un fondo a cuadros grises.
 Elige la letra del recorte que mejor sirve como foto de catálogo: el producto correcto, lo más completo posible, sin mano ni fondo, nítido.
 Si ninguno muestra el producto correcto de forma reconocible, responde NONE. reason: breve en español."""
+
+prompts.register(
+    "p3_cut_check", CHECK_SYSTEM_PROMPT, phase=3, model="Muse Spark", group="advanced",
+    title="Verificador de recortes",
+    description="Revisa cada recorte de SAM 3.1 y detecta si está incompleto, es otro objeto, trae fondo o mano, o no se reconoce.",
+)
+prompts.register(
+    "p3_cut_choice", CHOICE_SYSTEM_PROMPT, phase=3, model="Muse Spark", group="advanced",
+    title="Selector del mejor recorte",
+    description="Entre varios recortes alternativos del mismo producto, elige el que mejor sirve como foto de catálogo.",
+)
 
 CHOICE_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -124,9 +136,10 @@ def _image_part(jpeg: bytes) -> Dict[str, Any]:
 
 
 def _call_spark(
-    tracker: TokenTracker, namespace: str, system: str, content: List[Dict[str, Any]], schema_name: str, schema: Dict[str, Any], key_src: str, label: str
+    tracker: TokenTracker, namespace: str, prompt_key: str, content: List[Dict[str, Any]], schema_name: str, schema: Dict[str, Any], key_src: str, label: str
 ) -> Dict[str, Any]:
-    cache_key = hashlib.md5(f"{MUSE_SPARK_MODEL}|{CUTOUT_CHECK_VERSION}|{key_src}".encode("utf-8")).hexdigest()
+    system = prompts.get(prompt_key)
+    cache_key = hashlib.md5(f"{MUSE_SPARK_MODEL}|{CUTOUT_CHECK_VERSION}|{key_src}{prompts.signature(prompt_key)}".encode("utf-8")).hexdigest()
     cached = get_cached_result(namespace, cache_key)
     if cached:
         usage = cached["usage"]
@@ -279,7 +292,7 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
     parsed = _call_spark(
         tracker,
         "phase3_cutout_check",
-        CHECK_SYSTEM_PROMPT,
+        "p3_cut_check",
         content,
         "Phase3CutoutCheck",
         CHECK_SCHEMA,
@@ -333,7 +346,7 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
         parsed = _call_spark(
             tracker,
             "phase3_cutout_choice",
-            CHOICE_SYSTEM_PROMPT,
+            "p3_cut_choice",
             content,
             "Phase3CutoutChoice",
             CHOICE_SCHEMA,

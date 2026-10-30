@@ -107,3 +107,8 @@ muse-catalog-hackathon/
   - El stepper muestra los modelos que de verdad corren: "Muse Spark · visión" (rol de Glimmer) y "Muse Spark · textos" (rol de Muse Code). Los contadores se actualizan al terminar cada fase (el backend no transmite progreso intermedio).
 - **FRONTEND v0.1.1 (rama `version-0.1.1`):** `READY_FOR_USER_TEST` — Etapa 1 del rediseño visual (Inter, íconos SVG, estudio gris perla con multiply, tarjetas con rotación de ángulos al pasar el mouse, animaciones). Etapas 2 y 3 pendientes.
 - **FRONTEND v0.1.2 (rama `version-0.1.2`):** `READY_FOR_USER_TEST` — Etapa 2: Meta Muse Studio a pantalla completa con revelado progresivo (HEAD sobre rutas predecibles de `studio/`), antes/después arrastrable, franja de los 7 modelos e inicio con productos flotantes. Sin cambios en el backend.
+- **v0.2 (rama `version-0.2`): Configuración de prompts de los agentes.** Estado: `READY_FOR_USER_TEST`.
+  - Registro en `backend/core/prompts.py`: 13 agentes con instrucciones adicionales o modo experto, y perfiles en `storage/prompts/`.
+  - Endpoints `/api/v1/prompts*` y vista "Agentes" en el frontend.
+  - Regla de oro: sin perfil activo, los prompts y las claves de caché quedan idénticos. Se verificó con las Fases 2→5 desde caché: 0 llamadas y catálogo idéntico.
+  - Para agregar un prompt nuevo: definir la constante, llamar a `prompts.register(...)` junto a ella, usar `prompts.get(key)` y añadir `prompts.signature(key)` a la clave de caché.

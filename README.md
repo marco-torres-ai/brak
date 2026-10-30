@@ -152,6 +152,7 @@ Abre **http://localhost:8000**.
 | **＋ Agregar Productos con Video (Muse AI)** | Arrastras los videos y pulsas **Procesar**. El stepper avanza modelo por modelo, con la última acción del backend, contadores en vivo de tokens, imágenes y caché, y un aviso si Meta tarda más de lo normal. Si una fase falla, **"Reintentar desde este paso"** continúa sin repetir lo anterior |
 | **Pendientes de Aprobación** | Comparas mejor frame, recorte SAM y fotos de estudio; ves si la mención fue `EXPLICIT` o `DEICTIC` y la calidad del frame; editas nombre, precio o estado; **✅ Aceptar y Publicar**, **🗑️ Rechazar** o **✅ Aceptar Todos** |
 | **📊 Monitor** | Las trazas del `TokenTracker`: tokens por modelo, llamadas a la API, aciertos de caché e imágenes cobradas |
+| **Agentes** | Configuras los prompts de los 13 agentes. Puedes sumar **instrucciones adicionales** (por ejemplo, "tono juvenil" en los textos o "luz cálida" en las fotos de ambiente) o reescribirlos completos en **modo experto**. Los cambios se guardan en **perfiles** con nombre: creas uno con "＋ Nuevo perfil" (vacío o como copia del actual), lo renombras o lo eliminas. Los verificadores están en "Avanzado". Con el perfil "Original de Meta Muse" todo funciona exactamente como siempre. Ver [docs/API.md](docs/API.md#prompts-de-los-agentes-v02) |
 
 Para empezar de cero en una demo, borra los datos del sitio: **F12 → Application → Local Storage**.
 

@@ -36,6 +36,7 @@ from backend.core.config import (
     load_session_state,
     save_session_state,
 )
+from backend.core import prompts
 from backend.core.muse_api import MuseAPIError, chat_json, edit_image
 from backend.core.muse_client import CACHE_DIR, get_cached_result, set_cached_result
 from backend.core.token_tracker import TokenTracker
@@ -110,6 +111,30 @@ Para cada panel generado decide faithful = true solo si cumple TODO lo que aplic
 - LEFT, RIGHT, BACK: vistas deducidas desde otro ángulo. Deben mostrar de verdad ese ángulo (no repetir ni espejar la vista frontal), sobre fondo blanco, y ser coherentes con el producto: mismos colores, materiales y estilo; pueden mostrar caras que no se ven en REFERENCE, pero sin textos, logos ni rasgos nuevos que lo contradigan.
 - LIFESTYLE: el producto en un ambiente realista; los objetos del ambiente no parecen incluidos con el producto.
 issues: qué falla y cómo, EN INGLÉS (se le pasará al generador para corregir); cadena vacía si faithful es true."""
+
+IMAGE_HINT = "Escribe en inglés para mejores resultados. Ej.: 'Warm golden-hour light.' o 'Minimalist Scandinavian interior.'"
+prompts.register(
+    "p4_master", MASTER_PROMPT, phase=4, model="Muse Image", group="creative", kind="image",
+    title="Foto máster de estudio",
+    description="Limpia el recorte: completa lo que tapó la mano o cortó el borde y lo deja sobre fondo blanco. Es la base de todas las vistas.",
+    required=("problems", "desc"), hint=IMAGE_HINT,
+)
+for _kind, _title, _desc in (
+    ("front", "Vista frontal", "Foto de catálogo de frente, fondo blanco."),
+    ("left", "Vista lado izquierdo", "Rota el producto ~90° para mostrar su lado izquierdo (deducido por IA)."),
+    ("right", "Vista lado derecho", "Rota el producto ~90° para mostrar su lado derecho (deducido por IA)."),
+    ("back", "Vista trasera", "Rota el producto 180° para mostrar la parte de atrás (deducida por IA)."),
+    ("lifestyle", "Foto de ambiente", "Coloca el producto en un ambiente realista acorde a su categoría."),
+):
+    prompts.register(
+        f"p4_view_{_kind}", VIEW_PROMPTS[_kind], phase=4, model="Muse Image", group="creative", kind="image",
+        title=_title, description=_desc, required=("desc",), optional=("category",), hint=IMAGE_HINT,
+    )
+prompts.register(
+    "p4_fidelity", FIDELITY_SYSTEM_PROMPT, phase=4, model="Muse Spark", group="advanced",
+    title="Control de fidelidad",
+    description="Compara cada imagen generada con el producto real y rechaza las que inventan partes, cambian colores o cortan el producto.",
+)
 
 FIDELITY_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -334,7 +359,7 @@ def _check_fidelity(tracker: TokenTracker, entries: List[Dict[str, Any]], round_
         content.append({"type": "text", "text": f"product_id: {e['pid']}\nProducto: {e['name']}\nPaneles: " + ", ".join(panels)})
         content.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(strip).decode("ascii")}})
 
-    cache_key = hashlib.md5(json.dumps([MUSE_SPARK_MODEL, FIDELITY_VERSION, digests]).encode("utf-8")).hexdigest()
+    cache_key = hashlib.md5((json.dumps([MUSE_SPARK_MODEL, FIDELITY_VERSION, digests]) + prompts.signature("p4_fidelity")).encode("utf-8")).hexdigest()
     cached = get_cached_result("phase4_fidelity", cache_key)
     n_images = sum(len(e["generated"]) for e in entries)
     if cached:
@@ -350,7 +375,7 @@ def _check_fidelity(tracker: TokenTracker, entries: List[Dict[str, Any]], round_
         try:
             parsed, usage, _ = chat_json(
                 model=MUSE_SPARK_MODEL,
-                messages=[{"role": "system", "content": FIDELITY_SYSTEM_PROMPT}, {"role": "user", "content": content}],
+                messages=[{"role": "system", "content": prompts.get("p4_fidelity")}, {"role": "user", "content": content}],
                 schema_name="Phase4Fidelity",
                 schema=FIDELITY_SCHEMA,
                 reasoning_effort="low",
@@ -465,13 +490,15 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
         c = ctx[pid]
         if kind == "master":
             images = [_png(c["original"])] + ([_jpeg(c["frame"], 92)] if c["frame"] is not None else [])
-            prompt = MASTER_PROMPT.format(problems=c["problems"], desc=c["desc"])
-            neutral = MASTER_PROMPT.format(problems=c["problems"], desc=NEUTRAL_DESC)
+            template = prompts.get("p4_master")
+            prompt = template.format(problems=c["problems"], desc=c["desc"])
+            neutral = template.format(problems=c["problems"], desc=NEUTRAL_DESC)
             fmt = "png"
         else:
             images = [_png(c["base"])]
-            prompt = VIEW_PROMPTS[kind].format(desc=c["desc"], category=c["category"])
-            neutral = VIEW_PROMPTS[kind].format(desc=NEUTRAL_DESC, category=c["category"])
+            template = prompts.get(f"p4_view_{kind}")
+            prompt = template.format(desc=c["desc"], category=c["category"])
+            neutral = template.format(desc=NEUTRAL_DESC, category=c["category"])
             fmt = "jpeg"
         if issues:
             prompt += RETRY_SUFFIX.format(issues=issues)

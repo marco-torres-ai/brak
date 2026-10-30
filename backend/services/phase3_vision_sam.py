@@ -42,6 +42,7 @@ from backend.core.config import (
     load_session_state,
     save_session_state,
 )
+from backend.core import prompts
 from backend.core.muse_api import chat_json, segment_image_sam
 from backend.core.muse_client import get_cached_result, locate_source_video, set_cached_result
 from backend.core.token_tracker import TokenTracker
@@ -69,6 +70,11 @@ Para cada producto:
 6. bbox: caja del objeto DENTRO DEL PANEL del mejor fotograma, en coordenadas normalizadas 0 a 1000 sobre la imagen completa del collage que recibes (ymin, xmin, ymax, xmax). Debe abarcar el objeto completo y no la mano que lo sostiene.
 7. sam_prompts: de 2 a 4 frases nominales cortas EN INGLÉS para un segmentador que solo entiende sustantivos comunes, de la más específica a la más genérica (por ejemplo "action figure", "toy"; "sunglasses", "glasses"; "spray bottle", "bottle"). Sin marcas, sin posiciones, sin listas ni verbos.
 Devuelve un elemento por producto con su product_id exacto."""
+prompts.register(
+    "p3_vision", VISION_SYSTEM_PROMPT, phase=3, model="Muse Spark (Visión)", group="advanced",
+    title="Visión: mejor fotograma y caja",
+    description="Mira los 3 fotogramas candidatos de cada producto, elige el mejor, lo nombra, ubica su caja y propone las palabras para SAM 3.1.",
+)
 
 VISION_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -288,7 +294,7 @@ def analyze_with_spark_vision(
         sort_keys=True,
         ensure_ascii=False,
     )
-    cache_key = hashlib.md5(key_src.encode("utf-8")).hexdigest()
+    cache_key = hashlib.md5((key_src + prompts.signature("p3_vision")).encode("utf-8")).hexdigest()
     ids = ", ".join(c["product_id"] for c in contexts)
 
     cached = get_cached_result("phase3_spark_vision", cache_key)
@@ -311,7 +317,7 @@ def analyze_with_spark_vision(
 
     parsed, usage, _ = chat_json(
         model=MUSE_SPARK_MODEL,
-        messages=[{"role": "system", "content": VISION_SYSTEM_PROMPT}, {"role": "user", "content": content}],
+        messages=[{"role": "system", "content": prompts.get("p3_vision")}, {"role": "user", "content": content}],
         schema_name="Phase3VisionSelection",
         schema=VISION_SCHEMA,
         reasoning_effort=MUSE_SPARK_REASONING_PHASE3,

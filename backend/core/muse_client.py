@@ -22,6 +22,7 @@ from backend.core.config import (
     MUSE_VOICE_MODEL,
     STORAGE_DIR,
 )
+from backend.core import prompts
 from backend.core.muse_api import chat_json, transcribe_wav
 from backend.core.token_tracker import TokenTracker
 
@@ -70,6 +71,12 @@ Reglas:
 10. name_source: AUDIO si el nombre sale tal cual del audio; AUDIO_CORRECTED_BY_VIDEO si el video corrigió una palabra mal transcrita; VIDEO_ONLY si en el audio no se nombró (deíctico u omitido) y el nombre sale solo de lo que se ve; UNKNOWN si no se puede saber.
 11. discarded_chatter: muletillas, saludos o comentarios sin intención de venta, con el motivo.
 12. visual_inventory: si recibiste video, lista TODOS los objetos que el vendedor muestra a propósito (lo sostiene en la mano, lo señala, lo acerca o lo enfoca en primer plano), se haya dicho o no algo sobre ellos, con el intervalo aproximado en segundos del video en que se muestra. No incluyas objetos que solo pasan por el fondo. Lista vacía si no recibiste video."""
+prompts.register(
+    "p2_extract", SPARK_SYSTEM_PROMPT, phase=2, model="Muse Spark", group="creative",
+    title="Extractor de productos",
+    description="Lee la transcripción y el video y decide qué productos se ofrecen, su nombre, precio, moneda, estado y características.",
+    hint="Ej.: 'Si el vendedor no dice moneda, asume PEN.' o 'Incluye la talla en el nombre cuando la diga.'",
+)
 
 SPARK_PRODUCTS_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -346,7 +353,7 @@ class MuseClient:
         batch_md5 = hashlib.md5(
             (
                 f"{MUSE_SPARK_MODEL}|{MUSE_SPARK_REASONING_PHASE2}|{SPARK_PROMPT_VERSION}|"
-                f"{video_signature}|{canonical_payload}"
+                f"{video_signature}|{canonical_payload}{prompts.signature('p2_extract')}"
             ).encode("utf-8")
         ).hexdigest()
 
@@ -393,7 +400,7 @@ class MuseClient:
         parsed, usage, raw = chat_json(
             model=MUSE_SPARK_MODEL,
             messages=[
-                {"role": "system", "content": SPARK_SYSTEM_PROMPT},
+                {"role": "system", "content": prompts.get("p2_extract")},
                 {"role": "user", "content": user_content},
             ],
             schema_name="SalesProductsBatch",

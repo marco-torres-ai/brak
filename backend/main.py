@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.core import progress
+from backend.core import progress, prompts
 from backend.core.config import (
     FRONTEND_DIR,
     LAPLACIAN_BLUR_THRESHOLD,
@@ -14,6 +14,7 @@ from backend.core.config import (
     META_MUSE_API_KEY,
     STORAGE_DIR,
     load_session_state,
+    save_session_state,
 )
 from backend.services.phase1_preprocess import run_phase1_preprocess
 from backend.services.phase2_semantic import (
@@ -79,8 +80,10 @@ async def health_check():
     }
 
 
-def _run_tracked(session_id: Optional[str], phase: int, make_coro: Any) -> Dict[str, Any]:
+def _run_tracked(session_id: Optional[str], phase: int, make_coro: Any, phases: Optional[List[int]] = None) -> Dict[str, Any]:
     """Ejecuta una fase en este hilo (fuera del event loop) y registra su inicio y fin en el progreso en vivo."""
+    custom = {str(p): prompts.describe_phase(p) for p in (phases or [phase])}
+    custom = {p: d for p, d in custom.items() if d}
     progress.begin(session_id, phase)
     try:
         state = asyncio.run(make_coro())
@@ -88,7 +91,79 @@ def _run_tracked(session_id: Optional[str], phase: int, make_coro: Any) -> Dict[
         progress.end(error=str(exc)[:300])
         raise
     progress.end()
+    if custom and isinstance(state, dict) and state.get("session_id"):
+        # Trazabilidad: qué prompts personalizados se usaron en cada fase (solo si hubo alguno).
+        state.setdefault("prompt_customizations", {}).update(custom)
+        save_session_state(state)
     return state
+
+
+def _prompt_call(fn: Any, *args: Any) -> Any:
+    """Escrituras del registro de prompts: 409 si hay una fase corriendo, 400 si la entrada es inválida."""
+    if progress.snapshot().get("running"):
+        raise HTTPException(status_code=409, detail="Hay una fase en curso: espera a que termine para cambiar los prompts.")
+    try:
+        return fn(*args)
+    except prompts.PromptError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.get("/api/v1/prompts")
+async def get_prompts():
+    """Agentes configurables con su prompt original, el personalizado y el efectivo, más los perfiles."""
+    return prompts.snapshot()
+
+
+@app.put("/api/v1/prompts/{key}")
+async def put_prompt(key: str, payload: Dict[str, Any] = Body(...)):
+    full = payload.get("full_text")
+    _prompt_call(prompts.update_agent, key, str(payload.get("extra") or ""), str(full) if full is not None else None)
+    return prompts.snapshot()
+
+
+@app.delete("/api/v1/prompts/{key}")
+async def delete_prompt(key: str):
+    _prompt_call(prompts.reset_agent, key)
+    return prompts.snapshot()
+
+
+@app.post("/api/v1/prompts/profiles")
+async def create_prompt_profile(payload: Dict[str, Any] = Body(...)):
+    _prompt_call(prompts.create_profile, str(payload.get("name") or ""), payload.get("copy_from"))
+    return prompts.snapshot()
+
+
+@app.put("/api/v1/prompts/profiles/active")
+async def set_prompt_profile(payload: Dict[str, Any] = Body(...)):
+    _prompt_call(prompts.set_active, payload.get("profile"))
+    return prompts.snapshot()
+
+
+@app.put("/api/v1/prompts/profiles/{slug}")
+async def rename_prompt_profile(slug: str, payload: Dict[str, Any] = Body(...)):
+    _prompt_call(prompts.rename_profile, slug, str(payload.get("name") or ""))
+    return prompts.snapshot()
+
+
+@app.delete("/api/v1/prompts/profiles/{slug}")
+async def delete_prompt_profile(slug: str):
+    _prompt_call(prompts.delete_profile, slug)
+    return prompts.snapshot()
+
+
+@app.get("/api/v1/prompts/profiles/{slug}/export")
+async def export_prompt_profile(slug: str):
+    try:
+        data = prompts.export_profile(slug)
+    except prompts.PromptError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return JSONResponse(data, headers={"Content-Disposition": f'attachment; filename="brak_prompts_{slug}.json"'})
+
+
+@app.post("/api/v1/prompts/profiles/import")
+async def import_prompt_profile(payload: Dict[str, Any] = Body(...)):
+    _prompt_call(prompts.import_profile, payload)
+    return prompts.snapshot()
 
 
 @app.get("/api/v1/progress")
@@ -219,7 +294,7 @@ async def api_run_full_pipeline_auto(
     try:
         session_id = payload.get("session_id") if payload else None
         # Fases 2 a 5 seguidas (~10 min con videos nuevos): en otro hilo para no congelar el servidor.
-        state = await asyncio.to_thread(_run_tracked, session_id, 2, lambda: run_full_pipeline_auto(session_id=session_id))
+        state = await asyncio.to_thread(_run_tracked, session_id, 2, lambda: run_full_pipeline_auto(session_id=session_id), [2, 3, 4, 5])
         return state
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))

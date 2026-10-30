@@ -105,6 +105,9 @@
       <span class="hidden lg:inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-medium bg-white/[0.04] hairline">
         <span id="iconSparkHeader"></span><span class="meta-ai-text">Powered by Meta Muse AI</span>
       </span>
+      <button data-action="open-agents" title="Configurar los prompts de los agentes" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
+        <span data-icon="sliders"></span><span class="hidden sm:inline font-medium">Agentes</span><span id="agentsDot" class="hidden w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+      </button>
       <button data-action="open-tokens" title="Monitor de tokens" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
         <span id="iconChart"></span><span id="headerTokens" class="font-medium tabular-nums">0</span>
       </button>
@@ -234,6 +237,7 @@
         <button id="btnProcess" data-action="process" disabled class="w-full h-11 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
           <span data-icon="sparkles"></span>Procesar y extraer productos
         </button>
+        <button id="profileChip" data-action="open-agents" class="w-full -mt-2 h-9 rounded-full bg-white/[0.03] hairline hover:bg-white/[0.06] text-[12px] text-slate-400 transition flex items-center justify-center gap-2"></button>
 
         <div id="pipelineBox" class="hidden space-y-4">
           <div class="flex items-center justify-between">
@@ -272,6 +276,59 @@
       </section>
     </div>
   </div>
+</div>
+
+<!-- ===================== CONFIGURACIÓN DE AGENTES (PANTALLA COMPLETA) ===================== -->
+<div id="agentsDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-ink-900/95 backdrop-blur-xl"></div>
+  <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 40% at 30% 0%, rgba(99,102,241,.14), transparent 70%)"></div>
+  <div class="relative h-full flex flex-col fade-in">
+    <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white" data-icon="sliders"></div>
+        <div>
+          <h3 class="text-[15px] font-semibold text-white">Configuración de agentes</h3>
+          <p class="text-[12px] text-slate-400">Ajusta cómo piensa cada modelo de Meta. Se aplica a los próximos videos que proceses.</p>
+        </div>
+      </div>
+      <button data-action="close-agents" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+    </div>
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      <div class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        <div class="rounded-3xl surface p-5 flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-3 mr-auto min-w-0">
+            <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Perfil activo</span>
+            <select id="profileSelect" class="h-10 pl-4 pr-9 rounded-full bg-white/[0.05] hairline text-[13px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60 max-w-[260px]"></select>
+          </div>
+          <button data-action="profile-new" class="h-10 px-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/25 hover:brightness-110 transition flex items-center gap-2"><span data-icon="plus"></span>Nuevo perfil</button>
+          <button id="btnProfileRename" data-action="profile-rename" class="h-10 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="pencil"></span>Renombrar</button>
+          <button id="btnProfileDelete" data-action="profile-delete" class="h-10 px-4 rounded-full bg-rose-500/10 hairline hover:bg-rose-500/20 text-[13px] text-rose-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="trash"></span>Eliminar</button>
+        </div>
+        <div id="agentsLock" class="hidden rounded-2xl bg-amber-400/10 hairline p-4 text-[13px] text-amber-200 flex items-center gap-2"><span data-icon="alert"></span>Hay una fase procesando videos: los prompts quedan en solo lectura hasta que termine.</div>
+        <div id="agentsBody" class="space-y-10"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CREAR / RENOMBRAR PERFIL ===================== -->
+<div id="profileModal" class="fixed inset-0 z-[55] hidden items-center justify-center p-4" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-action="profile-cancel"></div>
+  <form id="profileForm" class="relative rounded-[28px] bg-ink-800 shadow-2xl shadow-black/60 hairline max-w-md w-full p-7 fade-in">
+    <h3 id="profileModalTitle" class="text-[18px] font-semibold text-white"></h3>
+    <p id="profileModalText" class="mt-2 text-[13px] text-slate-400 leading-relaxed"></p>
+    <label class="block mt-5 text-[12px] font-medium text-slate-300">Nombre del perfil</label>
+    <input id="profileName" maxlength="60" autocomplete="off" class="mt-2 w-full h-11 px-4 rounded-full bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" />
+    <div id="profileFromBox" class="mt-5">
+      <div class="text-[12px] font-medium text-slate-300">Empezar desde</div>
+      <label class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="original" class="mt-1 accent-indigo-500" checked /><span><span class="block text-[13px] text-white">Original de Meta Muse</span><span class="block text-[12px] text-slate-500">Un perfil limpio, sin cambios.</span></span></label>
+      <label id="profileFromCopy" class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="copy" class="mt-1 accent-indigo-500" /><span><span class="block text-[13px] text-white">Copia del perfil actual</span><span id="profileFromCopyText" class="block text-[12px] text-slate-500"></span></span></label>
+    </div>
+    <div class="mt-7 flex justify-end gap-2">
+      <button type="button" data-action="profile-cancel" class="h-10 px-5 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition">Cancelar</button>
+      <button id="profileSubmit" type="submit" class="h-10 px-5 rounded-full bg-meta hover:bg-meta-dark text-white text-[13px] font-semibold transition"></button>
+    </div>
+  </form>
 </div>
 
 <!-- ===================== DRAWER: MONITOR DE TOKENS ===================== -->
@@ -387,6 +444,12 @@ const ICONS = {
   tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1"/>',
   move: '<path d="m18 8 4 4-4 4"/><path d="m6 8-4 4 4 4"/><path d="M2 12h20"/>',
   film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
+  sliders: '<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
+  pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.98-3.98L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
 };
 const icon = (name, size = 16, cls = '') => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
@@ -682,13 +745,10 @@ function renderCanvas() {
   $('canvasTitle').textContent = !canvas.items.length ? 'Aquí verás trabajar a Meta Muse'
     : canvas.items.every((it) => it.done) ? 'Catálogo listo' : imgs ? 'Muse Image está fotografiando tus productos' : cuts ? 'SAM 3.1 recortó tus productos' : 'Spark encontró estos productos';
   if (!canvas.items.length) {
-    box.innerHTML = `<div class="col-span-full rounded-3xl surface p-7 sm:p-8 grid lg:grid-cols-[1fr_1.1fr] gap-8 items-start">
-      <div>
-        <div class="w-14 h-14 rounded-2xl meta-ai-gradient flex items-center justify-center text-white shadow-xl shadow-indigo-600/30">${icon('sparkles', 24)}</div>
-        <p class="mt-5 text-[17px] text-white font-semibold">Los productos aparecerán aquí en cuanto Spark los detecte</p>
-        <p class="mt-2 text-[14px] text-slate-400 leading-relaxed">Después SAM 3.1 los recortará y Muse Image les hará una sesión de fotos que verás aparecer imagen por imagen.</p>
-      </div>
-      <ol class="relative">${modelsTimeline(true)}</ol></div>`;
+    box.innerHTML = `<div class="col-span-full rounded-3xl surface py-20 px-6 text-center">
+      <div class="mx-auto w-14 h-14 rounded-2xl meta-ai-gradient flex items-center justify-center text-white shadow-xl shadow-indigo-600/30">${icon('sparkles', 24)}</div>
+      <p class="mt-5 text-[17px] text-white font-semibold">Los productos aparecerán aquí en cuanto Spark los detecte</p>
+      <p class="mt-2 text-[14px] text-slate-400 leading-relaxed max-w-md mx-auto">Después SAM 3.1 los recortará y Muse Image les hará una sesión de fotos que verás aparecer imagen por imagen.</p></div>`;
     return;
   }
   const isNew = (url) => { if (!url || canvas.shown.has(url)) return ''; canvas.shown.add(url); return 'reveal'; };
@@ -1195,6 +1255,226 @@ function animateOut(uids, then) {
   setTimeout(then, 330);
 }
 
+/* ---------- Configuración de agentes (GET/PUT/DELETE /api/v1/prompts) ---------- */
+const AGENT_VIEWS = [['front', 'Frente'], ['left', 'Izq.'], ['right', 'Der.'], ['back', 'Atrás'], ['lifestyle', 'Ambiente']];
+const AGENT_ICON = { 2: 'sparkles', 3: 'eye', 4: 'image', 5: 'tag' };
+let promptsState = null;
+let agentDraft = {};
+let agentViewTab = 'front';
+let agentsAdvancedOpen = false;
+let agentsLocked = false;
+const jsonReq = (method, body) => ({ method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+const agentOf = (key) => (promptsState ? promptsState.agents.find((a) => a.key === key) : null);
+
+function draftOf(a) {
+  if (!agentDraft[a.key]) agentDraft[a.key] = { extra: a.extra || '', full: a.full_text ?? a.default_text, expert: a.full_text != null };
+  return agentDraft[a.key];
+}
+function agentDirty(a) {
+  const d = draftOf(a);
+  return d.extra.trim() !== (a.extra || '') || (d.full !== (a.full_text ?? a.default_text));
+}
+
+async function loadPrompts(resetDrafts = false) {
+  try {
+    promptsState = await api('/api/v1/prompts');
+    if (resetDrafts) agentDraft = {};
+  } catch (err) { promptsState = null; }
+  renderProfileChip();
+  return promptsState;
+}
+
+function renderProfileChip() {
+  const chip = $('profileChip');
+  const dot = $('agentsDot');
+  if (!promptsState) { chip.innerHTML = `${icon('sliders', 14)}<span>Prompts de los agentes</span>`; return; }
+  const n = promptsState.agents.filter((a) => a.is_custom).length;
+  chip.innerHTML = `${icon('sliders', 14)}<span>Perfil: <b class="text-slate-200 font-medium">${esc(promptsState.active_profile_name)}</b>${n ? ` · ${n} agente(s) personalizados` : ''}</span>`;
+  dot.classList.toggle('hidden', !n);
+}
+
+function costNote(a) {
+  const base = `Al guardar, la próxima vez que corra la Fase ${a.phase} se volverá a llamar a ${a.model}`;
+  return a.kind === 'image' ? `${base} (~US$0.01 por imagen regenerada).` : `${base}.`;
+}
+
+function agentFields(a) {
+  const d = draftOf(a);
+  const dis = agentsLocked ? 'disabled' : '';
+  const ph = [...a.placeholders.required.map((p) => [p, true]), ...a.placeholders.optional.map((p) => [p, false])];
+  return `
+    <label class="block mt-5 text-[12px] font-medium text-slate-300">Instrucciones adicionales <span class="text-slate-500 font-normal">· se suman al prompt original sin reemplazarlo</span></label>
+    <textarea data-agent-extra="${a.key}" ${dis} rows="3" placeholder="${esc(a.hint || 'Ej.: escribe con un tono más formal.')}" class="mt-2 w-full rounded-2xl bg-black/30 hairline p-3.5 text-[13px] text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-meta/60 resize-y">${esc(d.extra)}</textarea>
+    <button data-action="agent-expert" data-key="${a.key}" class="mt-3 inline-flex items-center gap-2 text-[12px] ${d.expert ? 'text-indigo-300' : 'text-slate-400 hover:text-slate-200'} transition">
+      <span class="relative w-8 h-[18px] rounded-full ${d.expert ? 'bg-indigo-500' : 'bg-white/10'} transition"><span class="absolute top-[2px] ${d.expert ? 'left-[16px]' : 'left-[2px]'} w-[14px] h-[14px] rounded-full bg-white transition-all"></span></span>
+      ${icon('code', 14)}Modo experto: reescribir el prompt completo
+    </button>
+    ${!d.expert && d.full !== a.default_text ? '<span class="ml-2 text-[11px] text-indigo-300">· usa un prompt reescrito</span>' : ''}
+    ${d.expert ? `<div class="mt-3 rounded-2xl bg-black/30 hairline p-3.5">
+      ${ph.length ? `<div class="flex flex-wrap items-center gap-1.5 mb-2.5"><span class="text-[11px] text-slate-500 mr-1">Marcadores (clic para insertar):</span>${ph.map(([p, req]) => `<button data-action="agent-insert" data-key="${a.key}" data-ph="${p}" ${dis} class="h-6 px-2 rounded-md font-mono text-[11px] ${req ? 'bg-indigo-500/15 text-indigo-200' : 'bg-white/5 text-slate-300'} hover:brightness-125" title="${req ? 'Obligatorio' : 'Opcional'}">{${p}}</button>`).join('')}</div>` : ''}
+      <textarea id="full-${a.key}" data-agent-full="${a.key}" ${dis} rows="12" spellcheck="false" class="w-full rounded-xl bg-transparent text-[12px] leading-relaxed font-mono text-slate-200 focus:outline-none resize-y">${esc(d.full)}</textarea>
+      <div class="mt-2 flex items-center justify-between gap-3 text-[11px] text-slate-500"><span>${d.full === a.default_text ? 'Texto original' : '<span class="text-indigo-300">Texto modificado</span>'}</span>
+        <button data-action="agent-original" data-key="${a.key}" ${dis} class="text-slate-400 hover:text-white">Volver al texto original</button></div>
+    </div>` : ''}
+    <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <p class="text-[11px] text-slate-500 max-w-md">${esc(costNote(a))}</p>
+      <div class="flex items-center gap-2">
+        ${a.is_custom ? `<button data-action="agent-reset" data-key="${a.key}" ${dis} class="h-9 px-4 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-1.5">${icon('retry', 13)}Restaurar original</button>` : ''}
+        <button data-action="agent-save" data-key="${a.key}" data-save="${a.key}" ${agentsLocked || !agentDirty(a) ? 'disabled' : ''} class="h-9 px-5 rounded-full bg-meta hover:bg-meta-dark text-white text-[12px] font-semibold disabled:opacity-35 disabled:cursor-not-allowed transition">Guardar</button>
+      </div>
+    </div>`;
+}
+
+function agentCard(a, { title, description, tabs = '' } = {}) {
+  return `<article class="rounded-3xl surface p-6">
+    <div class="flex items-start gap-4">
+      <span class="shrink-0 w-11 h-11 rounded-2xl ${a.group === 'advanced' ? 'bg-white/[0.06] text-slate-300' : 'meta-ai-gradient text-white shadow-lg shadow-indigo-600/30'} flex items-center justify-center">${icon(AGENT_ICON[a.phase] || 'sparkles', 19)}</span>
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h4 class="text-[15px] font-semibold text-white">${esc(title || a.title)}</h4>
+          <span class="h-6 px-2.5 rounded-full bg-white/[0.05] text-[11px] text-slate-300 flex items-center">${esc(a.model)}</span>
+          <span class="h-6 px-2.5 rounded-full bg-white/[0.05] text-[11px] text-slate-400 flex items-center">Fase ${a.phase}</span>
+          ${a.is_custom ? '<span class="h-6 px-2.5 rounded-full bg-indigo-500/15 text-[11px] text-indigo-200 flex items-center">Personalizado</span>' : ''}
+        </div>
+        <p class="mt-1 text-[13px] text-slate-400 leading-relaxed">${esc(description || a.description)}</p>
+      </div>
+    </div>
+    ${tabs}
+    ${agentFields(a)}
+  </article>`;
+}
+
+function viewsCard() {
+  const views = AGENT_VIEWS.map(([k, label]) => [agentOf(`p4_view_${k}`), k, label]).filter(([a]) => a);
+  if (!views.length) return '';
+  const current = agentOf(`p4_view_${agentViewTab}`) || views[0][0];
+  const tabs = `<div class="mt-5 flex flex-wrap gap-1 p-1 rounded-full bg-white/[0.04] hairline w-fit">${views.map(([a, k, label]) =>
+    `<button data-action="agent-view-tab" data-key="${k}" class="h-8 px-4 rounded-full text-[12px] font-medium transition flex items-center gap-1.5 ${k === agentViewTab ? 'bg-white text-slate-900' : 'text-slate-300 hover:text-white'}">${esc(label)}${a.is_custom ? '<span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>' : ''}</button>`).join('')}</div>
+    <p class="mt-3 text-[12px] text-slate-500">${esc(current.title)}: ${esc(current.description)}</p>`;
+  return agentCard(current, { title: 'Sesión de fotos: vistas del catálogo', description: 'Muse Image genera 5 fotos a partir de la máster: frente, izquierda, derecha y atrás (deducidas por IA) y una foto de ambiente. Cada una tiene su propio prompt.', tabs });
+}
+
+function renderAgents() {
+  const body = $('agentsBody');
+  if (!promptsState) {
+    body.innerHTML = '<div class="rounded-3xl surface p-10 text-center text-slate-400 text-[14px]">No se pudo conectar con el backend para leer los prompts.</div>';
+    return;
+  }
+  const sel = $('profileSelect');
+  sel.innerHTML = `<option value="">${esc(promptsState.default_profile_name)}</option>` + promptsState.profiles.map((p) =>
+    `<option value="${esc(p.slug)}">${esc(p.name)}${p.custom_agents ? ` · ${p.custom_agents}` : ''}</option>`).join('');
+  sel.value = promptsState.active_profile || '';
+  sel.disabled = agentsLocked;
+  $('btnProfileRename').disabled = agentsLocked || !promptsState.active_profile;
+  $('btnProfileDelete').disabled = agentsLocked || !promptsState.active_profile;
+  $('agentsLock').classList.toggle('hidden', !agentsLocked);
+  $('agentsLock').classList.toggle('flex', agentsLocked);
+  const isOriginal = !promptsState.active_profile;
+
+  const section = (label, sub, html) => `<section><div class="mb-4"><div class="text-[11px] font-medium uppercase tracking-wider text-slate-400">${label}</div>${sub ? `<p class="mt-1 text-[13px] text-slate-500">${sub}</p>` : ''}</div><div class="space-y-5">${html}</div></section>`;
+  const card = (k) => (agentOf(k) ? agentCard(agentOf(k)) : '');
+  const advanced = promptsState.agents.filter((a) => a.group === 'advanced');
+  const nAdvCustom = advanced.filter((a) => a.is_custom).length;
+
+  body.innerHTML = `
+    ${isOriginal ? `<div class="rounded-2xl bg-white/[0.03] hairline p-4 text-[13px] text-slate-400 flex items-center gap-2">${icon('info', 16, 'text-blue-300 shrink-0')}Estás en el Original de Meta Muse, que nunca se modifica. Puedes editar y, al guardar, te pediremos un nombre para crear tu perfil. También puedes crearlo ahora con "Nuevo perfil".</div>` : ''}
+    ${section('Fase 2 · Entender lo que vendes', '', card('p2_extract'))}
+    ${section('Fase 4 · Sesión de fotos con Muse Image', 'Los prompts de imagen funcionan mejor en inglés. Los marcadores como {desc} se reemplazan por los datos de cada producto.', card('p4_master') + viewsCard())}
+    ${section('Fase 5 · Textos de venta', '', card('p5_copy'))}
+    <section>
+      <button data-action="agents-advanced" class="w-full rounded-2xl surface p-5 flex items-center justify-between text-left">
+        <span><span class="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Avanzado · verificadores${nAdvCustom ? ` <span class="text-indigo-300 normal-case">(${nAdvCustom} personalizado/s)</span>` : ''}</span>
+        <span class="block mt-1 text-[13px] text-slate-500">${advanced.length} agentes que revisan y corrigen el trabajo de los demás.</span></span>
+        <span class="text-slate-400 transition ${agentsAdvancedOpen ? 'rotate-180' : ''}">${icon('chevron', 18)}</span>
+      </button>
+      ${agentsAdvancedOpen ? `<div class="mt-4 rounded-2xl bg-amber-400/10 hairline p-4 text-[13px] text-amber-200 flex items-start gap-2">${icon('alert', 16, 'shrink-0 mt-0.5')}Estos agentes cuidan la calidad: deciden qué recorte sirve, qué foto es fiel al producto real y qué productos se agregan. Cambiarlos puede bajar la calidad del catálogo.</div>
+        <div class="mt-5 space-y-5">${advanced.map((a) => agentCard(a)).join('')}</div>` : ''}
+    </section>`;
+}
+
+async function refreshAgentsLock() {
+  try { const p = await api('/api/v1/progress'); agentsLocked = !!p.running; } catch { agentsLocked = !!(run && run.running); }
+}
+
+async function openAgents() {
+  openDrawer('agentsDrawer');
+  $('agentsBody').innerHTML = '<div class="h-64 rounded-3xl skeleton"></div>';
+  await Promise.all([refreshAgentsLock(), loadPrompts(false)]);
+  renderAgents();
+}
+
+async function promptsWrite(path, req, okMsg) {
+  try {
+    promptsState = await api(path, req);
+    renderProfileChip();
+    renderAgents();
+    if (okMsg) toast(okMsg);
+    return true;
+  } catch (err) {
+    toast(err.message, 'error');
+    if (/fase en curso/i.test(err.message)) { agentsLocked = true; renderAgents(); }
+    return false;
+  }
+}
+
+// Ventanita de perfiles: mode = 'new' | 'rename' | 'save' (guardar un cambio hecho sobre el original).
+let profileModal = null;
+function openProfileModal(mode, key = null) {
+  if (!promptsState || agentsLocked) return;
+  profileModal = { mode, key };
+  const active = promptsState.active_profile;
+  const copy = {
+    new: ['Nuevo perfil', 'Un perfil es un juego de prompts con nombre. Al crearlo queda activo y los próximos videos se procesan con él.', '', 'Crear y activar'],
+    rename: ['Renombrar perfil', 'Solo cambia el nombre; los prompts del perfil no se tocan.', promptsState.active_profile_name, 'Guardar nombre'],
+    save: ['Guardar en un perfil nuevo', 'El "Original de Meta Muse" nunca se modifica. Para guardar este cambio, crea un perfil: quedará activo con tu cambio y podrás volver al original cuando quieras desde el selector.', 'Mi perfil', 'Crear y guardar'],
+  }[mode];
+  $('profileModalTitle').textContent = copy[0];
+  $('profileModalText').textContent = copy[1];
+  $('profileName').value = copy[2];
+  $('profileSubmit').textContent = copy[3];
+  $('profileFromBox').classList.toggle('hidden', mode !== 'new');
+  $('profileFromCopy').classList.toggle('hidden', !active);
+  $('profileFromCopy').classList.toggle('flex', !!active);
+  $('profileFromCopyText').textContent = active ? `Parte de "${promptsState.active_profile_name}" con todos sus cambios.` : '';
+  document.querySelector('input[name=profileFrom][value=original]').checked = true;
+  $('profileModal').classList.remove('hidden'); $('profileModal').classList.add('flex');
+  setTimeout(() => { $('profileName').focus(); $('profileName').select(); }, 30);
+}
+function closeProfileModal() { profileModal = null; $('profileModal').classList.add('hidden'); $('profileModal').classList.remove('flex'); }
+
+async function submitProfileModal() {
+  if (!profileModal) return;
+  const name = $('profileName').value.trim();
+  if (!name) { $('profileName').focus(); return toast('Escribe un nombre para el perfil', 'info'); }
+  const { mode, key } = profileModal;
+  const active = promptsState.active_profile;
+  closeProfileModal();
+  if (mode === 'rename') return promptsWrite(`/api/v1/prompts/profiles/${encodeURIComponent(active)}`, jsonReq('PUT', { name }), `Perfil renombrado a "${name}"`);
+  const fromCopy = mode === 'new' && document.querySelector('input[name=profileFrom]:checked').value === 'copy';
+  if (mode === 'new') agentDraft = {};
+  const ok = await promptsWrite('/api/v1/prompts/profiles', jsonReq('POST', { name, copy_from: fromCopy ? active : null }), mode === 'new' ? `Perfil "${name}" creado y activo` : null);
+  if (ok && mode === 'save' && key) saveAgent(key);
+}
+
+async function saveAgent(key) {
+  const a = agentOf(key);
+  if (!a) return;
+  if (!promptsState.active_profile) return openProfileModal('save', key);
+  const d = draftOf(a);
+  const full = d.full === a.default_text ? null : d.full;
+  const prev = agentDraft[key];
+  delete agentDraft[key];
+  const ok = await promptsWrite(`/api/v1/prompts/${encodeURIComponent(key)}`, jsonReq('PUT', { extra: d.extra.trim(), full_text: full }), null);
+  if (!ok) { agentDraft[key] = prev; renderAgents(); }
+  else if (promptsState) toast(`Guardado en "${promptsState.active_profile_name}" · se aplica desde el próximo procesamiento`);
+}
+
+function updateSaveButton(key) {
+  const a = agentOf(key);
+  const btn = document.querySelector(`[data-save="${key}"]`);
+  if (a && btn) btn.disabled = agentsLocked || !agentDirty(a);
+}
+
 function openDrawer(id) { $(id).classList.remove('hidden'); }
 function closeDrawer(id) { $(id).classList.add('hidden'); }
 
@@ -1249,7 +1529,7 @@ const actions = {
   },
   'open-tokens': () => { openDrawer('tokenDrawer'); refreshTokens(); },
   'close-tokens': () => closeDrawer('tokenDrawer'),
-  'open-upload': () => openDrawer('uploadDrawer'),
+  'open-upload': () => { openDrawer('uploadDrawer'); loadPrompts(false); },
   'close-upload': () => {
     if (run && run.running && !confirm('El pipeline sigue procesando en el servidor. ¿Cerrar el panel? (seguirá corriendo, pero no verás el progreso)')) return;
     closeDrawer('uploadDrawer');
@@ -1264,6 +1544,43 @@ const actions = {
   'open-how': () => { $('howModal').classList.remove('hidden'); $('howModal').classList.add('flex'); },
   'close-how': () => { $('howModal').classList.add('hidden'); $('howModal').classList.remove('flex'); },
   'how-to-upload': () => { actions['close-how'](); openDrawer('uploadDrawer'); },
+  'open-agents': () => openAgents(),
+  'close-agents': () => {
+    const dirty = promptsState && promptsState.agents.some((a) => agentDraft[a.key] && agentDirty(a));
+    if (dirty && !confirm('Tienes cambios sin guardar en los prompts. ¿Cerrar de todos modos?')) return;
+    agentDraft = {};
+    closeDrawer('agentsDrawer');
+  },
+  'agents-advanced': () => { agentsAdvancedOpen = !agentsAdvancedOpen; renderAgents(); },
+  'agent-view-tab': (_, key) => { agentViewTab = key; renderAgents(); },
+  'agent-expert': (_, key) => { const a = agentOf(key); if (!a) return; const d = draftOf(a); d.expert = !d.expert; renderAgents(); },
+  'agent-original': (_, key) => { const a = agentOf(key); if (!a) return; draftOf(a).full = a.default_text; renderAgents(); },
+  'agent-insert': (_, key, el) => {
+    const ta = $(`full-${key}`);
+    if (!ta || ta.disabled) return;
+    const tok = `{${el.dataset.ph}}`;
+    const s = ta.selectionStart ?? ta.value.length, e2 = ta.selectionEnd ?? s;
+    ta.value = ta.value.slice(0, s) + tok + ta.value.slice(e2);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = s + tok.length;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  },
+  'agent-save': (_, key) => { if (!agentsLocked) saveAgent(key); },
+  'agent-reset': (_, key) => {
+    const a = agentOf(key);
+    if (!a || agentsLocked || !confirm(`¿Restaurar el prompt original de "${a.title}" en este perfil?`)) return;
+    delete agentDraft[key];
+    promptsWrite(`/api/v1/prompts/${encodeURIComponent(key)}`, jsonReq('DELETE'), `${a.title}: prompt original restaurado`);
+  },
+  'profile-new': () => openProfileModal('new'),
+  'profile-rename': () => { if (promptsState && promptsState.active_profile) openProfileModal('rename'); },
+  'profile-cancel': () => closeProfileModal(),
+  'profile-delete': () => {
+    if (!promptsState || agentsLocked) return;
+    if (!promptsState.active_profile) return toast('El perfil original no se puede eliminar', 'info');
+    if (!confirm(`¿Eliminar el perfil "${promptsState.active_profile_name}"? Se volverá a los prompts originales.`)) return;
+    agentDraft = {};
+    promptsWrite(`/api/v1/prompts/profiles/${encodeURIComponent(promptsState.active_profile)}`, jsonReq('DELETE'), 'Perfil eliminado · prompts originales activos');
+  },
 };
 
 document.addEventListener('click', (e) => {
@@ -1276,6 +1593,14 @@ document.addEventListener('click', (e) => {
 document.addEventListener('input', (e) => {
   const el = e.target;
   if (el.matches && el.matches('.ba input[type=range]')) { el.closest('.ba').style.setProperty('--pos', `${el.value}%`); return; }
+  if (el.dataset && (el.dataset.agentExtra || el.dataset.agentFull)) {
+    const key = el.dataset.agentExtra || el.dataset.agentFull;
+    const a = agentOf(key);
+    if (!a) return;
+    draftOf(a)[el.dataset.agentExtra ? 'extra' : 'full'] = el.value;
+    updateSaveButton(key);
+    return;
+  }
   if (!el.dataset || !el.dataset.field) return;
   const p = pending.find((x) => x.uid === el.dataset.uid);
   if (!p) return;
@@ -1286,8 +1611,17 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
+  if (profileModal) { closeProfileModal(); return; }
+  if (!$('agentsDrawer').classList.contains('hidden')) { actions['close-agents'](); return; }
   closeQuick(); closeDrawer('cartDrawer'); closeDrawer('tokenDrawer'); actions['close-how']();
 });
+
+$('profileSelect').addEventListener('change', (e) => {
+  agentDraft = {};
+  const slug = e.target.value || null;
+  promptsWrite('/api/v1/prompts/profiles/active', jsonReq('PUT', { profile: slug }), `Perfil activo: ${e.target.selectedOptions[0].textContent.replace(/ · \d+$/, '')}`);
+});
+$('profileForm').addEventListener('submit', (e) => { e.preventDefault(); submitProfileModal(); });
 
 $('videoInput').addEventListener('change', (e) => setFiles(e.target.files));
 ['dragover', 'dragenter'].forEach((ev) => $('dropZone').addEventListener(ev, (e) => { e.preventDefault(); $('dropZone').classList.add('border-meta'); }));
@@ -1308,6 +1642,7 @@ renderCanvas();
 renderAll();
 refreshTokens();
 seedIfEmpty();
+loadPrompts(false);
 </script>
 </body>
 </html>

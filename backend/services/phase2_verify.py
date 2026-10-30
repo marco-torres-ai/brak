@@ -34,6 +34,7 @@ from backend.core.config import (
     MUSE_VOICE_MODEL,
     STORAGE_DIR,
 )
+from backend.core import prompts
 from backend.core.muse_api import chat_json, transcribe_wav
 from backend.core.muse_client import (
     SALES_KEYWORDS_BIAS,
@@ -75,6 +76,11 @@ Reglas:
 - start_sec / end_sec: segundos del video completo en que se muestra el objeto (el clip empieza en window.start_sec).
 - confidence: entre 0 y 1 según la evidencia que oyes y ves. evidence: explica brevemente qué se oye y qué se ve.
 - target_product_id: cadena vacía salvo en UPDATE_PRODUCT y NO_CHANGE."""
+prompts.register(
+    "p2_verify", VERIFIER_SYSTEM_PROMPT, phase=2, model="Muse Spark", group="advanced",
+    title="Verificador audio ↔ video",
+    description="Revisa los tramos dudosos (objetos mostrados sin precio, voz sin transcribir) y decide si agregar, corregir o dejar productos.",
+)
 
 VERIFIER_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -651,6 +657,7 @@ def run_phase2_verification(
         (
             f"{MUSE_SPARK_MODEL}|{VERIFIER_PROMPT_VERSION}|{','.join(clip_signature)}|"
             + json.dumps([c for c in user_content if c["type"] == "text"], ensure_ascii=False)
+            + prompts.signature("p2_verify")
         ).encode("utf-8")
     ).hexdigest()
     cached = get_cached_result("phase2_verifier", cache_key)
@@ -667,7 +674,7 @@ def run_phase2_verification(
         parsed, usage, _ = chat_json(
             model=MUSE_SPARK_MODEL,
             messages=[
-                {"role": "system", "content": VERIFIER_SYSTEM_PROMPT},
+                {"role": "system", "content": prompts.get("p2_verify")},
                 {"role": "user", "content": user_content},
             ],
             schema_name="Phase2VerifierDecisions",

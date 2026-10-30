@@ -326,3 +326,40 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
 - **Verificación:** capturas reales (inicio, franja, estudio a mitad de la Fase 4, Pendientes con antes/después, ficha en modo comparación); `HEAD` + `last-modified` comprobados en el servidor; prueba funcional completa y ejecución en vivo de las Fases 2→5 (desde caché) con el lienzo pasando de 7 productos a 7 recortes y de 7 a 42 imágenes reveladas.
 - **Estado:** `READY_FOR_USER_TEST`.
 - **Ajuste pedido por el usuario:** la franja de los 7 modelos empujaba los productos fuera de la pantalla (empezaban a ~1,000 px). Se quitó de la tienda: ahora vive en la ventana "Cómo lo hace Meta" (línea de tiempo vertical) y en el lienzo vacío de Meta Muse Studio. Inicio compactado: en 1440×900 la primera fila de productos queda a la vista.
+- **Segundo ajuste del usuario:** se quitaron también los 7 pasos del lienzo vacío de Meta Muse Studio ("Aquí verás trabajar a Meta Muse"); ahora solo muestra el mensaje centrado. Los 7 pasos quedan únicamente en la ventana "Cómo lo hace Meta". 0 tokens.
+
+## v0.2.0 — Configuración de prompts de los agentes (rama `version-0.2`) (2026-10-30)
+- **Pedido del usuario:** que se puedan configurar los prompts de los agentes desde la tienda. El usuario autorizó tocar el backend para esto.
+- **Backend: nuevo registro `backend/core/prompts.py`.**
+  - Los 13 prompts (Fases 2–5) se registran al importarse cada módulo.
+  - Las fases piden el texto con `prompts.get(key)` y agregan `prompts.signature(key)` a su clave de caché.
+  - Hay dos formas de personalizar: **instrucciones adicionales** (se suman al original; en los prompts de imagen se escapan las llaves) y **modo experto** (texto completo, con validación de marcadores `{desc}`, `{problems}` y `{category}`).
+  - **Perfiles** en `storage/prompts/`: crear, duplicar, activar, eliminar, exportar e importar.
+  - "Original de Meta Muse" es de solo lectura; el primer cambio crea "Mi perfil".
+  - Cambios en módulos ya `TESTED_OK`: solo se reemplazó la constante del prompt por `prompts.get(...)` y se agregó la firma a la clave de caché. Sin perfil activo, la firma es `""`, así que **todo queda idéntico**.
+- **Endpoints:**
+  - `GET /api/v1/prompts`
+  - `PUT` y `DELETE /api/v1/prompts/{key}`
+  - `POST /api/v1/prompts/profiles`, `PUT /api/v1/prompts/profiles/active` y `DELETE /api/v1/prompts/profiles/{slug}`
+  - `GET /api/v1/prompts/profiles/{slug}/export` y `POST /api/v1/prompts/profiles/import`
+  - Las escrituras responden 409 si hay una fase corriendo. La sesión guarda `prompt_customizations` cuando hubo prompts personalizados.
+- **Frontend:**
+  - Botón "Agentes" en el encabezado, que abre la vista a pantalla completa "Configuración de agentes".
+  - Barra de perfil: selector, Duplicar, Exportar, Importar y Eliminar.
+  - Tarjetas creativas por fase: extractor, máster, "Sesión de fotos" con pestañas Frente/Izq./Der./Atrás/Ambiente, y textos de venta.
+  - Sección "Avanzado · verificadores", colapsada y con aviso.
+  - En cada tarjeta: modo experto con marcadores que se insertan con un clic, "Volver al texto original", "Restaurar original", aviso de costo y solo lectura mientras corre una fase.
+  - Chip "Perfil: X" en Meta Muse Studio.
+- **Verificación (videos reales ya procesados):**
+  - Pruebas del registro: 13 agentes; textos y firmas idénticos sin perfil; rechazo de marcadores faltantes, desconocidos o desbalanceados; llaves en las instrucciones extra; perfiles, exportar/importar y volver al original.
+  - **Fases 2→5 sobre `sess_20261030_000404` sin perfil: 0 llamadas a la API, 40 caché HIT y `catalog_products` idéntico.**
+  - Con "tono juvenil" en `p5_copy`: solo la Fase 5 llamó a la API (1 llamada) y los textos cambiaron. Al volver al original, el catálogo quedó idéntico desde caché.
+  - Endpoints probados con curl (400 / guardar / exportar), capturas reales de la vista, y sintaxis JS y Python verificada.
+- **Costo de la verificación:** 1 llamada a Muse Spark (~2,600 tokens). 0 imágenes.
+- **Ajuste pedido por el usuario: perfiles más claros.**
+  - Se quitaron de la pantalla Exportar, Importar y "Duplicar"; los endpoints siguen en la API.
+  - Nueva barra: selector, **＋ Nuevo perfil** (ventanita con nombre y "Empezar desde: Original / Copia del perfil actual"), **Renombrar** y Eliminar. Renombrar y Eliminar se desactivan en el original.
+  - Si editas estando en el original, al pulsar Guardar se pide un nombre ("Guardar en un perfil nuevo") en lugar de crear "Mi perfil" a escondidas.
+  - Backend: nuevo `PUT /api/v1/prompts/profiles/{slug}` (renombrar) y slugs reservados `active` e `import` para que no choquen con las rutas.
+  - Verificación: curl (crear "Active" da `active-2`, renombrar, nombre vacío da 400), capturas de las dos ventanitas y flujo completo en el navegador (escribir, Guardar, nombre, Crear: perfil creado, activo y con el cambio). Perfiles de prueba borrados.
+- **Estado:** `READY_FOR_USER_TEST`.

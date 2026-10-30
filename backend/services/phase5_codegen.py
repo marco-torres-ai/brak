@@ -25,6 +25,7 @@ from backend.core.config import (
     load_session_state,
     save_session_state,
 )
+from backend.core import prompts
 from backend.core.muse_api import MuseAPIError, chat_json
 from backend.core.muse_client import get_cached_result, set_cached_result
 from backend.core.token_tracker import TokenTracker
@@ -47,6 +48,12 @@ Escribe en español neutro, en tono comercial claro y honesto:
 - tags: hasta 6 palabras clave de búsqueda en minúsculas.
 store: name (nombre corto y atractivo para la tienda, acorde a los productos) y tagline (1 frase).
 Devuelve un elemento por producto con su product_id exacto."""
+prompts.register(
+    "p5_copy", COPY_SYSTEM_PROMPT, phase=5, model="Muse Spark", group="creative",
+    title="Redactor de textos de venta",
+    description="Escribe título, descripción, puntos destacados, categoría y etiquetas de cada producto, y el nombre de la tienda.",
+    hint="Ej.: 'Tono juvenil y cercano, frases cortas.' o 'La tienda se llama Brak.'",
+)
 
 COPY_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -138,7 +145,7 @@ def _write_copy(tracker: TokenTracker, products: List[Dict[str, Any]]) -> Dict[s
             for p in chunk
         ]
         canonical = json.dumps(payload, sort_keys=True, ensure_ascii=False)
-        key = hashlib.md5(f"{MUSE_SPARK_MODEL}|{PHASE5_PROMPT_VERSION}|{canonical}".encode("utf-8")).hexdigest()
+        key = hashlib.md5(f"{MUSE_SPARK_MODEL}|{PHASE5_PROMPT_VERSION}|{canonical}{prompts.signature('p5_copy')}".encode("utf-8")).hexdigest()
         cached = get_cached_result("phase5_copy", key)
         if cached:
             parsed, usage = cached["parsed"], cached["usage"]
@@ -153,7 +160,7 @@ def _write_copy(tracker: TokenTracker, products: List[Dict[str, Any]]) -> Dict[s
             try:
                 parsed, usage, _ = chat_json(
                     model=MUSE_SPARK_MODEL,
-                    messages=[{"role": "system", "content": COPY_SYSTEM_PROMPT}, {"role": "user", "content": canonical}],
+                    messages=[{"role": "system", "content": prompts.get("p5_copy")}, {"role": "user", "content": canonical}],
                     schema_name="CatalogCopy",
                     schema=COPY_SCHEMA,
                     reasoning_effort="low",

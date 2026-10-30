@@ -187,6 +187,52 @@ Estado del servidor, límites de entrada y sesión actual. Incluye `meta_muse_ap
 
 ---
 
+## Prompts de los agentes (v0.2)
+
+Los 13 prompts de los agentes se pueden personalizar sin tocar código. Hay dos formas:
+- **Instrucciones adicionales (`extra`):** se suman al final del prompt original.
+- **Modo experto (`full_text`):** reemplaza el texto completo.
+
+Los cambios se guardan en **perfiles** dentro de `storage/prompts/`, fuera de git.
+
+- **Sin perfil activo** ("Original de Meta Muse"), el pipeline usa exactamente los prompts y las claves de caché de siempre.
+- **Con un prompt personalizado**, la clave de caché de ese agente cambia. Solo ese agente vuelve a llamar a la API; el resto sigue saliendo de la caché.
+- **Formato de salida:** los JSON Schema estrictos no se editan, así que el formato nunca se rompe.
+- **Trazabilidad:** la sesión guarda `prompt_customizations`, con qué perfil y qué agentes personalizados se usaron en cada fase. Solo aparece si hubo alguno.
+
+| Clave | Fase · Modelo | Grupo | Marcadores |
+|---|---|---|---|
+| `p2_extract` | 2 · Muse Spark | creative | — |
+| `p2_verify` | 2 · Muse Spark | advanced | — |
+| `p3_vision`, `p3_cut_check`, `p3_cut_choice` | 3 · Muse Spark | advanced | — |
+| `p4_master` | 4 · Muse Image | creative | `{problems}` `{desc}` obligatorios |
+| `p4_view_front` / `_left` / `_right` / `_back` / `_lifestyle` | 4 · Muse Image | creative | `{desc}` obligatorio, `{category}` opcional |
+| `p4_fidelity` | 4 · Muse Spark | advanced | — |
+| `p5_copy` | 5 · Muse Spark | creative | — |
+
+### `GET /api/v1/prompts`
+Devuelve `active_profile` (slug o `null`), `active_profile_name`, `profiles[]` (`slug`, `name`, `custom_agents`) y `agents[]`. Cada agente trae `key`, `phase`, `model`, `group`, `title`, `description`, `kind` (`system`/`image`), `hint`, `placeholders`, `default_text`, `extra`, `full_text`, `effective_text` e `is_custom`.
+
+### `PUT /api/v1/prompts/{key}`
+Recibe `{"extra": "Tono juvenil, frases cortas.", "full_text": null}` y guarda en el perfil activo. Si el activo es el original, crea y activa "Mi perfil". Responde **400** si falta un marcador obligatorio, aparece uno desconocido o las llaves están desbalanceadas.
+
+### `DELETE /api/v1/prompts/{key}`
+Restaura el prompt original del agente en el perfil activo.
+
+### Perfiles
+- `POST /api/v1/prompts/profiles` recibe `{"name": "Lujo", "copy_from": "mi-perfil" | null}`. Crea el perfil y lo activa.
+- `PUT /api/v1/prompts/profiles/active` recibe `{"profile": "lujo" | null}`. Con `null` se vuelve al original.
+- `PUT /api/v1/prompts/profiles/{slug}` recibe `{"name": "Lujo boutique"}` y solo cambia el nombre (el slug y los prompts no cambian).
+- `DELETE /api/v1/prompts/profiles/{slug}`
+- `GET /api/v1/prompts/profiles/{slug}/export` devuelve un JSON descargable.
+- `POST /api/v1/prompts/profiles/import` recibe ese mismo JSON. Crea el perfil y lo activa.
+
+Exportar e Importar existen solo en la API: la pantalla de Brak Shop no los muestra. Los slugs `active` e `import` están reservados; un perfil llamado "Active" recibe el slug `active-2`.
+
+Todas las escrituras devuelven el mismo cuerpo que `GET /api/v1/prompts`. Responden **409** si hay una fase corriendo.
+
+---
+
 ## Construir las URLs de las imágenes
 
 | Origen | Formato de la ruta | URL completa |
