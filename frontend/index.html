@@ -63,6 +63,22 @@
   @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+  /* Antes / después arrastrable */
+  .ba { position: relative; overflow: hidden; touch-action: none; user-select: none; }
+  .ba .ba-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--pos, 50%)) 0 0); }
+  .ba .ba-line { position: absolute; top: 0; bottom: 0; left: var(--pos, 50%); width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 14px rgba(0,0,0,.45); pointer-events: none; }
+  .ba .ba-knob { position: absolute; top: 50%; left: 50%; width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 999px; background: #fff; color: #0f172a; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .ba input[type=range] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; -webkit-appearance: none; appearance: none; }
+  /* Inicio: tarjetas flotantes con profundidad */
+  .parallax { transform: translate(calc(var(--mx, 0) * var(--d, 1) * 1px), calc(var(--my, 0) * var(--d, 1) * 1px)); transition: transform .25s ease-out; }
+  .floaty { animation: floaty 7s ease-in-out infinite; }
+  @keyframes floaty { 0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); } 50% { transform: translateY(-12px) rotate(var(--r, 0deg)); } }
+  .flowline { background: linear-gradient(90deg, transparent, rgba(59,130,246,.9), rgba(168,85,247,.9), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: flow 3.2s linear infinite; }
+  @keyframes flow { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+  .reveal { animation: reveal .8s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes reveal { from { opacity: 0; filter: blur(10px); transform: scale(.94); } to { opacity: 1; filter: none; transform: none; } }
+  .pulse-soft { animation: pulseSoft 1.8s ease-in-out infinite; }
+  @keyframes pulseSoft { 0%, 100% { opacity: .45; } 50% { opacity: .9; } }
   ::selection { background: rgba(8,102,255,.35); }
   ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 8px; }
 </style>
@@ -112,19 +128,31 @@
 <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
   <!-- ===================== TIENDA ACTIVA ===================== -->
   <section id="viewStore">
-    <div class="flex flex-wrap items-end justify-between gap-6 mb-8">
-      <div class="max-w-2xl">
-        <div class="text-[12px] font-medium tracking-wide uppercase text-slate-400 mb-2">Tienda activa</div>
-        <h1 class="text-3xl sm:text-[40px] leading-[1.1] font-semibold tracking-tight text-white">Segunda mano,<br class="hidden sm:block" /> <span class="meta-ai-text">fotos de estudio.</span></h1>
-        <p class="mt-3 text-[15px] text-slate-400 leading-relaxed">Cada artículo nació de un video del vendedor. Meta Muse escuchó el precio, encontró el objeto, lo recortó y le hizo una sesión de fotos.</p>
+    <div id="hero" class="relative grid lg:grid-cols-[1.1fr_1fr] gap-8 items-center mb-10">
+      <div>
+        <span class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-white/[0.04] hairline"><span data-icon="sparkles" class="text-indigo-300"></span><span class="meta-ai-text">Video-to-catalog con Meta Muse</span></span>
+        <h1 class="mt-4 text-4xl sm:text-[48px] leading-[1.04] font-semibold tracking-tight text-white">De un video<br /><span class="meta-ai-text">a tu vitrina.</span></h1>
+        <p class="mt-4 max-w-xl text-[15px] text-slate-400 leading-relaxed">Muestra tus cosas y di el precio. Meta Muse escucha, encuentra cada objeto, lo recorta y le hace una sesión de fotos de estudio. Tú solo apruebas.</p>
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+          <button data-action="open-upload" class="h-12 pl-5 pr-6 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-xl shadow-indigo-600/30 hover:brightness-110 transition flex items-center gap-2"><span data-icon="sparkles"></span>Vender con un video</button>
+          <button data-action="open-how" class="h-12 px-5 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[14px] font-medium text-slate-200 transition flex items-center gap-2">Cómo lo hace Meta <span data-icon="arrow"></span></button>
+        </div>
+        <dl class="mt-7 flex items-center gap-6 text-sm">
+          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Artículos</dt><dd id="statProducts" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
+          <div class="w-px h-10 bg-white/10"></div>
+          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Categorías</dt><dd id="statCategories" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
+          <div class="w-px h-10 bg-white/10"></div>
+          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Por revisar</dt><dd id="statPending" class="text-2xl font-semibold text-amber-400 tabular-nums">0</dd></div>
+        </dl>
       </div>
-      <dl class="flex items-center gap-6 text-sm">
-        <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Artículos</dt><dd id="statProducts" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
-        <div class="w-px h-10 bg-white/10"></div>
-        <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Categorías</dt><dd id="statCategories" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
-        <div class="w-px h-10 bg-white/10"></div>
-        <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Por revisar</dt><dd id="statPending" class="text-2xl font-semibold text-amber-400 tabular-nums">0</dd></div>
-      </dl>
+      <div id="heroArt" class="relative h-[300px] lg:h-[340px] hidden sm:block" aria-hidden="true"></div>
+    </div>
+
+    <div class="flex items-end justify-between gap-3 mb-5">
+      <div>
+        <div class="text-[12px] font-medium tracking-wide uppercase text-slate-400 mb-2">Tienda activa</div>
+        <h2 class="text-2xl font-semibold tracking-tight text-white">Segunda mano, <span class="meta-ai-text">fotos de estudio</span></h2>
+      </div>
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -177,59 +205,73 @@
   Brak Shop · Video-to-catalog con Meta Muse — Voice Transcribe · Spark · SAM 3.1 · Muse Image
 </footer>
 
-<!-- ===================== DRAWER: AGREGAR CON VIDEO ===================== -->
+<!-- ===================== ESTUDIO DE CARGA (PANTALLA COMPLETA) ===================== -->
 <div id="uploadDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
-  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="close-upload"></div>
-  <aside class="absolute right-0 top-0 h-full w-full max-w-xl bg-ink-800/95 border-l border-white/5 flex flex-col fade-in">
-    <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between">
+  <div class="absolute inset-0 bg-ink-900/95 backdrop-blur-xl"></div>
+  <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 40% at 70% 0%, rgba(99,102,241,.16), transparent 70%)"></div>
+  <div class="relative h-full flex flex-col fade-in">
+    <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg meta-ai-gradient flex items-center justify-center text-white" data-icon="sparkles"></div>
+        <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white" data-icon="sparkles"></div>
         <div>
-          <h3 class="text-[15px] font-semibold text-white">Agregar productos con video</h3>
-          <p class="text-[12px] text-slate-400">1 a 3 videos · hasta 60 s · di el precio de cada objeto</p>
+          <h3 class="text-[15px] font-semibold text-white">Meta Muse Studio</h3>
+          <p class="text-[12px] text-slate-400">Sube 1 a 3 videos (hasta 60 s) y mira cómo los modelos de Meta crean tu catálogo</p>
         </div>
       </div>
-      <button data-action="close-upload" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+      <button data-action="close-upload" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-6 space-y-5">
-      <label id="dropZone" for="videoInput" class="block rounded-2xl border border-dashed border-white/15 hover:border-meta/70 bg-white/[0.02] p-8 text-center cursor-pointer transition">
-        <div class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.05] flex items-center justify-center text-slate-200" data-icon="upload"></div>
-        <div class="mt-3 text-[14px] font-medium text-slate-100">Arrastra tus videos o haz clic para elegirlos</div>
-        <div class="text-[12px] text-slate-500 mt-1">MP4 o MOV · máximo 3 · hasta 60 segundos cada uno</div>
-        <input id="videoInput" type="file" accept="video/*" multiple class="hidden" />
-      </label>
-      <div id="fileList" class="space-y-2"></div>
+    <div class="flex-1 min-h-0 grid lg:grid-cols-[420px_1fr]">
+      <aside class="min-h-0 overflow-y-auto p-6 space-y-5 border-r border-white/5">
+        <label id="dropZone" for="videoInput" class="block rounded-2xl border border-dashed border-white/15 hover:border-meta/70 bg-white/[0.02] p-7 text-center cursor-pointer transition">
+          <div class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.05] flex items-center justify-center text-slate-200" data-icon="upload"></div>
+          <div class="mt-3 text-[14px] font-medium text-slate-100">Arrastra tus videos o haz clic</div>
+          <div class="text-[12px] text-slate-500 mt-1">MP4 o MOV · máximo 3 · hasta 60 s</div>
+          <input id="videoInput" type="file" accept="video/*" multiple class="hidden" />
+        </label>
+        <div id="fileList" class="space-y-2"></div>
 
-      <button id="btnProcess" data-action="process" disabled class="w-full h-11 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
-        <span data-icon="sparkles"></span>Procesar y extraer productos
-      </button>
+        <button id="btnProcess" data-action="process" disabled class="w-full h-11 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
+          <span data-icon="sparkles"></span>Procesar y extraer productos
+        </button>
 
-      <div id="pipelineBox" class="hidden space-y-4">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Pipeline Meta Muse</span>
-          <span id="pipelineTimer" class="text-[12px] tabular-nums text-slate-400">00:00</span>
+        <div id="pipelineBox" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Pipeline Meta Muse</span>
+            <span id="pipelineTimer" class="text-[12px] tabular-nums text-slate-400">00:00</span>
+          </div>
+          <ol id="stepper" class="space-y-2"></ol>
+          <div id="liveWarning" class="hidden rounded-xl bg-amber-400/10 hairline p-3 text-[12px] text-amber-200"></div>
+          <div id="liveEvent" class="hidden rounded-xl bg-black/30 hairline p-2.5 text-[11px] font-mono text-slate-400"></div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Tokens API</div><div id="liveTokens" class="mt-1 text-[15px] font-semibold tabular-nums text-white">0</div></div>
+            <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Caché</div><div id="liveSaved" class="mt-1 text-[15px] font-semibold tabular-nums text-emerald-400">0</div></div>
+            <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Imágenes</div><div id="liveImages" class="mt-1 text-[15px] font-semibold tabular-nums text-amber-300">0</div></div>
+          </div>
+          <div id="pipelineMessage" class="text-[12px] text-slate-400"></div>
+          <div id="pipelineError" class="hidden rounded-2xl bg-rose-500/10 hairline p-4 space-y-3">
+            <div id="pipelineErrorText" class="text-[13px] text-rose-200"></div>
+            <button data-action="retry" class="w-full h-10 rounded-full bg-meta hover:bg-meta-dark text-white text-[13px] font-semibold transition flex items-center justify-center gap-2"><span data-icon="retry"></span>Reintentar desde este paso</button>
+          </div>
         </div>
-        <ol id="stepper" class="space-y-2"></ol>
-        <div id="liveWarning" class="hidden rounded-xl bg-amber-400/10 hairline p-3 text-[12px] text-amber-200"></div>
-        <div id="liveEvent" class="hidden rounded-xl bg-black/30 hairline p-2.5 text-[11px] font-mono text-slate-400"></div>
-        <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Tokens API</div><div id="liveTokens" class="mt-1 text-[15px] font-semibold tabular-nums text-white">0</div></div>
-          <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Caché</div><div id="liveSaved" class="mt-1 text-[15px] font-semibold tabular-nums text-emerald-400">0</div></div>
-          <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Imágenes</div><div id="liveImages" class="mt-1 text-[15px] font-semibold tabular-nums text-amber-300">0</div></div>
+      </aside>
+
+      <section class="min-h-0 overflow-y-auto p-6">
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+          <div>
+            <div class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Lienzo en vivo</div>
+            <h4 id="canvasTitle" class="mt-1 text-xl font-semibold tracking-tight text-white">Aquí verás trabajar a Meta Muse</h4>
+          </div>
+          <div id="canvasStats" class="flex items-center gap-2 text-[12px]"></div>
         </div>
-        <div id="pipelineMessage" class="text-[12px] text-slate-400"></div>
-        <div id="pipelineResult" class="hidden rounded-2xl bg-emerald-500/10 hairline p-4 space-y-3">
+        <div id="pipelineResult" class="hidden mb-5 rounded-2xl bg-emerald-500/10 hairline p-4 flex flex-wrap items-center justify-between gap-3">
           <div id="pipelineResultText" class="text-[14px] text-emerald-200 font-medium"></div>
-          <button data-action="go-pending" class="w-full h-10 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">Revisar en pendientes <span data-icon="arrow"></span></button>
+          <button data-action="go-pending" class="h-10 px-5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center gap-2">Revisar en pendientes <span data-icon="arrow"></span></button>
         </div>
-        <div id="pipelineError" class="hidden rounded-2xl bg-rose-500/10 hairline p-4 space-y-3">
-          <div id="pipelineErrorText" class="text-[13px] text-rose-200"></div>
-          <button data-action="retry" class="w-full h-10 rounded-full bg-meta hover:bg-meta-dark text-white text-[13px] font-semibold transition flex items-center justify-center gap-2"><span data-icon="retry"></span>Reintentar desde este paso</button>
-        </div>
-      </div>
+        <div id="studioCanvas" class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-5"></div>
+      </section>
     </div>
-  </aside>
+  </div>
 </div>
 
 <!-- ===================== DRAWER: MONITOR DE TOKENS ===================== -->
@@ -287,6 +329,21 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: CÓMO LO HACE META ===================== -->
+<div id="howModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-action="close-how"></div>
+  <div class="relative rounded-[28px] bg-ink-800 shadow-2xl shadow-black/60 hairline max-w-2xl w-full max-h-[90vh] overflow-y-auto fade-in">
+    <button data-action="close-how" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+    <div class="p-7 sm:p-8">
+      <span class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-white/[0.04] hairline"><span data-icon="sparkles" class="text-indigo-300"></span><span class="meta-ai-text">Así trabaja Meta Muse</span></span>
+      <h2 class="mt-4 text-2xl font-semibold tracking-tight text-white">7 pasos, de tu voz a la vitrina</h2>
+      <p class="mt-2 text-[14px] text-slate-400">Cada fase tiene un agente que revisa y corrige el trabajo de la anterior. Tú apruebas al final.</p>
+      <ol id="modelsList" class="relative mt-7 space-y-1"></ol>
+      <button data-action="how-to-upload" class="mt-6 w-full h-12 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-xl shadow-indigo-600/30 hover:brightness-110 transition flex items-center justify-center gap-2"><span data-icon="sparkles"></span>Probarlo con un video</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden h-11 pl-3 pr-4 rounded-full bg-ink-700/95 hairline backdrop-blur text-[13px] text-white shadow-2xl items-center gap-2"></div>
 
 <script>
@@ -325,18 +382,22 @@ const ICONS = {
   mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  scissors: '<circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/>',
+  tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1"/>',
+  move: '<path d="m18 8 4 4-4 4"/><path d="m6 8-4 4 4 4"/><path d="M2 12h20"/>',
   film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
 };
 const icon = (name, size = 16, cls = '') => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
 const STEPS = [
-  { model: 'OpenCV + FFmpeg', what: 'Valida los videos, descarta frames borrosos y extrae el audio 16 kHz', phase: 1 },
-  { model: 'Muse Voice Transcribe', what: 'Transcribe la voz del vendedor con sus tiempos', phase: 2 },
-  { model: 'Muse Spark', what: 'Detecta productos, precios y estado; verifica audio ↔ video', phase: 2 },
-  { model: 'Muse Spark · visión', what: 'Elige el mejor frame y ubica el objeto (cumple el rol de Glimmer)', phase: 3 },
-  { model: 'SAM 3.1', what: 'Recorta el producto sin fondo y verifica el recorte', phase: 3 },
-  { model: 'Muse Image', what: 'Máster de estudio, frente, 3 vistas IA y ambiente', phase: 4 },
-  { model: 'Muse Spark · textos', what: 'Escribe los textos de venta y arma el catálogo (cumple el rol de Muse Code)', phase: 5 },
+  { model: 'OpenCV + FFmpeg', what: 'Valida los videos, descarta frames borrosos y extrae el audio 16 kHz', short: 'Valida el video y separa el audio', icon: 'film', phase: 1 },
+  { model: 'Muse Voice Transcribe', what: 'Transcribe la voz del vendedor con sus tiempos', short: 'Escucha lo que dices, con tiempos', icon: 'mic', phase: 2 },
+  { model: 'Muse Spark', what: 'Detecta productos, precios y estado; verifica audio ↔ video', short: 'Entiende qué vendes y a qué precio', icon: 'sparkles', phase: 2 },
+  { model: 'Muse Spark · visión', what: 'Elige el mejor frame y ubica el objeto (cumple el rol de Glimmer)', short: 'Mira el video y encuentra el objeto', icon: 'eye', phase: 3 },
+  { model: 'SAM 3.1', what: 'Recorta el producto sin fondo y verifica el recorte', short: 'Lo recorta al píxel, sin fondo', icon: 'scissors', phase: 3 },
+  { model: 'Muse Image', what: 'Máster de estudio, frente, 3 vistas IA y ambiente', short: 'Sesión de fotos: estudio, ángulos y ambiente', icon: 'image', phase: 4 },
+  { model: 'Muse Spark · textos', what: 'Escribe los textos de venta y arma el catálogo (cumple el rol de Muse Code)', short: 'Escribe los textos y arma la tienda', icon: 'tag', phase: 5 },
 ];
 const PHASES = {
   2: { url: '/api/v1/phase2/semantic', hint: 'suele tardar ~1 min' },
@@ -359,6 +420,11 @@ let run = null; // { sid, nextPhase, running }
 let timerHandle = null;
 let loadingSeed = !approved.length && !localStorage.getItem(LS.seeded);
 let pollHandle = null;
+// Lienzo en vivo del estudio de carga: productos que aparecen a medida que cada modelo termina.
+const STUDIO_FILES = { master: '_master_studio.png', front: '_studio_white.jpg', left: '_angle_left.jpg', right: '_angle_right.jpg', back: '_angle_back.jpg', life: '_lifestyle.jpg' };
+const STUDIO_LABELS = { master: 'Máster', front: 'Frente', left: 'Izq. IA', right: 'Der. IA', back: 'Atrás IA', life: 'Ambiente' };
+let canvas = { sid: null, items: [], shown: new Set() };
+let studioPoll = null;
 // El progreso informa la última acción TERMINADA; el paso activo es el que viene después.
 const STEP_BY_MODEL = [
   [/Voice Transcribe/i, 2], [/OpenCV Frame/i, 3], [/Visi[oó]n|SAM 3\.1|Verificador de recortes/i, 4],
@@ -477,6 +543,179 @@ function stageBox(p, v) {
   return `<div class="stage relative aspect-square overflow-hidden ${isStudio(v) ? 'studio' : 'bg-slate-900'}" data-stage="${esc(p.uid)}">${stageInner(p, v)}${dots(p, v)}</div>`;
 }
 
+/* ---------- Antes / después ---------- */
+function beforeAfter(beforeUrl, afterView, title) {
+  const after = afterView && isStudio(afterView)
+    ? `<div class="absolute inset-0 studio"><img src="${esc(afterView.url)}" alt="${esc(title)}" class="blend absolute inset-0 w-full h-full object-contain p-6" /></div>`
+    : `<img src="${esc(afterView ? afterView.url : '')}" alt="${esc(title)}" class="absolute inset-0 w-full h-full object-cover" />`;
+  return `<div class="ba aspect-square" style="--pos:50%">
+    ${after}
+    <div class="ba-before"><img src="${esc(beforeUrl)}" alt="Video original" class="absolute inset-0 w-full h-full object-cover" /></div>
+    <span class="absolute top-3 left-3 h-6 px-2.5 inline-flex items-center rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-white">Video original</span>
+    <span class="absolute top-3 right-3 h-6 px-2.5 inline-flex items-center gap-1 rounded-full bg-white/85 backdrop-blur text-[10px] font-semibold text-indigo-700">${icon('sparkles', 11)}Muse Image</span>
+    <div class="ba-line"><div class="ba-knob">${icon('move', 18)}</div></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Comparar antes y después" />
+  </div>`;
+}
+
+/* ---------- Inicio y franja de modelos ---------- */
+function renderHero() {
+  const art = $('heroArt');
+  if (!art) return;
+  const picks = approved.filter((p) => p.views.some((v) => v.key === 'front')).slice(0, 3);
+  if (!picks.length) { art.innerHTML = ''; return; }
+  const slots = [
+    { cls: 'left-[6%] top-[14%] w-[46%]', d: 1.2, r: '-6deg', delay: '0s' },
+    { cls: 'right-[4%] top-[4%] w-[42%]', d: 0.7, r: '5deg', delay: '-2.2s' },
+    { cls: 'left-[34%] bottom-[2%] w-[44%]', d: 1.8, r: '-2deg', delay: '-4.4s' },
+  ];
+  art.innerHTML = picks.map((p, i) => {
+    const v = p.views.find((x) => x.key === 'front');
+    const s = slots[i];
+    return `<div class="absolute ${s.cls} parallax" style="--d:${s.d}">
+      <div class="floaty rounded-[26px] overflow-hidden shadow-2xl shadow-black/60 hairline bg-ink-800" style="--r:${s.r}; animation-delay:${s.delay}">
+        <div class="aspect-square studio relative"><img src="${esc(v.url)}" alt="" class="blend absolute inset-0 w-full h-full object-contain p-5" /></div>
+        <div class="px-4 py-3 flex items-center justify-between gap-2">
+          <span class="text-[12px] font-medium text-white truncate">${esc(p.title)}</span>
+          ${p.price == null ? '' : `<span class="text-[13px] font-semibold text-emerald-400 tabular-nums shrink-0">${esc(money(p.price, p.currency))}</span>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('') + `<div class="absolute right-[2%] bottom-[18%] parallax" style="--d:2.4"><span class="floaty inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/90 text-[12px] font-semibold text-indigo-700 shadow-xl" style="animation-delay:-1s">${icon('sparkles', 13)}Fotos de estudio con IA</span></div>`;
+}
+
+function modelsTimeline(compact = false) {
+  // Línea de tiempo vertical de los 7 modelos (ventana "Cómo lo hace Meta" y lienzo vacío del estudio).
+  return STEPS.map((s, i) => `<li class="relative flex gap-4 ${compact ? 'pb-3' : 'pb-5'}">
+    ${i < STEPS.length - 1 ? `<span class="absolute left-[21px] top-12 bottom-0 w-px bg-gradient-to-b from-indigo-400/60 to-white/5"></span>` : ''}
+    <span class="relative shrink-0 ${compact ? 'w-10 h-10' : 'w-11 h-11'} rounded-2xl meta-ai-gradient flex items-center justify-center text-white shadow-lg shadow-indigo-600/30">${icon(s.icon, compact ? 17 : 19)}</span>
+    <div class="pt-1 min-w-0">
+      <div class="flex flex-wrap items-baseline gap-x-2"><span class="text-[14px] font-semibold text-white">${esc(s.model)}</span><span class="text-[11px] text-slate-500 tabular-nums">Fase ${s.phase}</span></div>
+      <div class="mt-0.5 text-[13px] text-slate-400 leading-snug">${esc(compact ? s.short : s.what)}</div>
+    </div>
+  </li>`).join('');
+}
+
+function renderModels() { $('modelsList').innerHTML = modelsTimeline(false); }
+
+/* ---------- Lienzo en vivo (estudio de carga) ---------- */
+function canvasReset(sid) {
+  canvas = { sid, items: [], shown: new Set() };
+  stopStudioPoll();
+  renderCanvas();
+}
+
+function canvasItem(pid) {
+  let it = canvas.items.find((x) => x.pid === pid);
+  if (!it) { it = { pid, name: pid, price: null, currency: 'USD', cutout: null, files: {} }; canvas.items.push(it); }
+  return it;
+}
+
+function canvasFromPhase2(state) {
+  (state.semantic_products || []).forEach((p) => {
+    const it = canvasItem(p.product_id);
+    Object.assign(it, { name: p.detected_name || p.product_id, price: p.price, currency: p.currency || 'USD', mention: p.mention_type });
+  });
+  renderCanvas();
+}
+
+function canvasFromPhase3(state) {
+  (state.grounded_products || []).forEach((g) => {
+    const it = canvasItem(g.product_id);
+    it.name = g.resolved_name || it.name;
+    if (g.sam31_cutout && g.sam31_cutout.cutout_png_url) it.cutout = `${API}${g.sam31_cutout.cutout_png_url}?v=${Date.now()}`;
+  });
+  renderCanvas();
+}
+
+function canvasFromPhase4(state) {
+  stopStudioPoll();
+  (state.studio_products || []).forEach((sp) => {
+    const it = canvasItem(sp.product_id);
+    const a = (sp.studio_imagen || {}).step_4a_enhancement || {}, b = (sp.studio_imagen || {}).step_4b_variations || {};
+    const urls = { master: a.restored_image_url, front: b.studio_white_url, left: b.angle_left_url, right: b.angle_right_url, back: b.angle_back_url, life: b.lifestyle_url };
+    it.files = {};
+    Object.entries(urls).forEach(([k, u]) => { if (u) it.files[k] = `${API}${u}?v=${Date.now()}`; });
+    it.lowQuality = !!a.low_quality_source;
+  });
+  renderCanvas();
+}
+
+function canvasFromPhase5(state) {
+  (state.catalog_products || []).forEach((c) => { const it = canvasItem(c.id); it.name = c.title || it.name; it.done = true; });
+  renderCanvas();
+}
+
+// Durante la Fase 4 se revisa qué imágenes de Muse Image ya existen: aparecen a medida que se generan.
+function startStudioPoll() {
+  stopStudioPoll();
+  const sid = canvas.sid, t0 = Date.now();
+  const tick = async () => {
+    const checks = [];
+    canvas.items.forEach((it) => Object.entries(STUDIO_FILES).forEach(([k, suffix]) => {
+      if (it.files[k]) return;
+      const url = `${API}/storage/${sid}/studio/${it.pid}${suffix}`;
+      checks.push(fetch(`${url}?t=${Date.now()}`, { method: 'HEAD', cache: 'no-store' }).then((r) => {
+        const mod = Date.parse(r.headers.get('last-modified') || '') || Date.now();
+        if (r.ok && mod >= t0 - 5000) { it.files[k] = `${url}?v=${mod}`; return true; }
+        return false;
+      }).catch(() => false));
+    }));
+    const found = (await Promise.all(checks)).some(Boolean);
+    if (found) renderCanvas();
+  };
+  tick();
+  studioPoll = setInterval(tick, 2500);
+}
+
+function stopStudioPoll() { clearInterval(studioPoll); studioPoll = null; }
+
+function renderCanvas() {
+  const box = $('studioCanvas');
+  if (!box) return;
+  const imgs = canvas.items.reduce((a, it) => a + Object.keys(it.files).length, 0);
+  const cuts = canvas.items.filter((it) => it.cutout).length;
+  $('canvasStats').innerHTML = canvas.items.length ? `
+    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('sparkles', 12)}${canvas.items.length} productos</span>
+    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('scissors', 12)}${cuts} recortes</span>
+    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('image', 12)}${imgs} imágenes</span>` : '';
+  $('canvasTitle').textContent = !canvas.items.length ? 'Aquí verás trabajar a Meta Muse'
+    : canvas.items.every((it) => it.done) ? 'Catálogo listo' : imgs ? 'Muse Image está fotografiando tus productos' : cuts ? 'SAM 3.1 recortó tus productos' : 'Spark encontró estos productos';
+  if (!canvas.items.length) {
+    box.innerHTML = `<div class="col-span-full rounded-3xl surface p-7 sm:p-8 grid lg:grid-cols-[1fr_1.1fr] gap-8 items-start">
+      <div>
+        <div class="w-14 h-14 rounded-2xl meta-ai-gradient flex items-center justify-center text-white shadow-xl shadow-indigo-600/30">${icon('sparkles', 24)}</div>
+        <p class="mt-5 text-[17px] text-white font-semibold">Los productos aparecerán aquí en cuanto Spark los detecte</p>
+        <p class="mt-2 text-[14px] text-slate-400 leading-relaxed">Después SAM 3.1 los recortará y Muse Image les hará una sesión de fotos que verás aparecer imagen por imagen.</p>
+      </div>
+      <ol class="relative">${modelsTimeline(true)}</ol></div>`;
+    return;
+  }
+  const isNew = (url) => { if (!url || canvas.shown.has(url)) return ''; canvas.shown.add(url); return 'reveal'; };
+  box.innerHTML = canvas.items.map((it) => {
+    const main = it.files.master || it.files.front || it.cutout;
+    const source = it.files.master || it.files.front ? ['Muse Image', 'bg-white/85 text-indigo-700'] : it.cutout ? ['SAM 3.1', 'bg-white/85 text-slate-800'] : ['Detectado por Spark', 'bg-black/60 text-white'];
+    const thumbs = Object.keys(STUDIO_FILES).map((k) => it.files[k]
+      ? `<div class="relative aspect-square rounded-lg overflow-hidden ${k === 'life' ? 'bg-slate-900' : 'studio'}" title="${STUDIO_LABELS[k]}"><img src="${esc(it.files[k])}" alt="" class="${isNew(it.files[k])} absolute inset-0 w-full h-full ${k === 'life' ? 'object-cover' : 'object-contain p-1 blend'}" /></div>`
+      : `<div class="aspect-square rounded-lg bg-white/[0.04] ${it.cutout && !it.done ? 'pulse-soft' : ''}" title="${STUDIO_LABELS[k]}"></div>`).join('');
+    return `<article class="rounded-3xl overflow-hidden surface fade-in">
+      <div class="relative aspect-[4/3] ${main ? 'studio' : 'bg-white/[0.03]'}">
+        ${main ? `<img src="${esc(main)}" alt="${esc(it.name)}" class="${isNew(main)} blend absolute inset-0 w-full h-full object-contain p-6" />`
+          : `<div class="absolute inset-0 skeleton"></div><div class="absolute inset-0 flex items-center justify-center text-slate-500">${icon('scissors', 26)}</div>`}
+        <span class="absolute top-3 left-3 h-6 px-2.5 inline-flex items-center gap-1 rounded-full ${source[1]} backdrop-blur text-[10px] font-semibold">${icon(source[0] === 'SAM 3.1' ? 'scissors' : source[0] === 'Muse Image' ? 'image' : 'sparkles', 11)}${source[0]}</span>
+        ${it.lowQuality ? '<span class="absolute top-3 right-3 h-6 px-2.5 inline-flex items-center rounded-full bg-rose-500/80 text-[10px] font-semibold text-white">Toma insuficiente</span>' : ''}
+      </div>
+      <div class="p-4 space-y-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="text-[14px] font-semibold text-white leading-snug line-clamp-2">${esc(it.name)}</div>
+          <span class="shrink-0 text-[14px] font-semibold tabular-nums ${it.price == null ? 'text-amber-300' : 'text-emerald-400'}">${it.price == null ? 'Consultar' : esc(money(it.price, it.currency))}</span>
+        </div>
+        <div class="grid grid-cols-6 gap-1.5">${thumbs}</div>
+      </div>
+    </article>`;
+  }).join('');
+}
+
 /* ---------- Render: navegación ---------- */
 function renderTabs() {
   const on = 'bg-white/10 text-white', off = 'text-slate-400 hover:text-white';
@@ -565,8 +804,8 @@ function bindRotations() {
     const seq = p ? rotatable(p) : [];
     if (seq.length < 2) return;
     card.addEventListener('pointerenter', () => {
-      if (activeView[uid] && !seq.some((v) => v.key === activeView[uid])) return; // eligió ambiente o frame: no rotar
-      let i = Math.max(0, seq.findIndex((v) => v.key === (activeView[uid] || seq[0].key)));
+      if (activeView[uid] && activeView[uid] !== 'ba' && !seq.some((v) => v.key === activeView[uid])) return; // eligió ambiente o frame: no rotar
+      let i = Math.max(0, seq.findIndex((v) => v.key === activeView[uid]));
       clearInterval(rotateTimers.get(uid));
       rotateTimers.set(uid, setInterval(() => { i = (i + 1) % seq.length; setStage(uid, seq[i].key); }, 1100));
     });
@@ -582,6 +821,7 @@ function renderPending() {
   $('pendingEmpty').classList.toggle('hidden', pending.length > 0);
   $('pendingGrid').innerHTML = pending.map((p, i) => {
     const v = p.views.find((x) => x.key === activeView[p.uid]) || p.views[0];
+    const front = p.views.find((x) => x.key === 'front');
     const deictic = p.mention_type === 'DEICTIC';
     const chip = (text, cls, title = '') => `<span title="${esc(title)}" class="h-6 px-2.5 inline-flex items-center rounded-full text-[11px] font-medium ${cls}">${text}</span>`;
     const mention = p.mention_type ? chip(deictic ? 'DEICTIC · “esto de acá”' : 'EXPLICIT · lo nombró', deictic ? 'bg-amber-400/10 text-amber-300' : 'bg-blue-500/10 text-blue-300',
@@ -597,11 +837,13 @@ function renderPending() {
         ${p.real_photo_only ? chip('Toma insuficiente', 'bg-rose-500/10 text-rose-300', 'Se muestra la foto real: la toma estaba movida') : ''}
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-[1.1fr_1fr]">
-        <div class="group">${stageBox(p, v)}</div>
+        <div>${p.best_frame_url && front ? beforeAfter(p.best_frame_url, front, p.title) : stageBox(p, v)}
+          <div class="px-4 py-3 border-t border-white/5 grid grid-cols-6 gap-1.5">${p.views.filter((x) => x.key !== 'frame').slice(0, 6).map((x) => `<button data-action="quick" data-uid="${esc(p.uid)}" title="${esc(x.label)}${x.ai ? ' · IA' : ''}" class="relative aspect-square rounded-lg overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'}"><img src="${esc(x.url)}" alt="" class="absolute inset-0 w-full h-full ${isStudio(x) ? 'object-contain p-1 blend' : 'object-cover'}" /></button>`).join('')}</div>
+        </div>
         <div class="p-5 space-y-4">
           <div class="grid grid-cols-2 gap-3">
-            ${thumb(p.best_frame_url, 'Video original', false)}
             ${thumb(p.sam_cutout_url, 'Recorte SAM 3.1', true)}
+            ${thumb((p.views.find((x) => x.key === 'life') || {}).url, 'Ambiente · Muse Image', false)}
           </div>
           <label class="block"><span class="text-[11px] text-slate-500">Nombre</span>
             <input data-field="title" data-uid="${esc(p.uid)}" value="${esc(p.title)}" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
@@ -622,7 +864,7 @@ function renderPending() {
   }).join('');
 }
 
-function renderAll() { renderTabs(); renderStore(); renderPending(); }
+function renderAll() { renderTabs(); renderStore(); renderPending(); renderHero(); }
 
 /* ---------- Vista rápida ---------- */
 function openQuick(uid) {
@@ -630,11 +872,15 @@ function openQuick(uid) {
   if (!p) return;
   const inStore = approved.some((x) => x.uid === uid);
   const v = p.views.find((x) => x.key === activeView[uid]) || p.views[0];
+  const front = p.views.find((x) => x.key === 'front');
+  const canCompare = Boolean(p.best_frame_url && front);
+  const comparing = canCompare && activeView[uid] === 'ba';
   $('quickBody').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-[1.15fr_1fr]">
     <div class="p-5 md:p-6 space-y-3">
-      <div class="rounded-[22px] overflow-hidden">${stageBox(p, v)}</div>
+      <div class="rounded-[22px] overflow-hidden">${comparing ? beforeAfter(p.best_frame_url, front, p.title) : stageBox(p, v)}</div>
+      ${canCompare ? `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${comparing ? 'front' : 'ba'}" class="w-full h-10 rounded-full ${comparing ? 'bg-meta text-white' : 'bg-white/[0.04] hairline text-slate-200 hover:bg-white/[0.08]'} text-[13px] font-medium transition flex items-center justify-center gap-2">${icon('move', 15)}${comparing ? 'Ver galería' : 'Antes / después: video vs. estudio'}</button>` : ''}
       <div class="grid grid-cols-7 gap-2">${p.views.map((x) => `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${x.key}"
-        class="relative aspect-square rounded-xl overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'} ring-2 ${x.key === v.key ? 'ring-meta' : 'ring-transparent hover:ring-white/20'} transition" title="${esc(x.label)}${x.ai ? ' · IA' : ''}">
+        class="relative aspect-square rounded-xl overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'} ring-2 ${!comparing && x.key === v.key ? 'ring-meta' : 'ring-transparent hover:ring-white/20'} transition" title="${esc(x.label)}${x.ai ? ' · IA' : ''}">
         <img src="${esc(x.url)}" alt="" class="absolute inset-0 w-full h-full ${isStudio(x) ? 'object-contain p-1 blend' : 'object-cover'}" />
         ${x.ai ? `<span class="absolute top-1 right-1 text-indigo-600">${icon('sparkles', 10)}</span>` : ''}</button>`).join('')}</div>
       ${p.views.some((x) => x.ai) ? `<p class="flex items-center gap-1.5 text-[12px] text-indigo-300/90">${icon('sparkles', 12)}Las vistas IA no se filmaron: Muse Image las generó a partir del producto real.</p>` : ''}
@@ -738,25 +984,35 @@ async function refreshTokens() {
 }
 
 /* ---------- Agregar con video ---------- */
-function videoDuration(file) {
+function videoMeta(file) {
+  // Duración y una miniatura del video (frame cerca del segundo 1), todo en el navegador.
   return new Promise((resolve) => {
     const v = document.createElement('video');
-    v.preload = 'metadata';
-    v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
-    v.onerror = () => resolve(NaN);
-    v.src = URL.createObjectURL(file);
+    v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+    const url = URL.createObjectURL(file);
+    const finish = (thumb) => { URL.revokeObjectURL(url); resolve({ duration: v.duration, thumb }); };
+    v.onloadedmetadata = () => { v.currentTime = Math.min(1, (v.duration || 2) / 3); };
+    v.onseeked = () => {
+      try {
+        const c = document.createElement('canvas'); const w = 160; c.width = w; c.height = Math.round(w * (v.videoHeight / v.videoWidth || 0.5625));
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); finish(c.toDataURL('image/jpeg', 0.7));
+      } catch { finish(null); }
+    };
+    v.onerror = () => finish(null);
+    setTimeout(() => finish(null), 6000);
+    v.src = url;
   });
 }
 
 async function setFiles(fileList) {
   const files = Array.from(fileList).filter((f) => f.type.startsWith('video/') || /\.(mp4|mov|m4v|webm)$/i.test(f.name));
   selectedFiles = [];
-  for (const f of files.slice(0, 3)) selectedFiles.push({ file: f, duration: await videoDuration(f) });
+  for (const f of files.slice(0, 3)) { const m = await videoMeta(f); selectedFiles.push({ file: f, duration: m.duration, thumb: m.thumb }); }
   const tooMany = files.length > 3;
   $('fileList').innerHTML = selectedFiles.map((s) => {
     const long = s.duration > 60.8;
     return `<div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hairline ${long ? 'ring-1 ring-rose-500/50' : ''}">
-      <span class="w-9 h-9 shrink-0 rounded-lg bg-white/[0.05] flex items-center justify-center text-slate-300">${icon('film', 16)}</span>
+      ${s.thumb ? `<img src="${s.thumb}" alt="" class="w-14 h-10 shrink-0 rounded-lg object-cover" />` : `<span class="w-14 h-10 shrink-0 rounded-lg bg-white/[0.05] flex items-center justify-center text-slate-300">${icon('film', 16)}</span>`}
       <span class="flex-1 text-[13px] text-slate-200 truncate">${esc(s.file.name)}</span>
       <span class="text-[12px] tabular-nums ${long ? 'text-rose-300' : 'text-slate-400'} shrink-0">${isNaN(s.duration) ? '—' : `${s.duration.toFixed(1)} s`}${long ? ' · supera 60 s' : ''}</span></div>`;
   }).join('') + (tooMany ? '<p class="text-[12px] text-amber-300">Solo se usarán los 3 primeros videos.</p>' : '');
@@ -875,6 +1131,7 @@ async function runPipeline(fromPhase) {
         throw new Error(`Ningún video pasó la validación. ${reasons}`);
       }
       run.sid = state.session_id;
+      canvasReset(run.sid);
       updateLive(state);
       $('pipelineMessage').textContent = phaseMessage(1, state);
       done.push(1); phase = 2;
@@ -885,8 +1142,14 @@ async function runPipeline(fromPhase) {
       renderStepper(phase, done, null);
       $('pipelineMessage').textContent = `Fase ${phase} en curso (${PHASES[phase].hint})…`;
       startPolling(phase, baseline, done);
+      if (canvas.sid !== run.sid) canvasReset(run.sid);
+      if (phase === 4) startStudioPoll();
       state = await api(PHASES[phase].url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: run.sid }) });
       stopPolling();
+      if (phase === 2) canvasFromPhase2(state);
+      if (phase === 3) canvasFromPhase3(state);
+      if (phase === 4) canvasFromPhase4(state);
+      if (phase === 5) canvasFromPhase5(state);
       updateLive(state);
       const n = auditNumbers(state);
       baseline = { saved: n.saved, images: n.images };
@@ -907,6 +1170,7 @@ async function runPipeline(fromPhase) {
     toast(`${products.length} producto(s) nuevos en Pendientes`);
   } catch (err) {
     stopPolling();
+    stopStudioPoll();
     clearInterval(timerHandle);
     renderStepper(null, done, phase);
     $('pipelineErrorText').textContent = `Falló la Fase ${phase}: ${err.message}`;
@@ -939,7 +1203,7 @@ const actions = {
   category: (_, key) => { activeCategory = key; renderStore(); },
   view: (uid, key, el, e) => { if (e) e.stopPropagation(); activeView[uid] = key; clearInterval(rotateTimers.get(uid)); setStage(uid, key); },
   quick: (uid) => openQuick(uid),
-  'quick-view': (uid, key) => { activeView[uid] = key; openQuick(uid); setStage(uid, key); },
+  'quick-view': (uid, key) => { activeView[uid] = key; openQuick(uid); if (key !== 'ba') setStage(uid, key); },
   'close-quick': closeQuick,
   approve: (uid) => animateOut([uid], () => { publish([uid]); renderAll(); toast('Publicado en la tienda'); }),
   reject: (uid) => animateOut([uid], () => { pending = pending.filter((p) => p.uid !== uid); save(LS.pending, pending); renderAll(); toast('Producto rechazado', 'info'); }),
@@ -997,6 +1261,9 @@ const actions = {
   },
   retry: () => { if (run && !run.running) runPipeline(run.nextPhase); },
   'go-pending': () => { closeDrawer('uploadDrawer'); activeTab = 'pending'; renderAll(); },
+  'open-how': () => { $('howModal').classList.remove('hidden'); $('howModal').classList.add('flex'); },
+  'close-how': () => { $('howModal').classList.add('hidden'); $('howModal').classList.remove('flex'); },
+  'how-to-upload': () => { actions['close-how'](); openDrawer('uploadDrawer'); },
 };
 
 document.addEventListener('click', (e) => {
@@ -1008,6 +1275,7 @@ document.addEventListener('click', (e) => {
 
 document.addEventListener('input', (e) => {
   const el = e.target;
+  if (el.matches && el.matches('.ba input[type=range]')) { el.closest('.ba').style.setProperty('--pos', `${el.value}%`); return; }
   if (!el.dataset || !el.dataset.field) return;
   const p = pending.find((x) => x.uid === el.dataset.uid);
   if (!p) return;
@@ -1018,7 +1286,7 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  closeQuick(); closeDrawer('cartDrawer'); closeDrawer('tokenDrawer');
+  closeQuick(); closeDrawer('cartDrawer'); closeDrawer('tokenDrawer'); actions['close-how']();
 });
 
 $('videoInput').addEventListener('change', (e) => setFiles(e.target.files));
@@ -1026,10 +1294,17 @@ $('videoInput').addEventListener('change', (e) => setFiles(e.target.files));
 ['dragleave', 'drop'].forEach((ev) => $('dropZone').addEventListener(ev, (e) => { e.preventDefault(); $('dropZone').classList.remove('border-meta'); }));
 $('dropZone').addEventListener('drop', (e) => setFiles(e.dataTransfer.files));
 $('searchInput').addEventListener('input', renderStore);
+$('hero').addEventListener('pointermove', (e) => {
+  const r = $('hero').getBoundingClientRect();
+  $('heroArt').style.setProperty('--mx', ((e.clientX - r.left) / r.width - 0.5) * -14);
+  $('heroArt').style.setProperty('--my', ((e.clientY - r.top) / r.height - 0.5) * -14);
+});
 $('sortSelect').addEventListener('change', renderStore);
 
+renderModels();
 paintStaticIcons();
 renderStepper(null, [], null);
+renderCanvas();
 renderAll();
 refreshTokens();
 seedIfEmpty();

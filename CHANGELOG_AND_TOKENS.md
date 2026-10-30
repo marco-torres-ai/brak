@@ -312,3 +312,17 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
   - Detalles: siluetas de carga (skeleton), contadores animados, el producto "vuela" al carrito, avisos con íconos, entrada escalonada de tarjetas, transiciones suaves; Pendientes, ficha del producto, carrito y paneles con el mismo lenguaje visual.
 - **Verificación:** capturas reales con Edge sin ventana (tienda, pendientes, ficha y carrito) y prueba funcional contra el backend (semilla de 7 productos, pipeline desde la Fase 5, aprobar/aceptar todos, carrito, ficha y monitor).
 - **Estado:** `READY_FOR_USER_TEST`. Etapas 2 (inicio de impacto, franja de modelos, estudio de carga con revelado progresivo) y 3 (antes/después, "Así lo creó la IA") pendientes.
+
+## v0.1.2-frontend — Brak Shop: lucir los modelos de Meta (Etapa 2) (rama `version-0.1.2`) (2026-10-30)
+- **Solo `frontend/index.html`; backend sin cambios.**
+- **Meta Muse Studio (pantalla completa)** en lugar del panel lateral: a la izquierda los videos (con miniatura generada en el navegador), el stepper, avisos y contadores; a la derecha el **lienzo en vivo**:
+  - tras la Fase 2 aparecen los productos detectados por Spark (nombre y precio);
+  - tras la Fase 3, los recortes de SAM 3.1;
+  - **durante la Fase 4 las fotos de Muse Image se revelan una por una a medida que se generan:** la página consulta con `HEAD` las rutas predecibles `storage/<sesión>/studio/<pid>_{master_studio,studio_white,angle_left,angle_right,angle_back,lifestyle}` y usa `last-modified` para ignorar archivos de ejecuciones anteriores;
+  - tras la Fase 5, los títulos finales.
+- **Antes / después arrastrable** (frame original del video vs. foto de estudio) como protagonista en Pendientes y como modo de la ficha del producto.
+- **Franja "Así trabaja Meta Muse":** los 7 pasos con su modelo, ícono y rol, unidos por una línea animada.
+- **Inicio de impacto:** titular "De un video a tu vitrina", llamados a la acción y hasta 3 productos reales flotando con efecto de profundidad al mover el mouse.
+- **Verificación:** capturas reales (inicio, franja, estudio a mitad de la Fase 4, Pendientes con antes/después, ficha en modo comparación); `HEAD` + `last-modified` comprobados en el servidor; prueba funcional completa y ejecución en vivo de las Fases 2→5 (desde caché) con el lienzo pasando de 7 productos a 7 recortes y de 7 a 42 imágenes reveladas.
+- **Estado:** `READY_FOR_USER_TEST`.
+- **Ajuste pedido por el usuario:** la franja de los 7 modelos empujaba los productos fuera de la pantalla (empezaban a ~1,000 px). Se quitó de la tienda: ahora vive en la ventana "Cómo lo hace Meta" (línea de tiempo vertical) y en el lienzo vacío de Meta Muse Studio. Inicio compactado: en 1440×900 la primera fila de productos queda a la vista.
