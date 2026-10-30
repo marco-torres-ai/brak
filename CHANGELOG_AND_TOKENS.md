@@ -302,3 +302,13 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
 - `README.md` reescrito (estaba en UTF-16 por haberse creado con `echo` en PowerShell; ahora UTF-8): qué hace, rol de cada modelo de Meta, diagrama del pipeline, inicio rápido, uso de Brak Shop, consejos para grabar, costos y tiempos medidos, API, estructura, solución de problemas, limitaciones y recursos oficiales.
 - Nuevos: `docs/ARCHITECTURE.md` (fases, verificadores, caché, robustez, lecciones aprendidas con la API real), `docs/API.md` (endpoints, ejemplos curl/JS, contratos JSON, URLs de imágenes), `docs/assets/pipeline_example.jpg` (3 productos reales del recorte SAM a las vistas de Muse Image) y `.env.example` (plantilla sin clave; `.gitignore` la exceptúa).
 - Rama `version-0.1` recreada (había sido renombrada a `main` por `git branch -M main`).
+
+## v0.1.1-frontend — Brak Shop: base visual premium (Etapa 1) (rama `version-0.1.1`) (2026-10-29)
+- **Diagnóstico (captura real):** parecía un panel de administración: 7 botones de vista por tarjeta, todo en negrita gruesa, 4 botones azules iguales, cuadros blancos "pegados" sobre negro, emojis como íconos, fuente del sistema y nada de movimiento.
+- **Cambios (solo `frontend/index.html`; misma lógica, mismos endpoints):**
+  - Tipografía Inter (Google Fonts) con pesos medios; íconos SVG estilo Lucide en lugar de emojis; superficies con sombras finas en vez de bordes.
+  - Producto en un **estudio gris perla** con viñeta y sombra de piso; las fotos de fondo blanco se funden con `mix-blend-mode: multiply` (sin cuadros blancos).
+  - Tarjeta nueva: indicadores de puntos en lugar de 7 botones, **rotación automática de ángulos al pasar el mouse** (frente → vistas IA), insignia "Vista IA", precio con jerarquía y botón de carrito circular que aparece al pasar el mouse.
+  - Detalles: siluetas de carga (skeleton), contadores animados, el producto "vuela" al carrito, avisos con íconos, entrada escalonada de tarjetas, transiciones suaves; Pendientes, ficha del producto, carrito y paneles con el mismo lenguaje visual.
+- **Verificación:** capturas reales con Edge sin ventana (tienda, pendientes, ficha y carrito) y prueba funcional contra el backend (semilla de 7 productos, pipeline desde la Fase 5, aprobar/aceptar todos, carrito, ficha y monitor).
+- **Estado:** `READY_FOR_USER_TEST`. Etapas 2 (inicio de impacto, franja de modelos, estudio de carga con revelado progresivo) y 3 (antes/después, "Así lo creó la IA") pendientes.

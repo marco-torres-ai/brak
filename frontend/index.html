@@ -4,96 +4,137 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Brak Shop | Second-Hand Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  tailwind.config = { theme: { extend: { colors: { meta: { DEFAULT: '#0866FF', dark: '#0064E0' } } } } };
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'] },
+        colors: { meta: { DEFAULT: '#0866FF', dark: '#0064E0' }, ink: { 900: '#020617', 800: '#0B1120', 700: '#111A2E' } },
+        boxShadow: {
+          card: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(148,163,184,0.08), 0 8px 24px -12px rgba(0,0,0,0.6)',
+          lift: '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 0 0 1px rgba(8,102,255,0.35), 0 24px 48px -20px rgba(8,102,255,0.35)',
+        },
+      },
+    },
+  };
 </script>
 <style>
+  :root { color-scheme: dark; }
   body {
     background-color: #020617;
-    background-image: radial-gradient(ellipse 80% 45% at 50% -8%, rgba(8, 102, 255, 0.14), transparent 70%);
+    background-image:
+      radial-gradient(ellipse 70% 40% at 50% -10%, rgba(8, 102, 255, 0.16), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 95% 10%, rgba(147, 51, 234, 0.06), transparent 70%);
     background-attachment: fixed;
-    color: #f8fafc;
-    font-family: "Optimistic Display", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #e2e8f0;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    -webkit-font-smoothing: antialiased;
   }
-  .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-  .checker {
-    background-color: #ffffff;
-    background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
-    background-size: 14px 14px; background-position: 0 0, 0 7px, 7px -7px, -7px 0;
-  }
-  .meta-ai-gradient { background-image: linear-gradient(90deg, #2563eb, #6366f1, #9333ea); }
-  .meta-ai-text { background-image: linear-gradient(90deg, #60a5fa, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .surface { background: rgba(11, 17, 32, 0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 1px 0 0 rgba(255,255,255,0.04) inset, 0 0 0 1px rgba(148,163,184,0.08); }
+  .hairline { box-shadow: 0 0 0 1px rgba(148,163,184,0.10); }
+  /* Escenario de estudio: gris perla con viñeta y sombra de piso. Las fotos con fondo blanco se funden (multiply). */
+  .studio { position: relative; background: radial-gradient(ellipse 85% 75% at 50% 38%, #ffffff 0%, #f5f5f7 52%, #e6e7ec 100%); }
+  .studio::after { content: ''; position: absolute; left: 24%; right: 24%; bottom: 9%; height: 6%; border-radius: 50%; background: radial-gradient(ellipse, rgba(15, 23, 42, 0.22), transparent 70%); filter: blur(6px); pointer-events: none; }
+  .studio img.blend { mix-blend-mode: multiply; }
+  .meta-ai-gradient { background-image: linear-gradient(100deg, #2563eb 0%, #6366f1 50%, #9333ea 100%); }
+  .meta-ai-text { background-image: linear-gradient(90deg, #60a5fa, #a5b4fc, #d8b4fe); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .card { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease; }
+  .card:hover { transform: translateY(-4px); }
+  .card .stage-img { transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .25s ease; }
+  .card:hover .stage-img { transform: scale(1.04); }
+  .card .cart-fab { opacity: 0; transform: translateY(6px) scale(.9); transition: all .25s ease; }
+  .card:hover .cart-fab, .card .cart-fab:focus-visible { opacity: 1; transform: none; }
+  @media (hover: none) { .card .cart-fab { opacity: 1; transform: none; } }
+  .skeleton { background: linear-gradient(90deg, rgba(30,41,59,.55) 0%, rgba(51,65,85,.55) 50%, rgba(30,41,59,.55) 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+  .shimmer { background: linear-gradient(90deg, rgba(37,99,235,.12), rgba(147,51,234,.30), rgba(37,99,235,.12)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
   .step-active .step-dot { animation: pulseRing 1.4s ease-in-out infinite; }
   @keyframes pulseRing { 0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.55); } 50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); } }
-  .shimmer { background: linear-gradient(90deg, rgba(37,99,235,.15), rgba(147,51,234,.35), rgba(37,99,235,.15)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
-  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-  .leaving { opacity: 0; transform: translateY(8px) scale(0.98); transition: all .35s ease; }
-  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .fade-in { animation: fadeIn .4s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .rise { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .leaving { opacity: 0; transform: translateY(10px) scale(0.98); transition: all .35s ease; }
+  .bump { animation: bump .45s ease; }
+  @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+  ::selection { background: rgba(8,102,255,.35); }
   ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 8px; }
 </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col font-sans">
 
 <!-- ===================== HEADER ===================== -->
-<header class="sticky top-0 z-30 glass border-b border-slate-800">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-2xl meta-ai-gradient flex items-center justify-center font-black text-white text-lg shadow-lg shadow-indigo-500/20">B</div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-lg font-extrabold tracking-tight text-white">Brak Shop</h1>
-          <span class="text-slate-500 text-sm hidden sm:inline">|</span>
-          <span class="text-sm text-slate-400 hidden sm:inline">Second-Hand Marketplace</span>
-        </div>
-        <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-indigo-500/40 bg-indigo-500/10">
-          <span class="meta-ai-text">✦ Powered by Meta Muse AI</span>
-        </span>
+<header class="sticky top-0 z-30 border-b border-white/5 bg-ink-900/70 backdrop-blur-xl">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4 justify-between">
+    <a href="#" data-action="tab" data-key="store" class="flex items-center gap-3 shrink-0">
+      <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white font-semibold shadow-lg shadow-indigo-600/30">B</div>
+      <div class="leading-tight">
+        <div class="text-[15px] font-semibold tracking-tight text-white">Brak Shop</div>
+        <div class="text-[11px] text-slate-400 hidden sm:block">Second-Hand Marketplace</div>
       </div>
-    </div>
+    </a>
 
-    <nav class="flex items-center gap-1 p-1 rounded-2xl bg-slate-900/80 border border-slate-800" aria-label="Secciones">
-      <button data-action="tab" data-key="store" id="tabStore" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Tienda Activa</button>
-      <button data-action="tab" data-key="pending" id="tabPending" class="px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
-        Pendientes de Aprobación <span id="pendingCount" class="min-w-[22px] px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[11px] font-black">0</span>
-      </button>
+    <nav class="hidden md:flex items-center gap-1 p-1 rounded-full bg-white/[0.04] hairline" aria-label="Secciones">
+      <button data-action="tab" data-key="store" id="tabStore" class="px-4 h-8 rounded-full text-[13px] font-medium transition flex items-center gap-2"></button>
+      <button data-action="tab" data-key="pending" id="tabPending" class="px-4 h-8 rounded-full text-[13px] font-medium transition flex items-center gap-2"></button>
     </nav>
 
     <div class="flex items-center gap-2">
-      <button data-action="open-upload" class="px-4 py-2.5 rounded-xl meta-ai-gradient text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:brightness-110 transition">
-        + Agregar Productos con Video <span class="hidden md:inline">(Muse AI)</span>
+      <span class="hidden lg:inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-medium bg-white/[0.04] hairline">
+        <span id="iconSparkHeader"></span><span class="meta-ai-text">Powered by Meta Muse AI</span>
+      </span>
+      <button data-action="open-tokens" title="Monitor de tokens" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
+        <span id="iconChart"></span><span id="headerTokens" class="font-medium tabular-nums">0</span>
       </button>
-      <button data-action="open-tokens" title="Monitor de trazas de tokens" class="px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-meta text-xs font-semibold text-slate-200 transition flex items-center gap-1.5">
-        📊 <span id="headerTokens" class="font-mono">0</span> <span class="hidden lg:inline text-slate-500">tokens</span>
+      <button id="cartButton" data-action="open-cart" aria-label="Carrito" class="relative w-9 h-9 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-slate-200 transition flex items-center justify-center">
+        <span id="iconBag"></span>
+        <span id="cartCount" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-meta text-white text-[10px] font-semibold flex items-center justify-center">0</span>
       </button>
-      <button data-action="open-cart" class="relative px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-meta text-sm transition" aria-label="Carrito">
-        🛒 <span id="cartCount" class="absolute -top-1.5 -right-1.5 min-w-[20px] px-1 rounded-full bg-meta text-white text-[10px] font-bold">0</span>
+      <button data-action="open-upload" class="h-9 pl-3 pr-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/30 hover:brightness-110 transition flex items-center gap-2">
+        <span id="iconPlus"></span><span class="hidden sm:inline">Agregar con video</span><span class="sm:hidden">Agregar</span>
+        <span class="hidden lg:inline text-white/70 font-medium">· Muse AI</span>
       </button>
     </div>
   </div>
+  <!-- pestañas en móvil -->
+  <div class="md:hidden px-4 pb-3 flex gap-2">
+    <button data-action="tab" data-key="store" id="tabStoreM" class="flex-1 h-9 rounded-full text-[13px] font-medium"></button>
+    <button data-action="tab" data-key="pending" id="tabPendingM" class="flex-1 h-9 rounded-full text-[13px] font-medium"></button>
+  </div>
 </header>
 
-<!-- ===================== TIENDA ACTIVA ===================== -->
-<main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
+<main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
+  <!-- ===================== TIENDA ACTIVA ===================== -->
   <section id="viewStore">
-    <div class="rounded-3xl glass border border-slate-800 p-6 mb-6 flex flex-wrap items-center justify-between gap-4">
-      <div class="max-w-2xl space-y-1">
-        <h2 class="text-2xl sm:text-3xl font-black text-white">Segunda mano, fotos de estudio.</h2>
-        <p class="text-sm text-slate-400">Cada artículo se publicó a partir de un video del vendedor: Meta Muse escuchó el precio, encontró el objeto, lo recortó y le hizo una sesión de fotos.</p>
+    <div class="flex flex-wrap items-end justify-between gap-6 mb-8">
+      <div class="max-w-2xl">
+        <div class="text-[12px] font-medium tracking-wide uppercase text-slate-400 mb-2">Tienda activa</div>
+        <h1 class="text-3xl sm:text-[40px] leading-[1.1] font-semibold tracking-tight text-white">Segunda mano,<br class="hidden sm:block" /> <span class="meta-ai-text">fotos de estudio.</span></h1>
+        <p class="mt-3 text-[15px] text-slate-400 leading-relaxed">Cada artículo nació de un video del vendedor. Meta Muse escuchó el precio, encontró el objeto, lo recortó y le hizo una sesión de fotos.</p>
       </div>
-      <div class="grid grid-cols-3 gap-3 text-center">
-        <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800"><div class="text-[10px] uppercase text-slate-400">Artículos</div><div id="statProducts" class="text-xl font-black text-white">0</div></div>
-        <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800"><div class="text-[10px] uppercase text-slate-400">Categorías</div><div id="statCategories" class="text-xl font-black text-white">0</div></div>
-        <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800"><div class="text-[10px] uppercase text-slate-400">Pendientes</div><div id="statPending" class="text-xl font-black text-amber-400">0</div></div>
-      </div>
+      <dl class="flex items-center gap-6 text-sm">
+        <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Artículos</dt><dd id="statProducts" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
+        <div class="w-px h-10 bg-white/10"></div>
+        <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Categorías</dt><dd id="statCategories" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
+        <div class="w-px h-10 bg-white/10"></div>
+        <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Por revisar</dt><dd id="statPending" class="text-2xl font-semibold text-amber-400 tabular-nums">0</dd></div>
+      </dl>
     </div>
 
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div id="categoryBar" class="flex flex-wrap gap-2"></div>
       <div class="flex items-center gap-2 w-full sm:w-auto">
-        <input id="searchInput" type="search" placeholder="Buscar en Brak Shop..." class="w-full sm:w-64 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-meta" />
-        <select id="sortSelect" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-meta">
+        <label class="relative flex-1 sm:flex-none">
+          <span id="iconSearch" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></span>
+          <input id="searchInput" type="search" placeholder="Buscar productos" class="w-full sm:w-64 h-10 pl-9 pr-3 rounded-full bg-white/[0.04] hairline text-[13px] text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-meta/60" />
+        </label>
+        <select id="sortSelect" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-[13px] text-slate-200 focus:outline-none focus:ring-2 focus:ring-meta/60">
           <option value="recent">Más recientes</option>
           <option value="price_asc">Precio: menor a mayor</option>
           <option value="price_desc">Precio: mayor a menor</option>
@@ -101,86 +142,90 @@
       </div>
     </div>
 
-    <div id="storeGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
-    <div id="storeEmpty" class="hidden rounded-3xl border border-dashed border-slate-800 py-16 text-center space-y-3">
-      <div class="text-4xl">🛍️</div>
-      <p class="text-slate-300 font-semibold">Todavía no hay artículos publicados.</p>
-      <p class="text-sm text-slate-500">Sube un video mostrando lo que vendes y aprueba los productos que detecte Meta Muse.</p>
-      <button data-action="open-upload" class="mt-2 px-4 py-2.5 rounded-xl meta-ai-gradient text-white font-bold text-sm">+ Agregar Productos con Video (Muse AI)</button>
+    <div id="storeGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+    <div id="storeEmpty" class="hidden rounded-3xl surface py-20 text-center">
+      <div id="iconEmptyStore" class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.04] hairline flex items-center justify-center text-slate-300"></div>
+      <p class="mt-4 text-white font-medium">Todavía no hay artículos publicados</p>
+      <p class="mt-1 text-sm text-slate-400">Sube un video mostrando lo que vendes y aprueba lo que detecte Meta Muse.</p>
+      <button data-action="open-upload" class="mt-6 h-10 px-5 rounded-full meta-ai-gradient text-white text-[13px] font-semibold">Agregar con video</button>
     </div>
   </section>
 
   <!-- ===================== PENDIENTES ===================== -->
   <section id="viewPending" class="hidden">
-    <div class="rounded-3xl glass border border-amber-500/30 p-5 mb-6 flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h2 class="text-xl font-black text-white flex items-center gap-2">Pendientes de Aprobación <span id="pendingCount2" class="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-xs font-black">0</span></h2>
-        <p class="text-sm text-slate-400">Revisa lo que generó la IA: ajusta nombre, precio o estado y decide qué se publica.</p>
+    <div class="flex flex-wrap items-end justify-between gap-6 mb-8">
+      <div class="max-w-2xl">
+        <div class="text-[12px] font-medium tracking-wide uppercase text-amber-400/90 mb-2 flex items-center gap-2">Pendientes de aprobación <span id="pendingCount2" class="px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 text-[11px] tabular-nums">0</span></div>
+        <h1 class="text-3xl sm:text-[34px] leading-tight font-semibold tracking-tight text-white">Revisa antes de publicar</h1>
+        <p class="mt-2 text-[15px] text-slate-400">Compara lo que generó la IA con el video original, ajusta nombre, precio o estado y decide qué entra a la tienda.</p>
       </div>
       <div class="flex gap-2">
-        <button data-action="reject-all" class="px-4 py-2.5 rounded-xl bg-slate-900 border border-rose-500/40 text-rose-300 hover:bg-rose-500/10 font-semibold text-sm transition">🗑️ Rechazar todos</button>
-        <button data-action="approve-all" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition">✅ Aceptar Todos</button>
+        <button data-action="reject-all" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2"><span data-icon="trash"></span>Rechazar todos</button>
+        <button data-action="approve-all" class="h-10 px-5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold shadow-lg shadow-emerald-500/20 transition flex items-center gap-2"><span data-icon="check"></span>Aceptar todos</button>
       </div>
     </div>
-    <div id="pendingGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
-    <div id="pendingEmpty" class="hidden rounded-3xl border border-dashed border-slate-800 py-16 text-center space-y-3">
-      <div class="text-4xl">✨</div>
-      <p class="text-slate-300 font-semibold">No hay productos esperando revisión.</p>
-      <button data-action="open-upload" class="mt-2 px-4 py-2.5 rounded-xl meta-ai-gradient text-white font-bold text-sm">+ Agregar Productos con Video (Muse AI)</button>
+    <div id="pendingGrid" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
+    <div id="pendingEmpty" class="hidden rounded-3xl surface py-20 text-center">
+      <div id="iconEmptyPending" class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.04] hairline flex items-center justify-center text-slate-300"></div>
+      <p class="mt-4 text-white font-medium">No hay productos esperando revisión</p>
+      <button data-action="open-upload" class="mt-6 h-10 px-5 rounded-full meta-ai-gradient text-white text-[13px] font-semibold">Agregar con video</button>
     </div>
   </section>
 </main>
 
-<footer class="border-t border-slate-800 py-4 text-center text-[11px] text-slate-500">
-  Brak Shop • Video-to-Catalog con Meta Muse (Voice Transcribe, Spark, SAM 3.1, Muse Image)
+<footer class="border-t border-white/5 py-6 text-center text-[12px] text-slate-500">
+  Brak Shop · Video-to-catalog con Meta Muse — Voice Transcribe · Spark · SAM 3.1 · Muse Image
 </footer>
 
 <!-- ===================== DRAWER: AGREGAR CON VIDEO ===================== -->
 <div id="uploadDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
-  <div class="absolute inset-0 bg-black/70" data-action="close-upload"></div>
-  <aside class="absolute right-0 top-0 h-full w-full max-w-xl glass border-l border-slate-800 flex flex-col">
-    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-      <div>
-        <h3 class="text-lg font-extrabold text-white">Agregar productos con video</h3>
-        <p class="text-xs text-slate-400">De 1 a 3 videos de hasta 60 s. Di el precio de cada objeto mientras lo muestras.</p>
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="close-upload"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-xl bg-ink-800/95 border-l border-white/5 flex flex-col fade-in">
+    <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg meta-ai-gradient flex items-center justify-center text-white" data-icon="sparkles"></div>
+        <div>
+          <h3 class="text-[15px] font-semibold text-white">Agregar productos con video</h3>
+          <p class="text-[12px] text-slate-400">1 a 3 videos · hasta 60 s · di el precio de cada objeto</p>
+        </div>
       </div>
-      <button data-action="close-upload" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+      <button data-action="close-upload" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-5 space-y-5">
-      <label id="dropZone" for="videoInput" class="block rounded-2xl border-2 border-dashed border-slate-700 hover:border-meta bg-slate-900/60 p-6 text-center cursor-pointer transition">
-        <div class="text-3xl mb-2">🎬</div>
-        <div class="text-sm font-semibold text-slate-200">Arrastra tus videos aquí o haz clic para elegirlos</div>
-        <div class="text-xs text-slate-500 mt-1">MP4 o MOV • máximo 3 • hasta 60 segundos cada uno</div>
+    <div class="flex-1 overflow-y-auto p-6 space-y-5">
+      <label id="dropZone" for="videoInput" class="block rounded-2xl border border-dashed border-white/15 hover:border-meta/70 bg-white/[0.02] p-8 text-center cursor-pointer transition">
+        <div class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.05] flex items-center justify-center text-slate-200" data-icon="upload"></div>
+        <div class="mt-3 text-[14px] font-medium text-slate-100">Arrastra tus videos o haz clic para elegirlos</div>
+        <div class="text-[12px] text-slate-500 mt-1">MP4 o MOV · máximo 3 · hasta 60 segundos cada uno</div>
         <input id="videoInput" type="file" accept="video/*" multiple class="hidden" />
       </label>
       <div id="fileList" class="space-y-2"></div>
 
-      <button id="btnProcess" data-action="process" disabled class="w-full py-3 rounded-xl meta-ai-gradient text-white font-extrabold text-sm shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition">
-        ✦ Procesar y Extraer Productos
+      <button id="btnProcess" data-action="process" disabled class="w-full h-11 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
+        <span data-icon="sparkles"></span>Procesar y extraer productos
       </button>
 
       <div id="pipelineBox" class="hidden space-y-4">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pipeline Meta Muse</span>
-          <span id="pipelineTimer" class="text-xs font-mono text-slate-400">00:00</span>
+          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Pipeline Meta Muse</span>
+          <span id="pipelineTimer" class="text-[12px] tabular-nums text-slate-400">00:00</span>
         </div>
         <ol id="stepper" class="space-y-2"></ol>
-        <div id="liveWarning" class="hidden rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-xs text-amber-200"></div>
-        <div id="liveEvent" class="hidden rounded-xl border border-slate-800 bg-slate-950/70 p-2.5 text-[11px] font-mono text-slate-400"></div>
+        <div id="liveWarning" class="hidden rounded-xl bg-amber-400/10 hairline p-3 text-[12px] text-amber-200"></div>
+        <div id="liveEvent" class="hidden rounded-xl bg-black/30 hairline p-2.5 text-[11px] font-mono text-slate-400"></div>
         <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Tokens API</div><div id="liveTokens" class="text-sm font-black font-mono text-white">0</div></div>
-          <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Evitados por caché</div><div id="liveSaved" class="text-sm font-black font-mono text-emerald-400">0</div></div>
-          <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Imágenes (US$)</div><div id="liveImages" class="text-sm font-black font-mono text-amber-300">0</div></div>
+          <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Tokens API</div><div id="liveTokens" class="mt-1 text-[15px] font-semibold tabular-nums text-white">0</div></div>
+          <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Caché</div><div id="liveSaved" class="mt-1 text-[15px] font-semibold tabular-nums text-emerald-400">0</div></div>
+          <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Imágenes</div><div id="liveImages" class="mt-1 text-[15px] font-semibold tabular-nums text-amber-300">0</div></div>
         </div>
-        <div id="pipelineMessage" class="text-xs text-slate-400"></div>
-        <div id="pipelineResult" class="hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3">
-          <div id="pipelineResultText" class="text-sm text-emerald-200 font-semibold"></div>
-          <button data-action="go-pending" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-sm transition">Revisar en Pendientes →</button>
+        <div id="pipelineMessage" class="text-[12px] text-slate-400"></div>
+        <div id="pipelineResult" class="hidden rounded-2xl bg-emerald-500/10 hairline p-4 space-y-3">
+          <div id="pipelineResultText" class="text-[14px] text-emerald-200 font-medium"></div>
+          <button data-action="go-pending" class="w-full h-10 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">Revisar en pendientes <span data-icon="arrow"></span></button>
         </div>
-        <div id="pipelineError" class="hidden rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 space-y-3">
-          <div id="pipelineErrorText" class="text-sm text-rose-200"></div>
-          <button data-action="retry" class="w-full py-2.5 rounded-xl bg-meta hover:bg-meta-dark text-white font-bold text-sm transition">Reintentar desde este paso</button>
+        <div id="pipelineError" class="hidden rounded-2xl bg-rose-500/10 hairline p-4 space-y-3">
+          <div id="pipelineErrorText" class="text-[13px] text-rose-200"></div>
+          <button data-action="retry" class="w-full h-10 rounded-full bg-meta hover:bg-meta-dark text-white text-[13px] font-semibold transition flex items-center justify-center gap-2"><span data-icon="retry"></span>Reintentar desde este paso</button>
         </div>
       </div>
     </div>
@@ -189,28 +234,28 @@
 
 <!-- ===================== DRAWER: MONITOR DE TOKENS ===================== -->
 <div id="tokenDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
-  <div class="absolute inset-0 bg-black/60" data-action="close-tokens"></div>
-  <aside class="absolute right-0 top-0 h-full w-full max-w-lg glass border-l border-slate-800 flex flex-col">
-    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="close-tokens"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-lg bg-ink-800/95 border-l border-white/5 flex flex-col fade-in">
+    <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between">
       <div>
-        <h3 class="text-lg font-extrabold text-white">📊 Monitor de trazas (TokenTracker)</h3>
-        <p id="tokenSession" class="text-xs text-slate-400 font-mono"></p>
+        <h3 class="text-[15px] font-semibold text-white">Monitor de tokens</h3>
+        <p id="tokenSession" class="text-[11px] text-slate-500 font-mono"></p>
       </div>
-      <button data-action="close-tokens" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+      <button data-action="close-tokens" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
     </div>
-    <div class="p-5 space-y-4 overflow-y-auto flex-1">
-      <div class="grid grid-cols-2 gap-2">
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Tokens de la API</div><div id="tkTotal" class="text-lg font-black font-mono">0</div></div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Evitados por caché MD5</div><div id="tkSaved" class="text-lg font-black font-mono text-emerald-400">0</div></div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Imágenes Muse Image</div><div id="tkImages" class="text-lg font-black font-mono text-amber-300">0</div></div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Llamadas API / caché</div><div id="tkCalls" class="text-lg font-black font-mono">0</div></div>
+    <div class="p-6 space-y-6 overflow-y-auto flex-1">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Tokens de la API</div><div id="tkTotal" class="mt-1 text-xl font-semibold tabular-nums">0</div></div>
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Evitados por caché</div><div id="tkSaved" class="mt-1 text-xl font-semibold tabular-nums text-emerald-400">0</div></div>
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Imágenes Muse Image</div><div id="tkImages" class="mt-1 text-xl font-semibold tabular-nums text-amber-300">0</div></div>
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Llamadas API / caché</div><div id="tkCalls" class="mt-1 text-xl font-semibold tabular-nums">0</div></div>
       </div>
       <div>
-        <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Por modelo</div>
-        <div id="tkModels" class="space-y-1.5"></div>
+        <div class="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-3">Por modelo</div>
+        <div id="tkModels" class="space-y-2"></div>
       </div>
       <div>
-        <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Trazas recientes</div>
+        <div class="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-3">Trazas recientes</div>
         <div id="tkLogs" class="space-y-1 font-mono text-[10.5px] leading-snug"></div>
       </div>
     </div>
@@ -219,30 +264,30 @@
 
 <!-- ===================== DRAWER: CARRITO ===================== -->
 <div id="cartDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
-  <div class="absolute inset-0 bg-black/60" data-action="close-cart"></div>
-  <aside class="absolute right-0 top-0 h-full w-full max-w-md glass border-l border-slate-800 flex flex-col">
-    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-      <h3 class="text-lg font-extrabold text-white">🛒 Tu carrito</h3>
-      <button data-action="close-cart" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="close-cart"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-md bg-ink-800/95 border-l border-white/5 flex flex-col fade-in">
+    <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between">
+      <h3 class="text-[15px] font-semibold text-white">Tu carrito</h3>
+      <button data-action="close-cart" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
     </div>
-    <div id="cartItems" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
-    <div class="p-5 border-t border-slate-800 space-y-3">
-      <div class="flex items-start justify-between font-bold"><span class="text-slate-300">Total</span><span id="cartTotal" class="text-right text-xl font-black text-emerald-400">—</span></div>
-      <button data-action="checkout" class="w-full py-3 rounded-xl bg-meta hover:bg-meta-dark text-white font-extrabold text-sm transition">Confirmar pedido</button>
+    <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-3"></div>
+    <div class="p-6 border-t border-white/5 space-y-4">
+      <div class="flex items-start justify-between"><span class="text-[13px] text-slate-400">Total</span><span id="cartTotal" class="text-right text-xl font-semibold tabular-nums text-white">—</span></div>
+      <button data-action="checkout" class="w-full h-11 rounded-full bg-meta hover:bg-meta-dark text-white text-[14px] font-semibold transition">Confirmar pedido</button>
     </div>
   </aside>
 </div>
 
 <!-- ===================== MODAL: VISTA RÁPIDA ===================== -->
 <div id="quickView" class="fixed inset-0 z-50 hidden items-center justify-center p-4" aria-modal="true" role="dialog">
-  <div class="absolute inset-0 bg-black/80" data-action="close-quick"></div>
-  <div class="relative glass border border-slate-700 rounded-3xl max-w-5xl w-full max-h-[92vh] overflow-y-auto p-6">
-    <button data-action="close-quick" class="absolute top-4 right-4 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-action="close-quick"></div>
+  <div class="relative rounded-[28px] bg-ink-800 shadow-2xl shadow-black/60 hairline max-w-5xl w-full max-h-[92vh] overflow-y-auto fade-in">
+    <button data-action="close-quick" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
     <div id="quickBody"></div>
   </div>
 </div>
 
-<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] hidden px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white shadow-2xl"></div>
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden h-11 pl-3 pr-4 rounded-full bg-ink-700/95 hairline backdrop-blur text-[13px] text-white shadow-2xl items-center gap-2"></div>
 
 <script>
 /* ============================================================
@@ -253,11 +298,36 @@
    Fase 4  POST /api/v1/phase4/studio       {session_id}
    Fase 5  POST /api/v1/phase5/codegen      {session_id}
    Estado  GET  /api/v1/session/current     (última sesión procesada)
+   Progreso GET /api/v1/progress            (fase en curso)
    Imágenes: /storage/<sesión>/... (las del catálogo son relativas a /storage/<sesión>/catalog/)
    ============================================================ */
 const API = (localStorage.getItem('brak_api_base') || '').replace(/\/$/, '');
 const LS = { approved: 'brak_approved_v1', pending: 'brak_pending_v1', cart: 'brak_cart_v1', seeded: 'brak_seeded_v1' };
 const SYMBOL = { USD: '$', PEN: 'S/', EUR: '€', MXN: '$', COP: '$', ARS: '$', CLP: '$', BOB: 'Bs' };
+
+/* ---------- Íconos SVG (trazos estilo Lucide) ---------- */
+const ICONS = {
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  sparkles: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>',
+  chart: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  minus: '<path d="M5 12h14"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  upload: '<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/>',
+  arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  retry: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  store: '<path d="M3 9h18l-1.5-5h-15Z"/><path d="M5 9v11h14V9"/><path d="M10 20v-6h4v6"/>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
+};
+const icon = (name, size = 16, cls = '') => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
 const STEPS = [
   { model: 'OpenCV + FFmpeg', what: 'Valida los videos, descarta frames borrosos y extrae el audio 16 kHz', phase: 1 },
@@ -283,26 +353,56 @@ let cart = load(LS.cart, []);
 let activeTab = 'store';
 let activeCategory = 'Todas';
 const activeView = {};
+const rotateTimers = new Map();
 let selectedFiles = [];
 let run = null; // { sid, nextPhase, running }
+let timerHandle = null;
+let loadingSeed = !approved.length && !localStorage.getItem(LS.seeded);
 let pollHandle = null;
 // El progreso informa la última acción TERMINADA; el paso activo es el que viene después.
 const STEP_BY_MODEL = [
   [/Voice Transcribe/i, 2], [/OpenCV Frame/i, 3], [/Visi[oó]n|SAM 3\.1|Verificador de recortes/i, 4],
   [/Muse Image|Fidelidad|Estudio Fase 4/i, 5], [/Textos|Cat[aá]logo HTML/i, 6],
 ];
-let timerHandle = null;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const money = (v, cur) => `${SYMBOL[cur] || ''}${Number(v).toLocaleString('es', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 })} ${cur}`;
-const priceText = (p) => (p.price == null || p.price === '' ? 'Consultar precio' : money(p.price, p.currency));
-const bgClass = (v) => (v.bg === 'dark' ? 'bg-slate-950' : v.bg === 'checker' ? 'checker' : 'bg-white');
+const money = (v, cur) => `${SYMBOL[cur] || ''}${Number(v).toLocaleString('es', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
 const fmtNum = (n) => Number(n || 0).toLocaleString('es');
+const isStudio = (v) => v && v.bg !== 'dark';
+const rotatable = (p) => p.views.filter((v) => isStudio(v) && v.key !== 'png');
+const findProduct = (uid) => approved.find((x) => x.uid === uid) || pending.find((x) => x.uid === uid);
 
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.remove('hidden');
-  clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.add('hidden'), 2600);
+function paintStaticIcons() {
+  $('iconSparkHeader').innerHTML = icon('sparkles', 13, 'text-indigo-300');
+  $('iconChart').innerHTML = icon('chart', 15);
+  $('iconBag').innerHTML = icon('bag', 17);
+  $('iconPlus').innerHTML = icon('plus', 16);
+  $('iconSearch').innerHTML = icon('search', 15);
+  $('iconEmptyStore').innerHTML = icon('store', 22);
+  $('iconEmptyPending').innerHTML = icon('inbox', 22);
+  document.querySelectorAll('[data-icon]').forEach((el) => { el.innerHTML = icon(el.dataset.icon, el.dataset.icon === 'x' ? 18 : 16); });
+}
+
+function toast(msg, type = 'success') {
+  const t = $('toast');
+  const ic = { success: ['check', 'text-emerald-400'], info: ['info', 'text-blue-300'], error: ['alert', 'text-rose-300'], cart: ['bag', 'text-blue-300'] }[type] || ['info', 'text-blue-300'];
+  t.innerHTML = `<span class="${ic[1]}">${icon(ic[0], 16)}</span><span>${esc(msg)}</span>`;
+  t.classList.remove('hidden'); t.classList.add('flex', 'fade-in');
+  clearTimeout(toast._h); toast._h = setTimeout(() => { t.classList.add('hidden'); t.classList.remove('flex'); }, 2600);
+}
+
+function countUp(el, to) {
+  const from = Number(el.dataset.value || 0);
+  el.dataset.value = to;
+  if (from === to) { el.textContent = fmtNum(to); return; }
+  const t0 = performance.now(), dur = 650;
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmtNum(Math.round(from + (to - from) * e));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 /* ---------- Datos: del estado del backend a productos de Brak Shop ---------- */
@@ -339,56 +439,78 @@ async function api(path, options = {}) {
 
 /* ---------- Productos semilla: la última sesión real procesada ---------- */
 async function seedIfEmpty() {
-  if (approved.length || localStorage.getItem(LS.seeded)) return;
+  if (approved.length || localStorage.getItem(LS.seeded)) { loadingSeed = false; return; }
   localStorage.setItem(LS.seeded, '1');
   try {
     const state = await api('/api/v1/session/current');
-    const seeds = buildProducts(state);
+    const seeds = buildProducts(state).map((p, i) => ({ ...p, published_at: Date.now() - i }));
     if (seeds.length) {
       approved = seeds; save(LS.approved, approved);
-      toast(`Se cargaron ${seeds.length} artículos de la última sesión procesada`);
-      renderAll();
+      toast(`Se cargaron ${seeds.length} artículos de la última sesión`, 'info');
     }
   } catch { /* sin sesión previa: la tienda arranca vacía */ }
+  loadingSeed = false;
+  renderAll();
+}
+
+/* ---------- Escenario de producto ---------- */
+function stageInner(p, v) {
+  if (!v) return '<div class="absolute inset-0 skeleton"></div>';
+  const img = isStudio(v)
+    ? `<img src="${esc(v.url)}" alt="${esc(p.title)}" loading="lazy" class="stage-img blend absolute inset-0 w-full h-full object-contain p-6" />`
+    : `<img src="${esc(v.url)}" alt="${esc(p.title)}" loading="lazy" class="stage-img absolute inset-0 w-full h-full object-cover" />`;
+  const badge = v.ai
+    ? `<span class="absolute top-3 left-3 inline-flex items-center gap-1 h-6 px-2 rounded-full bg-white/85 backdrop-blur text-[10px] font-semibold text-indigo-700 shadow-sm">${icon('sparkles', 11)}Vista IA</span>`
+    : p.real_photo_only ? '<span class="absolute top-3 left-3 h-6 px-2 inline-flex items-center rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-white">Foto real del video</span>'
+    : !isStudio(v) ? `<span class="absolute top-3 left-3 h-6 px-2 inline-flex items-center rounded-full bg-black/55 backdrop-blur text-[10px] font-semibold text-white">${esc(v.label)}</span>` : '';
+  return `${img}${badge}`;
+}
+
+function dots(p, current) {
+  if (p.views.length < 2) return '';
+  const dark = !isStudio(current);
+  return `<div class="absolute bottom-3 inset-x-0 flex justify-center gap-1.5">${p.views.map((v) => `<button data-action="view" data-uid="${esc(p.uid)}" data-key="${v.key}" title="${esc(v.label)}${v.ai ? ' · IA' : ''}" aria-label="${esc(v.label)}"
+    class="h-1.5 rounded-full transition-all ${v.key === current.key ? `w-5 ${dark ? 'bg-white' : 'bg-slate-900/80'}` : `w-1.5 ${dark ? 'bg-white/40 hover:bg-white/70' : 'bg-slate-900/25 hover:bg-slate-900/50'}`}"></button>`).join('')}</div>`;
+}
+
+function stageBox(p, v) {
+  return `<div class="stage relative aspect-square overflow-hidden ${isStudio(v) ? 'studio' : 'bg-slate-900'}" data-stage="${esc(p.uid)}">${stageInner(p, v)}${dots(p, v)}</div>`;
 }
 
 /* ---------- Render: navegación ---------- */
 function renderTabs() {
-  const on = 'bg-meta text-white shadow', off = 'text-slate-300 hover:text-white';
-  $('tabStore').className = `px-4 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'store' ? on : off}`;
-  $('tabPending').className = `px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${activeTab === 'pending' ? on : off}`;
-  $('viewStore').classList.toggle('hidden', activeTab !== 'store');
-  $('viewPending').classList.toggle('hidden', activeTab !== 'pending');
-  $('pendingCount').textContent = pending.length;
+  const on = 'bg-white/10 text-white', off = 'text-slate-400 hover:text-white';
+  const storeLabel = `${icon('store', 15)}<span>Tienda</span>`;
+  const pendLabel = `${icon('inbox', 15)}<span>Pendientes</span><span class="min-w-[20px] h-5 px-1.5 rounded-full ${pending.length ? 'bg-amber-400 text-slate-950' : 'bg-white/10 text-slate-300'} text-[11px] font-semibold tabular-nums flex items-center justify-center">${pending.length}</span>`;
+  [['tabStore', 'store', storeLabel], ['tabStoreM', 'store', storeLabel], ['tabPending', 'pending', pendLabel], ['tabPendingM', 'pending', pendLabel]].forEach(([id, key, html]) => {
+    const el = $(id); if (!el) return;
+    el.innerHTML = html;
+    el.className = `${id.endsWith('M') ? 'flex-1 h-9 justify-center' : 'px-4 h-8'} rounded-full text-[13px] font-medium transition flex items-center gap-2 ${activeTab === key ? on : off}`;
+  });
+  const showStore = activeTab === 'store';
+  $('viewStore').classList.toggle('hidden', !showStore);
+  $('viewPending').classList.toggle('hidden', showStore);
   $('pendingCount2').textContent = pending.length;
-  $('statPending').textContent = pending.length;
+  countUp($('statPending'), pending.length);
   $('cartCount').textContent = cart.reduce((a, i) => a + i.qty, 0);
-}
-
-function viewPills(p, current) {
-  return p.views.map((v) => `<button data-action="view" data-uid="${esc(p.uid)}" data-key="${v.key}"
-    class="px-2 py-1 rounded-lg text-[10px] font-semibold transition ${v.key === current.key ? 'bg-meta text-white' : 'bg-slate-900 text-slate-300 border border-slate-700 hover:border-meta'}">
-    ${esc(v.label)}${v.ai ? ' · IA' : ''}</button>`).join('');
-}
-
-function stage(p, v, extraClass = '') {
-  if (!v) return `<div class="aspect-square bg-slate-900 ${extraClass}"></div>`;
-  return `<div class="aspect-square ${bgClass(v)} relative overflow-hidden flex items-center justify-center ${extraClass}">
-      <img src="${esc(v.url)}" alt="${esc(p.title)}" loading="lazy" class="w-full h-full object-contain transition duration-300 group-hover:scale-105" />
-      ${v.ai ? '<span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold meta-ai-gradient text-white">✦ Vista generada por IA</span>' : ''}
-      ${p.real_photo_only ? '<span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/85 text-slate-200 border border-slate-600">Foto real del video</span>' : ''}
-    </div>`;
 }
 
 /* ---------- Render: tienda ---------- */
 function renderStore() {
+  stopAllRotations();
+  if (loadingSeed) {
+    $('storeEmpty').classList.add('hidden');
+    $('storeGrid').innerHTML = Array.from({ length: 8 }, () => `<div class="rounded-3xl overflow-hidden surface">
+      <div class="aspect-square skeleton"></div><div class="p-5 space-y-3"><div class="h-3 w-20 rounded skeleton"></div><div class="h-4 w-4/5 rounded skeleton"></div><div class="h-5 w-16 rounded skeleton"></div></div></div>`).join('');
+    return;
+  }
   const cats = ['Todas', ...new Set(approved.map((p) => p.category))];
   if (!cats.includes(activeCategory)) activeCategory = 'Todas';
   $('categoryBar').innerHTML = cats.map((c) => `<button data-action="category" data-key="${esc(c)}"
-    class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${c === activeCategory ? 'bg-meta text-white shadow' : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-meta'}">
-    ${esc(c)} <span class="opacity-70">${c === 'Todas' ? approved.length : approved.filter((p) => p.category === c).length}</span></button>`).join('');
-  $('statProducts').textContent = approved.length;
-  $('statCategories').textContent = cats.length - 1;
+    class="h-9 px-4 rounded-full text-[13px] font-medium transition ${c === activeCategory ? 'bg-meta text-white shadow-lg shadow-blue-600/25' : 'bg-white/[0.04] hairline text-slate-300 hover:text-white hover:bg-white/[0.08]'}">
+    ${esc(c)} <span class="ml-1 ${c === activeCategory ? 'text-white/70' : 'text-slate-500'} tabular-nums">${c === 'Todas' ? approved.length : approved.filter((p) => p.category === c).length}</span></button>`).join('');
+  countUp($('statProducts'), approved.length);
+  countUp($('statCategories'), cats.length - 1);
 
   const q = $('searchInput').value.trim().toLowerCase();
   const sort = $('sortSelect').value;
@@ -399,71 +521,102 @@ function renderStore() {
   if (sort === 'price_desc') list.sort((a, b) => (b.price ?? -1) - (a.price ?? -1));
 
   $('storeEmpty').classList.toggle('hidden', approved.length > 0);
-  $('storeGrid').innerHTML = list.map((p) => {
+  $('storeGrid').innerHTML = list.map((p, i) => {
     const v = p.views.find((x) => x.key === activeView[p.uid]) || p.views[0];
-    return `<article class="group rounded-2xl glass border border-slate-800 hover:border-meta overflow-hidden flex flex-col transition">
-      <div class="cursor-pointer" data-action="quick" data-uid="${esc(p.uid)}">${stage(p, v)}</div>
-      ${p.views.length > 1 ? `<div class="px-3 py-2 bg-slate-950/80 border-y border-slate-800 flex flex-wrap gap-1">${viewPills(p, v)}</div>` : ''}
-      <div class="p-4 flex-1 flex flex-col gap-2">
-        <div class="flex items-center justify-between gap-2 text-[11px]">
-          <span class="text-slate-400">${esc(p.category)}</span>
-          ${p.condition ? `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700">${esc(p.condition)}</span>` : ''}
+    return `<article class="card product-card rise group rounded-3xl overflow-hidden surface hover:shadow-lift" style="animation-delay:${Math.min(i, 12) * 40}ms" data-uid="${esc(p.uid)}">
+      <div class="cursor-pointer" data-action="quick" data-uid="${esc(p.uid)}">${stageBox(p, v)}</div>
+      <div class="p-5 pt-4">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-500 truncate">${esc(p.category)}</span>
+          ${p.condition ? `<span class="shrink-0 h-6 px-2.5 inline-flex items-center rounded-full bg-white/[0.05] text-[11px] text-slate-300">${esc(p.condition)}</span>` : ''}
         </div>
-        <h3 class="font-bold text-white leading-snug">${esc(p.title)}</h3>
-        <p class="text-xs text-slate-400 line-clamp-2">${esc(p.short_description)}</p>
-        <div class="mt-auto pt-2 ${p.price == null ? 'text-base text-amber-400' : 'text-2xl text-emerald-400'} font-black">${esc(priceText(p))}</div>
-      </div>
-      <div class="p-4 pt-0 flex gap-2">
-        <button data-action="quick" data-uid="${esc(p.uid)}" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition">Vista rápida</button>
-        ${p.price == null
-          ? `<button data-action="quick" data-uid="${esc(p.uid)}" class="flex-1 py-2 rounded-xl border border-amber-500/50 text-amber-300 hover:bg-amber-500/10 text-xs font-bold transition">Consultar precio</button>`
-          : `<button data-action="add-cart" data-uid="${esc(p.uid)}" class="flex-1 py-2 rounded-xl bg-meta hover:bg-meta-dark text-white text-xs font-bold transition">Agregar al carrito</button>`}
+        <h3 class="mt-1.5 text-[15px] font-semibold leading-snug text-white line-clamp-2 cursor-pointer" data-action="quick" data-uid="${esc(p.uid)}">${esc(p.title)}</h3>
+        <div class="mt-4 flex items-end justify-between gap-3">
+          ${p.price == null
+            ? '<span class="text-[14px] font-semibold text-amber-300">Consultar precio</span>'
+            : `<span class="text-[22px] font-semibold tracking-tight text-emerald-400 tabular-nums">${esc(money(p.price, p.currency))}<span class="ml-1 text-[12px] font-medium text-slate-500">${esc(p.currency)}</span></span>`}
+          ${p.price == null
+            ? `<button data-action="quick" data-uid="${esc(p.uid)}" class="cart-fab w-10 h-10 rounded-full bg-white/[0.06] hairline text-slate-200 hover:bg-white/10 flex items-center justify-center" aria-label="Ver detalle">${icon('eye', 17)}</button>`
+            : `<button data-action="add-cart" data-uid="${esc(p.uid)}" class="cart-fab w-10 h-10 rounded-full bg-meta hover:bg-meta-dark text-white shadow-lg shadow-blue-600/30 flex items-center justify-center" aria-label="Agregar al carrito">${icon('plus', 18)}</button>`}
+        </div>
       </div>
     </article>`;
   }).join('');
+  bindRotations();
+}
+
+/* ---------- Rotación automática de ángulos al pasar el mouse ---------- */
+function setStage(uid, key) {
+  const p = findProduct(uid);
+  if (!p) return;
+  const v = p.views.find((x) => x.key === key) || p.views[0];
+  document.querySelectorAll(`[data-stage="${CSS.escape(uid)}"]`).forEach((box) => {
+    box.className = `stage relative aspect-square overflow-hidden ${isStudio(v) ? 'studio' : 'bg-slate-900'}`;
+    box.innerHTML = `${stageInner(p, v)}${dots(p, v)}`;
+  });
+}
+
+function stopAllRotations() { rotateTimers.forEach((t) => clearInterval(t)); rotateTimers.clear(); }
+
+function bindRotations() {
+  document.querySelectorAll('.product-card').forEach((card) => {
+    const uid = card.dataset.uid;
+    const p = approved.find((x) => x.uid === uid);
+    const seq = p ? rotatable(p) : [];
+    if (seq.length < 2) return;
+    card.addEventListener('pointerenter', () => {
+      if (activeView[uid] && !seq.some((v) => v.key === activeView[uid])) return; // eligió ambiente o frame: no rotar
+      let i = Math.max(0, seq.findIndex((v) => v.key === (activeView[uid] || seq[0].key)));
+      clearInterval(rotateTimers.get(uid));
+      rotateTimers.set(uid, setInterval(() => { i = (i + 1) % seq.length; setStage(uid, seq[i].key); }, 1100));
+    });
+    card.addEventListener('pointerleave', () => {
+      clearInterval(rotateTimers.get(uid)); rotateTimers.delete(uid);
+      setStage(uid, activeView[uid] || p.views[0].key);
+    });
+  });
 }
 
 /* ---------- Render: pendientes ---------- */
 function renderPending() {
   $('pendingEmpty').classList.toggle('hidden', pending.length > 0);
-  $('pendingGrid').innerHTML = pending.map((p) => {
+  $('pendingGrid').innerHTML = pending.map((p, i) => {
     const v = p.views.find((x) => x.key === activeView[p.uid]) || p.views[0];
     const deictic = p.mention_type === 'DEICTIC';
-    const mention = p.mention_type ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${deictic ? 'bg-amber-500/15 text-amber-300 border border-amber-500/40' : 'bg-meta/15 text-blue-300 border border-meta/40'}"
-        title="${deictic ? 'El vendedor dijo “esto de acá”: la IA identificó el objeto con el video' : 'El vendedor nombró el producto'}">${deictic ? 'DEICTIC · “esto de acá”' : 'EXPLICIT · lo nombró'}</span>` : '';
-    const quality = p.quality_score != null ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-200 border border-slate-700">Calidad del frame ${esc(p.quality_score)}/10</span>` : '';
-    const thumb = (url, label, cls) => url ? `<figure class="space-y-1"><div class="aspect-square rounded-xl overflow-hidden border border-slate-700 ${cls} flex items-center justify-center"><img src="${esc(url)}" alt="${esc(label)}" class="w-full h-full object-contain" /></div><figcaption class="text-[10px] text-slate-400 text-center">${esc(label)}</figcaption></figure>` : '';
-    return `<article id="card-${esc(p.uid)}" class="rounded-2xl glass border border-slate-800 hover:border-amber-500/40 overflow-hidden transition">
-      <div class="p-4 border-b border-slate-800 flex flex-wrap items-center gap-2">
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-900 text-slate-400 border border-slate-800">${esc(p.id)} · ${esc(p.video_id)}</span>
-        ${mention}${quality}
-        ${p.real_photo_only ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/40">Toma insuficiente: foto real</span>' : ''}
+    const chip = (text, cls, title = '') => `<span title="${esc(title)}" class="h-6 px-2.5 inline-flex items-center rounded-full text-[11px] font-medium ${cls}">${text}</span>`;
+    const mention = p.mention_type ? chip(deictic ? 'DEICTIC · “esto de acá”' : 'EXPLICIT · lo nombró', deictic ? 'bg-amber-400/10 text-amber-300' : 'bg-blue-500/10 text-blue-300',
+      deictic ? 'El vendedor solo lo señaló: la IA lo identificó mirando el video' : 'El vendedor nombró el producto') : '';
+    const quality = p.quality_score != null ? chip(`Calidad ${esc(p.quality_score)}/10`, 'bg-white/[0.05] text-slate-300') : '';
+    const thumb = (url, label, studioBg) => url ? `<figure><div class="aspect-square rounded-2xl overflow-hidden ${studioBg ? 'studio' : 'bg-slate-900'} relative">
+      <img src="${esc(url)}" alt="${esc(label)}" class="absolute inset-0 w-full h-full ${studioBg ? 'object-contain p-3' : 'object-cover'}" /></div>
+      <figcaption class="mt-1.5 text-[11px] text-slate-500 text-center">${esc(label)}</figcaption></figure>` : '';
+    return `<article id="card-${esc(p.uid)}" class="rise rounded-3xl overflow-hidden surface" style="animation-delay:${Math.min(i, 8) * 50}ms">
+      <div class="px-5 h-14 flex items-center gap-2 border-b border-white/5">
+        <span class="text-[11px] font-mono text-slate-500">${esc(p.id)} · ${esc(p.video_id)}</span>
+        <span class="flex-1"></span>${mention}${quality}
+        ${p.real_photo_only ? chip('Toma insuficiente', 'bg-rose-500/10 text-rose-300', 'Se muestra la foto real: la toma estaba movida') : ''}
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2">
-        <div class="group">
-          ${stage(p, v)}
-          ${p.views.length > 1 ? `<div class="px-3 py-2 bg-slate-950/80 border-t border-slate-800 flex flex-wrap gap-1">${viewPills(p, v)}</div>` : ''}
-        </div>
-        <div class="p-4 space-y-3">
-          <div class="grid grid-cols-2 gap-2">
-            ${thumb(p.best_frame_url, 'Mejor frame (Spark visión)', 'bg-slate-950')}
-            ${thumb(p.sam_cutout_url, 'Recorte SAM 3.1', 'checker')}
+      <div class="grid grid-cols-1 sm:grid-cols-[1.1fr_1fr]">
+        <div class="group">${stageBox(p, v)}</div>
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            ${thumb(p.best_frame_url, 'Video original', false)}
+            ${thumb(p.sam_cutout_url, 'Recorte SAM 3.1', true)}
           </div>
-          <label class="block space-y-1"><span class="text-[11px] text-slate-400">Nombre</span>
-            <input data-field="title" data-uid="${esc(p.uid)}" value="${esc(p.title)}" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:border-meta" /></label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="block space-y-1"><span class="text-[11px] text-slate-400">Precio (${esc(p.currency)})</span>
-              <input data-field="price" data-uid="${esc(p.uid)}" type="number" min="0" step="0.5" value="${p.price ?? ''}" placeholder="Consultar" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-emerald-400 font-bold focus:outline-none focus:border-meta" /></label>
-            <label class="block space-y-1"><span class="text-[11px] text-slate-400">Estado</span>
-              <input data-field="condition" data-uid="${esc(p.uid)}" value="${esc(p.condition)}" placeholder="Ej. Como nuevo" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:border-meta" /></label>
+          <label class="block"><span class="text-[11px] text-slate-500">Nombre</span>
+            <input data-field="title" data-uid="${esc(p.uid)}" value="${esc(p.title)}" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="block"><span class="text-[11px] text-slate-500">Precio (${esc(p.currency)})</span>
+              <input data-field="price" data-uid="${esc(p.uid)}" type="number" min="0" step="0.5" value="${p.price ?? ''}" placeholder="Consultar" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] font-semibold text-emerald-400 tabular-nums focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
+            <label class="block"><span class="text-[11px] text-slate-500">Estado</span>
+              <input data-field="condition" data-uid="${esc(p.uid)}" value="${esc(p.condition)}" placeholder="Ej. Como nuevo" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
           </div>
-          <p class="text-xs text-slate-400 line-clamp-2">${esc(p.short_description)}</p>
-          ${p.seller_phrase ? `<p class="text-[11px] text-slate-500">🎙️ “${esc(p.seller_phrase)}”</p>` : ''}
+          ${p.seller_phrase ? `<p class="flex gap-2 text-[12px] text-slate-400"><span class="shrink-0 mt-0.5 text-slate-500">${icon('mic', 14)}</span><span>“${esc(p.seller_phrase)}”</span></p>` : ''}
         </div>
       </div>
-      <div class="p-4 border-t border-slate-800 flex gap-2">
-        <button data-action="reject" data-uid="${esc(p.uid)}" class="px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/50 text-rose-300 hover:bg-rose-500/20 text-sm font-bold transition">🗑️ Rechazar</button>
-        <button data-action="approve" data-uid="${esc(p.uid)}" class="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-extrabold transition">✅ Aceptar y Publicar</button>
+      <div class="px-5 py-4 border-t border-white/5 flex gap-3">
+        <button data-action="reject" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2">${icon('trash', 15)}Rechazar</button>
+        <button data-action="approve" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('check', 16)}Aceptar y publicar</button>
       </div>
     </article>`;
   }).join('');
@@ -473,30 +626,37 @@ function renderAll() { renderTabs(); renderStore(); renderPending(); }
 
 /* ---------- Vista rápida ---------- */
 function openQuick(uid) {
-  const p = approved.find((x) => x.uid === uid) || pending.find((x) => x.uid === uid);
+  const p = findProduct(uid);
   if (!p) return;
   const inStore = approved.some((x) => x.uid === uid);
   const v = p.views.find((x) => x.key === activeView[uid]) || p.views[0];
-  $('quickBody').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="space-y-3">
-      <div class="rounded-2xl overflow-hidden border border-slate-700">${stage(p, v)}</div>
-      <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">${p.views.map((x) => `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${x.key}"
-        class="aspect-square rounded-lg overflow-hidden border ${x.key === v.key ? 'border-meta' : 'border-slate-700'} ${bgClass(x)}" title="${esc(x.label)}"><img src="${esc(x.url)}" alt="" class="w-full h-full object-contain" /></button>`).join('')}</div>
-      ${p.views.some((x) => x.ai) ? '<p class="text-[11px] text-indigo-300">✦ Las vistas marcadas “IA” no se filmaron: Muse Image las generó a partir del producto real.</p>' : ''}
+  $('quickBody').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-[1.15fr_1fr]">
+    <div class="p-5 md:p-6 space-y-3">
+      <div class="rounded-[22px] overflow-hidden">${stageBox(p, v)}</div>
+      <div class="grid grid-cols-7 gap-2">${p.views.map((x) => `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${x.key}"
+        class="relative aspect-square rounded-xl overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'} ring-2 ${x.key === v.key ? 'ring-meta' : 'ring-transparent hover:ring-white/20'} transition" title="${esc(x.label)}${x.ai ? ' · IA' : ''}">
+        <img src="${esc(x.url)}" alt="" class="absolute inset-0 w-full h-full ${isStudio(x) ? 'object-contain p-1 blend' : 'object-cover'}" />
+        ${x.ai ? `<span class="absolute top-1 right-1 text-indigo-600">${icon('sparkles', 10)}</span>` : ''}</button>`).join('')}</div>
+      ${p.views.some((x) => x.ai) ? `<p class="flex items-center gap-1.5 text-[12px] text-indigo-300/90">${icon('sparkles', 12)}Las vistas IA no se filmaron: Muse Image las generó a partir del producto real.</p>` : ''}
     </div>
-    <div class="space-y-4">
-      <div class="text-xs text-slate-400">${esc(p.category)}</div>
-      <h3 class="text-2xl font-black text-white">${esc(p.title)}</h3>
-      <div class="flex items-center gap-3"><span class="${p.price == null ? 'text-xl text-amber-400' : 'text-3xl text-emerald-400'} font-black">${esc(priceText(p))}</span>
-        ${p.condition ? `<span class="px-2.5 py-1 rounded-full text-xs bg-slate-800 text-slate-200">${esc(p.condition)}</span>` : ''}</div>
-      <p class="text-sm text-slate-300 leading-relaxed">${esc(p.description || p.short_description)}</p>
-      ${p.highlights.length ? `<ul class="space-y-1 text-sm text-slate-300">${p.highlights.map((h) => `<li>✔ ${esc(h)}</li>`).join('')}</ul>` : ''}
-      ${p.tags.length ? `<div class="flex flex-wrap gap-1.5">${p.tags.map((t) => `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-[11px] text-slate-300">#${esc(t)}</span>`).join('')}</div>` : ''}
-      ${p.seller_phrase ? `<div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400">🎙️ Lo que dijo el vendedor: <i class="text-slate-200">“${esc(p.seller_phrase)}”</i></div>` : ''}
+    <div class="p-6 md:p-8 md:pl-2 space-y-5">
+      <div>
+        <div class="text-[11px] font-medium uppercase tracking-wider text-slate-500">${esc(p.category)}</div>
+        <h2 class="mt-2 text-2xl font-semibold tracking-tight text-white leading-tight">${esc(p.title)}</h2>
+      </div>
+      <div class="flex items-center gap-3">
+        ${p.price == null ? '<span class="text-xl font-semibold text-amber-300">Consultar precio</span>'
+          : `<span class="text-3xl font-semibold tracking-tight text-emerald-400 tabular-nums">${esc(money(p.price, p.currency))}<span class="ml-1.5 text-sm font-medium text-slate-500">${esc(p.currency)}</span></span>`}
+        ${p.condition ? `<span class="h-7 px-3 inline-flex items-center rounded-full bg-white/[0.06] text-[12px] text-slate-200">${esc(p.condition)}</span>` : ''}
+      </div>
+      <p class="text-[15px] text-slate-300 leading-relaxed">${esc(p.description || p.short_description)}</p>
+      ${p.highlights.length ? `<ul class="space-y-2">${p.highlights.map((h) => `<li class="flex gap-2.5 text-[14px] text-slate-300"><span class="mt-0.5 text-emerald-400">${icon('check', 15)}</span>${esc(h)}</li>`).join('')}</ul>` : ''}
+      ${p.tags.length ? `<div class="flex flex-wrap gap-1.5">${p.tags.map((t) => `<span class="h-6 px-2.5 inline-flex items-center rounded-full bg-white/[0.04] text-[11px] text-slate-400">#${esc(t)}</span>`).join('')}</div>` : ''}
+      ${p.seller_phrase ? `<div class="flex gap-3 p-4 rounded-2xl bg-white/[0.03] hairline"><span class="text-slate-400">${icon('mic', 16)}</span><div class="text-[13px] text-slate-400">Lo que dijo el vendedor<div class="mt-1 text-slate-200 italic">“${esc(p.seller_phrase)}”</div></div></div>` : ''}
       ${inStore ? (p.price == null
-        ? `<button data-action="contact" data-uid="${esc(uid)}" class="w-full py-3 rounded-xl border border-amber-500/60 text-amber-300 hover:bg-amber-500/10 font-bold text-sm">Consultar precio al vendedor</button>`
-        : `<button data-action="add-cart" data-uid="${esc(uid)}" class="w-full py-3 rounded-xl bg-meta hover:bg-meta-dark text-white font-extrabold text-sm">Agregar al carrito • ${esc(priceText(p))}</button>`) : ''}
-      ${inStore ? `<button data-action="unpublish" data-uid="${esc(uid)}" class="w-full py-2 rounded-xl text-xs text-slate-500 hover:text-rose-300">Retirar de la tienda</button>` : ''}
+        ? `<button data-action="contact" data-uid="${esc(uid)}" class="w-full h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[14px] font-semibold transition">Consultar precio al vendedor</button>`
+        : `<button data-action="add-cart" data-uid="${esc(uid)}" class="w-full h-12 rounded-full bg-meta hover:bg-meta-dark text-white text-[14px] font-semibold shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">${icon('bag', 17)}Agregar al carrito</button>`) : ''}
+      ${inStore ? `<button data-action="unpublish" data-uid="${esc(uid)}" class="w-full text-[12px] text-slate-500 hover:text-rose-300 transition">Retirar de la tienda</button>` : ''}
     </div>
   </div>`;
   $('quickView').classList.remove('hidden'); $('quickView').classList.add('flex');
@@ -504,6 +664,21 @@ function openQuick(uid) {
 function closeQuick() { $('quickView').classList.add('hidden'); $('quickView').classList.remove('flex'); }
 
 /* ---------- Carrito ---------- */
+function flyToCart(uid) {
+  const src = document.querySelector(`[data-stage="${CSS.escape(uid)}"] img`);
+  const target = $('cartButton').getBoundingClientRect();
+  if (src) {
+    const r = src.getBoundingClientRect();
+    const ghost = src.cloneNode();
+    ghost.className = 'fixed z-[70] object-contain rounded-2xl pointer-events-none';
+    Object.assign(ghost.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, transition: 'all .7s cubic-bezier(.5,-0.2,.4,1)', background: '#f5f5f7' });
+    document.body.appendChild(ghost);
+    requestAnimationFrame(() => Object.assign(ghost.style, { left: `${target.left + target.width / 2 - 14}px`, top: `${target.top + target.height / 2 - 14}px`, width: '28px', height: '28px', opacity: '0.4', borderRadius: '999px' }));
+    setTimeout(() => ghost.remove(), 720);
+  }
+  setTimeout(() => { const b = $('cartButton'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }, 650);
+}
+
 function renderCart() {
   const totals = {};
   $('cartItems').innerHTML = cart.length ? cart.map((i) => {
@@ -511,16 +686,16 @@ function renderCart() {
     if (!p) return '';
     totals[p.currency] = (totals[p.currency] || 0) + p.price * i.qty;
     const v = p.views[0];
-    return `<div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-      ${v ? `<img src="${esc(v.url)}" alt="" class="w-14 h-14 rounded-xl object-contain bg-white shrink-0" />` : ''}
-      <div class="flex-1 min-w-0"><div class="text-sm font-bold text-white truncate">${esc(p.title)}</div><div class="text-xs text-emerald-400 font-bold">${esc(money(p.price, p.currency))}</div></div>
+    return `<div class="p-3 rounded-2xl bg-white/[0.03] hairline flex items-center gap-3">
+      ${v ? `<div class="w-16 h-16 rounded-xl overflow-hidden studio relative shrink-0"><img src="${esc(v.url)}" alt="" class="absolute inset-0 w-full h-full object-contain p-1.5 blend" /></div>` : ''}
+      <div class="flex-1 min-w-0"><div class="text-[14px] font-medium text-white truncate">${esc(p.title)}</div><div class="text-[13px] text-emerald-400 font-semibold tabular-nums">${esc(money(p.price, p.currency))} ${esc(p.currency)}</div></div>
       <div class="flex items-center gap-1">
-        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="-1" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-200">−</button>
-        <span class="w-6 text-center text-sm">${i.qty}</span>
-        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="1" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-200">+</button>
+        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="-1" class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/10 text-slate-200 flex items-center justify-center" aria-label="Quitar uno">${icon('minus', 14)}</button>
+        <span class="w-6 text-center text-[13px] tabular-nums">${i.qty}</span>
+        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="1" class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/10 text-slate-200 flex items-center justify-center" aria-label="Agregar uno">${icon('plus', 14)}</button>
       </div></div>`;
-  }).join('') : '<p class="text-sm text-slate-500 text-center py-10">Tu carrito está vacío.</p>';
-  $('cartTotal').innerHTML = Object.keys(totals).length ? Object.entries(totals).map(([c, v]) => esc(money(v, c))).join('<br>') : '—';
+  }).join('') : `<div class="py-16 text-center"><div class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.04] hairline flex items-center justify-center text-slate-400">${icon('bag', 20)}</div><p class="mt-3 text-[14px] text-slate-400">Tu carrito está vacío</p></div>`;
+  $('cartTotal').innerHTML = Object.keys(totals).length ? Object.entries(totals).map(([c, v]) => `${esc(money(v, c))} <span class="text-[12px] text-slate-500">${esc(c)}</span>`).join('<br>') : '—';
 }
 
 /* ---------- Monitor de tokens ---------- */
@@ -539,7 +714,7 @@ function auditNumbers(state) {
 function renderTokens(state) {
   if (!state) return;
   const n = auditNumbers(state);
-  $('headerTokens').textContent = fmtNum(n.total);
+  countUp($('headerTokens'), n.total);
   $('tokenSession').textContent = state.session_id ? `Sesión ${state.session_id}` : 'Sin sesión';
   $('tkTotal').textContent = fmtNum(n.total);
   $('tkSaved').textContent = fmtNum(n.saved);
@@ -550,10 +725,12 @@ function renderTokens(state) {
     const m = byModel[l.model] || (byModel[l.model] = { tokens: 0, api: 0, cache: 0 });
     m.tokens += l.step_total_tokens || 0; m.api += l.status === 'API_CALL' ? 1 : 0; m.cache += l.status === 'CACHE_HIT_MD5' ? 1 : 0;
   });
-  $('tkModels').innerHTML = Object.entries(byModel).map(([m, s]) => `<div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-    <span class="text-slate-200 truncate">${esc(m)}</span><span class="font-mono text-slate-400 shrink-0">${fmtNum(s.tokens)} tok • ${s.api} API • ${s.cache} caché</span></div>`).join('') || '<p class="text-xs text-slate-500">Sin datos.</p>';
+  const max = Math.max(1, ...Object.values(byModel).map((s) => s.tokens));
+  $('tkModels').innerHTML = Object.entries(byModel).map(([m, s]) => `<div class="p-3 rounded-xl bg-white/[0.03] hairline">
+    <div class="flex items-center justify-between gap-2 text-[12px]"><span class="text-slate-200 truncate">${esc(m)}</span><span class="tabular-nums text-slate-400 shrink-0">${fmtNum(s.tokens)} tok · ${s.api} API · ${s.cache} caché</span></div>
+    <div class="mt-2 h-1 rounded-full bg-white/5 overflow-hidden"><div class="h-full rounded-full meta-ai-gradient" style="width:${Math.max(2, (s.tokens / max) * 100)}%"></div></div></div>`).join('') || '<p class="text-[12px] text-slate-500">Sin datos.</p>';
   const color = { API_CALL: 'text-blue-300', CACHE_HIT_MD5: 'text-emerald-300', API_ERROR: 'text-rose-300', ZERO_TOKEN_LOCAL: 'text-slate-400' };
-  $('tkLogs').innerHTML = n.logs.slice(-150).reverse().map((l) => `<div class="p-1.5 rounded bg-slate-950/70 ${color[l.status] || 'text-slate-300'}">${esc((l.trace_line || '').replace('[MUSE-TRACE] ', ''))}</div>`).join('');
+  $('tkLogs').innerHTML = n.logs.slice(-150).reverse().map((l) => `<div class="p-2 rounded-lg bg-black/25 ${color[l.status] || 'text-slate-300'}">${esc((l.trace_line || '').replace('[MUSE-TRACE] ', ''))}</div>`).join('');
 }
 
 async function refreshTokens() {
@@ -578,10 +755,11 @@ async function setFiles(fileList) {
   const tooMany = files.length > 3;
   $('fileList').innerHTML = selectedFiles.map((s) => {
     const long = s.duration > 60.8;
-    return `<div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-900 border ${long ? 'border-rose-500/50' : 'border-slate-800'}">
-      <span class="text-sm text-slate-200 truncate">🎞️ ${esc(s.file.name)}</span>
-      <span class="text-xs font-mono ${long ? 'text-rose-300' : 'text-slate-400'} shrink-0">${isNaN(s.duration) ? '—' : `${s.duration.toFixed(1)} s`}${long ? ' · supera 60 s' : ''}</span></div>`;
-  }).join('') + (tooMany ? '<p class="text-xs text-amber-300">Solo se usarán los 3 primeros videos.</p>' : '');
+    return `<div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hairline ${long ? 'ring-1 ring-rose-500/50' : ''}">
+      <span class="w-9 h-9 shrink-0 rounded-lg bg-white/[0.05] flex items-center justify-center text-slate-300">${icon('film', 16)}</span>
+      <span class="flex-1 text-[13px] text-slate-200 truncate">${esc(s.file.name)}</span>
+      <span class="text-[12px] tabular-nums ${long ? 'text-rose-300' : 'text-slate-400'} shrink-0">${isNaN(s.duration) ? '—' : `${s.duration.toFixed(1)} s`}${long ? ' · supera 60 s' : ''}</span></div>`;
+  }).join('') + (tooMany ? '<p class="text-[12px] text-amber-300">Solo se usarán los 3 primeros videos.</p>' : '');
   const valid = selectedFiles.length > 0 && selectedFiles.every((s) => !(s.duration > 60.8));
   $('btnProcess').disabled = !valid || Boolean(run && run.running);
 }
@@ -594,13 +772,13 @@ function renderStepper(activePhase, donePhases, errorPhase, activeStep = null) {
     const samePhase = s.phase === activePhase;
     const done = donePhases.includes(s.phase) || (samePhase && i < current);
     const active = samePhase && i === current, error = s.phase === errorPhase;
-    const dot = error ? 'bg-rose-500' : done ? 'bg-emerald-500' : active ? 'meta-ai-gradient' : 'bg-slate-800';
-    const icon = error ? '!' : done ? '✓' : i + 1;
-    return `<li class="${active ? 'step-active' : ''} flex items-start gap-3 p-3 rounded-xl border ${active ? 'border-indigo-500/60 shimmer' : done ? 'border-emerald-500/30 bg-emerald-500/5' : error ? 'border-rose-500/50 bg-rose-500/5' : 'border-slate-800 bg-slate-900/60'} transition">
-      <span class="step-dot w-7 h-7 shrink-0 rounded-full ${dot} flex items-center justify-center text-xs font-black text-white">${icon}</span>
+    const dot = error ? 'bg-rose-500' : done ? 'bg-emerald-500' : active ? 'meta-ai-gradient' : 'bg-white/[0.06]';
+    const mark = error ? icon('alert', 13) : done ? icon('check', 13) : `<span class="text-[11px]">${i + 1}</span>`;
+    return `<li class="${active ? 'step-active shimmer' : ''} flex items-start gap-3 p-3 rounded-xl ${active ? 'ring-1 ring-indigo-400/50' : done ? 'bg-emerald-500/[0.04]' : error ? 'bg-rose-500/[0.06]' : 'bg-white/[0.02]'} transition">
+      <span class="step-dot w-7 h-7 shrink-0 rounded-full ${dot} flex items-center justify-center font-semibold text-white">${mark}</span>
       <div class="min-w-0">
-        <div class="text-sm font-bold ${active ? 'meta-ai-text' : done ? 'text-emerald-300' : 'text-slate-300'}">${esc(s.model)} <span class="text-[10px] font-mono text-slate-500">· Fase ${s.phase}</span></div>
-        <div class="text-[11px] text-slate-400">${esc(s.what)}</div>
+        <div class="text-[13px] font-semibold ${active ? 'meta-ai-text' : done ? 'text-emerald-300' : 'text-slate-300'}">${esc(s.model)} <span class="text-[10px] font-normal text-slate-500">· Fase ${s.phase}</span></div>
+        <div class="text-[12px] text-slate-400">${esc(s.what)}</div>
       </div></li>`;
   }).join('');
 }
@@ -722,7 +900,7 @@ async function runPipeline(fromPhase) {
     pending = [...pending.filter((p) => !uids.has(p.uid)), ...products];
     save(LS.pending, pending);
     clearInterval(timerHandle);
-    $('pipelineResultText').textContent = `¡Listo! ${products.length} producto(s) llegaron a Pendientes de Aprobación en ${$('pipelineTimer').textContent}.`;
+    $('pipelineResultText').textContent = `¡Listo! ${products.length} producto(s) llegaron a Pendientes en ${$('pipelineTimer').textContent}.`;
     $('pipelineResult').classList.remove('hidden');
     run = null;
     renderAll();
@@ -753,35 +931,42 @@ function animateOut(uids, then) {
   setTimeout(then, 330);
 }
 
+function openDrawer(id) { $(id).classList.remove('hidden'); }
+function closeDrawer(id) { $(id).classList.add('hidden'); }
+
 const actions = {
-  tab: (_, key) => { activeTab = key; renderAll(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+  tab: (_, key, el, e) => { if (e) e.preventDefault(); activeTab = key; renderAll(); (key === 'store' ? $('viewStore') : $('viewPending')).classList.add('fade-in'); window.scrollTo({ top: 0, behavior: 'smooth' }); },
   category: (_, key) => { activeCategory = key; renderStore(); },
-  view: (uid, key) => { activeView[uid] = key; renderStore(); renderPending(); },
+  view: (uid, key, el, e) => { if (e) e.stopPropagation(); activeView[uid] = key; clearInterval(rotateTimers.get(uid)); setStage(uid, key); },
   quick: (uid) => openQuick(uid),
-  'quick-view': (uid, key) => { activeView[uid] = key; openQuick(uid); renderStore(); },
+  'quick-view': (uid, key) => { activeView[uid] = key; openQuick(uid); setStage(uid, key); },
   'close-quick': closeQuick,
-  approve: (uid) => animateOut([uid], () => { publish([uid]); renderAll(); toast('Publicado en la tienda ✅'); }),
-  reject: (uid) => animateOut([uid], () => { pending = pending.filter((p) => p.uid !== uid); save(LS.pending, pending); renderAll(); toast('Producto rechazado'); }),
+  approve: (uid) => animateOut([uid], () => { publish([uid]); renderAll(); toast('Publicado en la tienda'); }),
+  reject: (uid) => animateOut([uid], () => { pending = pending.filter((p) => p.uid !== uid); save(LS.pending, pending); renderAll(); toast('Producto rechazado', 'info'); }),
   'approve-all': () => {
-    if (!pending.length) return toast('No hay pendientes');
+    if (!pending.length) return toast('No hay pendientes', 'info');
     const uids = pending.map((p) => p.uid);
-    animateOut(uids, () => { publish(uids); activeTab = 'store'; renderAll(); toast(`${uids.length} producto(s) publicados ✅`); });
+    animateOut(uids, () => { publish(uids); activeTab = 'store'; renderAll(); toast(`${uids.length} producto(s) publicados`); });
   },
   'reject-all': () => {
-    if (!pending.length) return toast('No hay pendientes');
+    if (!pending.length) return toast('No hay pendientes', 'info');
     if (!confirm(`¿Rechazar los ${pending.length} productos pendientes?`)) return;
     pending = []; save(LS.pending, pending); renderAll();
   },
   unpublish: (uid) => {
     approved = approved.filter((p) => p.uid !== uid); cart = cart.filter((i) => i.uid !== uid);
-    save(LS.approved, approved); save(LS.cart, cart); closeQuick(); renderAll(); toast('Retirado de la tienda');
+    save(LS.approved, approved); save(LS.cart, cart); closeQuick(); renderAll(); toast('Retirado de la tienda', 'info');
   },
-  'add-cart': (uid) => {
+  'add-cart': (uid, key, el, e) => {
+    if (e) e.stopPropagation();
     const p = approved.find((x) => x.uid === uid);
     if (!p || p.price == null) return;
     const item = cart.find((i) => i.uid === uid);
     if (item) item.qty += 1; else cart.push({ uid, qty: 1 });
-    save(LS.cart, cart); renderTabs(); toast('Agregado al carrito 🛒');
+    save(LS.cart, cart);
+    flyToCart(uid);
+    setTimeout(renderTabs, 650);
+    toast(`${p.title} · agregado al carrito`, 'cart');
   },
   qty: (uid, key) => {
     const item = cart.find((i) => i.uid === uid);
@@ -790,20 +975,20 @@ const actions = {
     cart = cart.filter((i) => i.qty > 0);
     save(LS.cart, cart); renderCart(); renderTabs();
   },
-  contact: (uid) => { const p = approved.find((x) => x.uid === uid); toast(`Consulta enviada por “${p ? p.title : ''}”`); },
-  'open-cart': () => { renderCart(); $('cartDrawer').classList.remove('hidden'); },
-  'close-cart': () => $('cartDrawer').classList.add('hidden'),
+  contact: (uid) => { const p = approved.find((x) => x.uid === uid); toast(`Consulta enviada por “${p ? p.title : ''}”`, 'info'); },
+  'open-cart': () => { renderCart(); openDrawer('cartDrawer'); },
+  'close-cart': () => closeDrawer('cartDrawer'),
   checkout: () => {
-    if (!cart.length) return toast('Tu carrito está vacío');
+    if (!cart.length) return toast('Tu carrito está vacío', 'info');
     toast('¡Pedido confirmado! (demo)');
     cart = []; save(LS.cart, cart); renderCart(); renderTabs();
   },
-  'open-tokens': () => { $('tokenDrawer').classList.remove('hidden'); refreshTokens(); },
-  'close-tokens': () => $('tokenDrawer').classList.add('hidden'),
-  'open-upload': () => { $('uploadDrawer').classList.remove('hidden'); },
+  'open-tokens': () => { openDrawer('tokenDrawer'); refreshTokens(); },
+  'close-tokens': () => closeDrawer('tokenDrawer'),
+  'open-upload': () => openDrawer('uploadDrawer'),
   'close-upload': () => {
     if (run && run.running && !confirm('El pipeline sigue procesando en el servidor. ¿Cerrar el panel? (seguirá corriendo, pero no verás el progreso)')) return;
-    $('uploadDrawer').classList.add('hidden');
+    closeDrawer('uploadDrawer');
   },
   process: () => {
     if (run && run.running) return;
@@ -811,7 +996,7 @@ const actions = {
     runPipeline(1);
   },
   retry: () => { if (run && !run.running) runPipeline(run.nextPhase); },
-  'go-pending': () => { $('uploadDrawer').classList.add('hidden'); activeTab = 'pending'; renderAll(); },
+  'go-pending': () => { closeDrawer('uploadDrawer'); activeTab = 'pending'; renderAll(); },
 };
 
 document.addEventListener('click', (e) => {
@@ -833,7 +1018,7 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  closeQuick(); $('cartDrawer').classList.add('hidden'); $('tokenDrawer').classList.add('hidden');
+  closeQuick(); closeDrawer('cartDrawer'); closeDrawer('tokenDrawer');
 });
 
 $('videoInput').addEventListener('change', (e) => setFiles(e.target.files));
@@ -843,6 +1028,7 @@ $('dropZone').addEventListener('drop', (e) => setFiles(e.dataTransfer.files));
 $('searchInput').addEventListener('input', renderStore);
 $('sortSelect').addEventListener('change', renderStore);
 
+paintStaticIcons();
 renderStepper(null, [], null);
 renderAll();
 refreshTokens();
