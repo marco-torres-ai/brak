@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import httpx
 
+from backend.core import progress
 from backend.core.config import META_MUSE_API_KEY, MUSE_API_BASE_URL
 
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
@@ -26,30 +27,47 @@ class MuseAPIError(RuntimeError):
 
 def _auth_headers(accept: str = "application/json") -> Dict[str, str]:
     if not META_MUSE_API_KEY:
-        raise MuseAPIError("Falta META_MUSE_API_KEY en el archivo .env")
+        raise MuseAPIError("META_MUSE_API_KEY is missing from the .env file")
     return {"Authorization": f"Bearer {META_MUSE_API_KEY}", "Accept": accept}
 
 
-def _post(path: str, timeout: float = 120.0, attempts: int = 4, **kwargs: Any) -> httpx.Response:
+def _post(
+    path: str, timeout: float = 120.0, attempts: int = 4, max_timeout: float = 300.0, label: str = "", **kwargs: Any
+) -> httpx.Response:
+    """POST con reintentos. Si Meta no responde dentro de `timeout`, el siguiente intento espera el doble (hasta
+    `max_timeout`): una petición trabada del lado de Meta se recupera rápido y una respuesta lenta pero legítima
+    igual alcanza a llegar. Las esperas y reintentos se informan al progreso en vivo."""
     url = f"{MUSE_API_BASE_URL}{path}"
+    name = label or path
     delay = 2.0
     for attempt in range(1, attempts + 1):
         try:
             resp = httpx.post(url, timeout=timeout, **kwargs)
+        except httpx.TimeoutException as exc:
+            if attempt == attempts:
+                raise MuseAPIError(f"{name}: Meta did not respond after {attempts} attempts ({exc})") from exc
+            progress.note_wait(
+                f"{name}: Meta did not respond within {timeout:.0f} s; retrying automatically "
+                f"(attempt {attempt + 1} of {attempts}, waiting up to {min(max_timeout, timeout * 2):.0f} s)."
+            )
+            timeout = min(max_timeout, timeout * 2)
+            continue
         except httpx.TransportError as exc:
             if attempt == attempts:
-                raise MuseAPIError(f"Error de red llamando {path}: {exc}") from exc
+                raise MuseAPIError(f"Network error calling {path}: {exc}") from exc
+            progress.note_wait(f"{name}: network error ({type(exc).__name__}); retry {attempt + 1} of {attempts} in {delay:.0f} s.")
             time.sleep(delay)
             delay *= 2
             continue
         if resp.status_code in RETRYABLE_STATUS and attempt < attempts:
+            progress.note_wait(f"{name}: Meta returned HTTP {resp.status_code}; retry {attempt + 1} of {attempts} in {delay:.0f} s.")
             time.sleep(delay)
             delay *= 2
             continue
         if resp.status_code >= 400:
-            raise MuseAPIError(f"{path} respondió HTTP {resp.status_code}: {resp.text[:800]}")
+            raise MuseAPIError(f"{path} returned HTTP {resp.status_code}: {resp.text[:800]}")
         return resp
-    raise MuseAPIError(f"{path}: reintentos agotados")
+    raise MuseAPIError(f"{path}: retries exhausted")
 
 
 def normalize_usage(usage: Optional[Dict[str, Any]]) -> Dict[str, int]:
@@ -85,6 +103,9 @@ def transcribe_wav(
     audio_bytes = wav if isinstance(wav, bytes) else Path(wav).read_bytes()
     resp = _post(
         "/asr/transcribe",
+        timeout=60.0,
+        max_timeout=180.0,
+        label="Muse Voice Transcribe",
         headers=_auth_headers(),
         files={
             "request": (None, json.dumps(request_body), "application/json"),
@@ -120,14 +141,17 @@ def chat_json(
     if reasoning_effort:
         body["reasoning_effort"] = reasoning_effort
 
-    # Con 3 videos de 60 s la respuesta puede pasar de 2 min; un timeout corto reintentaría y cobraría de nuevo.
-    resp = _post("/chat/completions", timeout=300.0, headers=_auth_headers(), json=body)
+    # Límite según el tamaño de la petición: ~90 s para llamadas chicas (suelen responder en 10-30 s) y hasta 300 s
+    # con 3 videos de 60 s. Si se agota, _post reintenta con el doble.
+    size_mb = len(json.dumps(body)) / 1_000_000
+    timeout = min(300.0, 90.0 + 20.0 * size_mb)
+    resp = _post("/chat/completions", timeout=timeout, max_timeout=300.0, label=f"Muse Spark ({size_mb:.1f} MB)", headers=_auth_headers(), json=body)
     data = resp.json()
     try:
         content = data["choices"][0]["message"]["content"]
         parsed = json.loads(content)
     except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
-        raise MuseAPIError(f"Respuesta inesperada de {model}: {json.dumps(data)[:800]}") from exc
+        raise MuseAPIError(f"Unexpected response from {model}: {json.dumps(data)[:800]}") from exc
     return parsed, normalize_usage(data.get("usage")), data
 
 
@@ -151,7 +175,7 @@ def segment_image_sam(model: str, image_jpeg: bytes, prompt_text: str) -> Tuple[
         ],
         "metadata": {"include_confidence": "true"},
     }
-    resp = _post("/responses", headers=_auth_headers(), json=body)
+    resp = _post("/responses", timeout=60.0, max_timeout=180.0, label="SAM 3.1", headers=_auth_headers(), json=body)
     data = resp.json()
     texts = [
         part.get("text", "")
@@ -185,10 +209,10 @@ def edit_image(
     }
     if size:
         body["size"] = size
-    resp = _post("/images/edits", timeout=300.0, headers=_auth_headers(), json=body)
+    resp = _post("/images/edits", timeout=120.0, max_timeout=300.0, label="Muse Image", headers=_auth_headers(), json=body)
     data = resp.json()
     try:
         image_bytes = base64.b64decode(data["data"][0]["b64_json"])
     except (KeyError, IndexError, TypeError, ValueError) as exc:
-        raise MuseAPIError(f"Respuesta inesperada de {model}: {json.dumps(data)[:800]}") from exc
+        raise MuseAPIError(f"Unexpected response from {model}: {json.dumps(data)[:800]}") from exc
     return image_bytes, data.get("usage") or {}

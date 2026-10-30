@@ -32,7 +32,9 @@ Aplicación web de Hackathon para procesar de **1 a 3 videos cortos (máximo 60s
 - **API real:** Meta Model API — `https://api.meta.ai/v1`, cabecera `Authorization: Bearer <META_MUSE_API_KEY>`, compatible con el SDK de OpenAI. Docs: https://dev.meta.ai/docs/models.md. Cliente HTTP: `backend/core/muse_api.py`.
 - **Modelos disponibles en la API (verificado con `GET /v1/models` el 2026-10-29):** `muse-voice-transcribe-1.0` (`POST /asr/transcribe`), `muse-spark-1.3` / `1.2` / `1.1` (`POST /chat/completions`, acepta imágenes), `muse-image-1.0`, `sam-3.1`, `muse-wonder-1.0`.
 - **NO están en la API:** `Muse Glimmer` (open-weight, solo auto-hospedado) → se reemplaza por `muse-spark-1.3` con imagen. `Muse Code` es un producto de Meta, no un modelo → el código del catálogo lo genera `muse-spark-1.3`.
-- **Modelos configurables en `.env`:** `MUSE_VOICE_MODEL`, `MUSE_SPARK_MODEL`, `MUSE_SAM_MODEL`, `MUSE_VOICE_LANGUAGES` (por defecto `Spanish`), `MUSE_SPARK_REASONING_PHASE2` / `MUSE_SPARK_REASONING_PHASE3` (por defecto `low`), `MUSE_PHASE3_MIN_IOU` (0.3), `MUSE_PHASE3_VERIFY_CUTOUTS` (1), `MUSE_IMAGE_MODEL`, `MUSE_IMAGE_SIZE` (1024x1024), `MUSE_IMAGE_PARALLEL` (4), `MUSE_PHASE4_LIFESTYLE` (1).
+- **Modelos configurables en `.env`:** `MUSE_VOICE_MODEL`, `MUSE_SPARK_MODEL`, `MUSE_SAM_MODEL`, `MUSE_VOICE_LANGUAGES` (por defecto `Spanish,English`), `MUSE_SPARK_REASONING_PHASE2` / `MUSE_SPARK_REASONING_PHASE3` (por defecto `low`), `MUSE_PHASE3_MIN_IOU` (0.3), `MUSE_PHASE3_VERIFY_CUTOUTS` (1), `MUSE_IMAGE_MODEL`, `MUSE_IMAGE_SIZE` (1024x1024), `MUSE_IMAGE_PARALLEL` (4), `MUSE_PHASE4_LIFESTYLE` (1).
+- **Esperas y reintentos (v5.1.0):** límite de espera por llamada según tamaño (Spark: 90 s + 20 s por MB, máx. 300; Muse Image 120; SAM y Voice 60). Si Meta no responde, el reintento espera el doble (hasta el máximo), máx. 4 intentos. Motivo: el 2026-10-29 una llamada de Spark visión quedó colgada en Meta 5 min mientras la API respondía en 1,3 s a otras llamadas.
+- **Progreso en vivo:** `backend/core/progress.py` (en memoria, una sesión a la vez) alimentado por el TokenTracker y por el cliente de la API; `GET /api/v1/progress?session_id=` devuelve fase, último evento, aviso de espera de Meta, tokens e imágenes en curso.
 - **Muse Image en la API:** `POST /images/edits` (JSON, `images[].image_url` con data URL; sin máscara ni transparencia, fondo siempre opaco). Cobra **US$0.01 por imagen**, no por token (`usage` es solo referencial). ~15–25 s por imagen. Nombres de marcas o personajes (Winnie the Pooh, Iron Man, Funko) disparan `content_policy_violation`: se reintenta sin nombrar el producto.
 - **SAM 3.1 en la API:** `POST /responses` con `input_text` (frase nominal corta en inglés, o prompt de caja de `build_object_prompt`) + `input_image` (data URL). La salida son tokens `<0f>id<|box;...|><|mask;...|>`; se decodifican con el parser oficial `meta-sam-parser` (en `requirements.txt`). No reporta tokens (cobra por imagen procesada). Las frases genéricas funcionan mejor ("bottle" sí, "spray bottle" no).
 - **Límites Operativos:** `MAX_VIDEOS=3`, `MAX_DURATION_SEC=60`, `LAPLACIAN_BLUR_THRESHOLD=80.0`
@@ -53,7 +55,8 @@ muse-catalog-hackathon/
 │   ├── requirements.txt
 │   ├── core/
 │   │   ├── config.py           # Carga de .env y constantes
-│   │   ├── muse_api.py         # Cliente HTTP real de la Meta Model API (reintentos, JSON Schema, usage)
+│   │   ├── muse_api.py         # Cliente HTTP real de la Meta Model API (reintentos con espera creciente, JSON Schema, usage)
+│   │   ├── progress.py         # Progreso en vivo de la fase en curso (GET /api/v1/progress)
 │   │   ├── muse_client.py      # Lógica por fase sobre muse_api.py con Caché MD5 y TokenTracker
 │   │   └── token_tracker.py    # Middleware de trazas y cálculo de ahorro de tokens
 │   └── services/
@@ -98,3 +101,28 @@ muse-catalog-hackathon/
   - Tienda: filtros por categoría, buscador, orden por precio, selector de vistas (izquierda/derecha/atrás marcadas "IA"), ficha ampliada, carrito con totales por moneda, "Consultar precio" para productos sin precio, "Foto real del video" para tomas insuficientes.
   - Carpeta `storage/<sesión>/catalog/` con `muse_ecommerce_catalog.html` + `images/` (rutas relativas, máx. 1024 px). `/api/v1/phase5/catalog-preview` redirige a esa carpeta; `/catalog-download` entrega un ZIP que se abre sin el servidor (Tailwind por CDN: necesita internet para los estilos).
   - Resumen con números reales: tokens de la API, tokens evitados por caché (solo `CACHE_HIT_MD5`), imágenes cobradas y costo; desglose por modelo con llamadas API y aciertos de caché.
+- **FRONTEND "Brak Shop" v0.1 (rama git `version-0.1`):** `READY_FOR_USER_TEST`. `frontend/index.html` reescrito (el dashboard técnico anterior queda en la rama `main`). Sin cambios en el backend.
+  - Tienda Activa (aprobados en `localStorage`; semilla = productos de la última sesión real vía `GET /api/v1/session/current`), Pendientes de Aprobación (editar nombre/precio/estado, Aceptar y Publicar, Rechazar, Aceptar Todos), drawer "+ Agregar Productos con Video (Muse AI)" que encadena Fase 1 → 5 con stepper de 7 modelos, reintento desde la fase que falle, monitor de trazas del TokenTracker y carrito por moneda.
+  - Datos: `catalog_products` (Fase 5) + `studio_products` (mejor frame, `quality_score`, `mention_type`, recorte SAM). Imágenes del catálogo = `/storage/<sesión>/catalog/<src>`. Base de la API configurable con `localStorage.brak_api_base` (vacío = mismo origen).
+  - El stepper muestra los modelos que de verdad corren: "Muse Spark · visión" (rol de Glimmer) y "Muse Spark · textos" (rol de Muse Code). Los contadores se actualizan al terminar cada fase (el backend no transmite progreso intermedio).
+- **FRONTEND v0.1.1 (rama `version-0.1.1`):** `READY_FOR_USER_TEST` — Etapa 1 del rediseño visual (Inter, íconos SVG, estudio gris perla con multiply, tarjetas con rotación de ángulos al pasar el mouse, animaciones). Etapas 2 y 3 pendientes.
+- **FRONTEND v0.1.2 (rama `version-0.1.2`):** `READY_FOR_USER_TEST` — Etapa 2: Meta Muse Studio a pantalla completa con revelado progresivo (HEAD sobre rutas predecibles de `studio/`), antes/después arrastrable, franja de los 7 modelos e inicio con productos flotantes. Sin cambios en el backend.
+- **v0.2 (rama `version-0.2`): Configuración de prompts de los agentes.** Estado: `READY_FOR_USER_TEST`.
+  - Registro en `backend/core/prompts.py`: 13 agentes con instrucciones adicionales o modo experto, y perfiles en `storage/prompts/`.
+  - Endpoints `/api/v1/prompts*` y vista "Agentes" en el frontend.
+  - Regla de oro: sin perfil activo, los prompts y las claves de caché quedan idénticos. Se verificó con las Fases 2→5 desde caché: 0 llamadas y catálogo idéntico.
+  - Para agregar un prompt nuevo: definir la constante, llamar a `prompts.register(...)` junto a ella, usar `prompts.get(key)` y añadir `prompts.signature(key)` a la clave de caché.
+- **v0.3 (rama `version-0.3`): Flujo de agentes con bolitas.** Etapa 1: `TESTED_OK`.
+  - Grafo visual de orden fijo (vista "Flujo" y Studio en vivo), solo frontend.
+  - Etapa 2 `TESTED_OK`: `backend/core/flows.py` (9 opciones; los valores por defecto salen del `.env`, así que "Completo de Meta Muse" es idéntico), endpoints `/api/v1/flows*`, interruptores en las bolitas, desvíos, estimación y chip Perfil · Flujo. **Al probar con procesos (SAM usa ProcessPool), proteger los scripts con `if __name__ == "__main__"`.**
+  - Extra `TESTED_OK`: aviso de repetidos en "Por revisar" (solo frontend). Coincidencia por `video_md5` + nombre normalizado; "Aceptar todos" salta los repetidos. Con el mismo video basta un nombre parecido (≥ 3/4 de las palabras), y `backfillVideoMd5()` completa los productos antiguos.
+  - **Error conocido (backend, sin corregir):** la clave de caché de la Fase 2 usa el MD5 de `video_proxies/*_480p.mp4`, que ffmpeg no genera igual dos veces. Por eso re-subir el mismo video vuelve a llamar a Spark y regenera imágenes. Arreglo propuesto: usar el MD5 del video original más los parámetros, con la clave antigua como respaldo.
+  - Extra `TESTED_OK`: nueva marca (logo "b" con play recortado) e interfaz en inglés (requisito del hackathon). Los textos visibles van en inglés. Los patrones del frontend sobre nombres de modelo y el 409 son bilingües.
+  - **v0.3.2 (commit en la rama `version-0.3`), `TESTED_OK` con 2 videos reales: pipeline en inglés de punta a punta. Perfil por defecto renombrado a "Default".**
+    - Los 7 prompts que estaban en español (`p2_extract`, `p2_verify`, `p3_vision`, `p3_cut_check`, `p3_cut_choice`, `p4_fidelity`, `p5_copy`) y los mensajes que arma el código para los modelos están en inglés. Los modelos escriben en inglés aunque el vendedor hable español; `quote` / `raw_spoken_phrase` siguen literales.
+    - La voz escucha español e inglés (`MUSE_VOICE_LANGUAGES=Spanish,English`, palabras clave bilingües); la clave de caché de la transcripción incluye idiomas y palabras clave.
+    - Centinelas nuevos con alias en español para sesiones viejas: `"Optimal"`/`"Óptimo"`, `" | Cutout:"`/`" | Recorte:"`, `NOT_MENTIONED_VALUES` (`"Not mentioned"`/`"No mencionado"`). Los marcadores de prompt de caja solo se tradujeron (`"Spark box"`, `"expanded box"`); la lógica de SAM no cambió.
+    - Versiones subidas (la caché vieja no se reutiliza para esas llamadas): phase2_v7, verify_v2, phase3_v3, cutcheck_v3, fidelity_v5, phase5_v2.
+    - Se borraron las sesiones `storage/sess_*` y el `session_state.json` raíz (los videos originales siguen en Descargas). La caché se conservó. El frontend usa claves de localStorage `brak_*_v2` y borra las `v1`.
+  - Etapa 3 pendiente: estimador de costo, "Regenerar desde esta bolita" y pausa tras la Fase 2.
+  - Base: commit `bdc0f9a` de la v0.2 (rama `version-0.2`).

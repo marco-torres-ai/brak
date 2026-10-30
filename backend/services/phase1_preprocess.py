@@ -154,7 +154,7 @@ async def process_single_video(
         tracker.record_event(
             phase=1,
             model="OpenCV+FFmpeg Pre-Filter",
-            operation=f"Video '{raw_filename}' rechazado: archivo corrupto o codec no soportado",
+            operation=f"Video '{raw_filename}' rejected: corrupt file or unsupported codec",
             tokens_saved=ESTIMATED_VISION_TOKENS_PER_FRAME * 30,
             status="REJECTED_CORRUPT",
         )
@@ -162,7 +162,7 @@ async def process_single_video(
             "video_id": video_id,
             "filename": raw_filename,
             "status": "REJECTED_CORRUPT",
-            "reason": "No se pudo abrir el contenedor de video con OpenCV.",
+            "reason": "OpenCV could not open the video container.",
             "retained_frames": [],
         }
 
@@ -182,8 +182,8 @@ async def process_single_video(
             phase=1,
             model="OpenCV+FFmpeg Pre-Filter",
             operation=(
-                f"Video '{raw_filename}' ({duration_sec}s) excede el máximo permitido "
-                f"de {MAX_DURATION_SEC:.0f}s. Rechazado sin gastar tokens."
+                f"Video '{raw_filename}' ({duration_sec}s) exceeds the allowed maximum "
+                f"of {MAX_DURATION_SEC:.0f}s. Rejected without spending tokens."
             ),
             tokens_saved=tokens_avoided,
             status="REJECTED_DURATION_EXCEEDED",
@@ -193,7 +193,7 @@ async def process_single_video(
             "filename": raw_filename,
             "video_md5": video_md5,
             "status": "REJECTED_DURATION_EXCEEDED",
-            "reason": f"Duración ({duration_sec}s) supera el límite de {MAX_DURATION_SEC:.0f} segundos.",
+            "reason": f"Duration ({duration_sec}s) exceeds the {MAX_DURATION_SEC:.0f}-second limit.",
             "duration_sec": duration_sec,
             "resolution": f"{width}x{height}",
             "fps": round(fps, 2),
@@ -304,7 +304,7 @@ async def process_single_video(
         tracker.record_event(
             phase=1,
             model="OpenCV+FFmpeg Pre-Filter",
-            operation=f"Video '{raw_filename}' rechazado por estar totalmente oscuro (brillo={avg_brightness}).",
+            operation=f"Video '{raw_filename}' rejected for being completely dark (brightness={avg_brightness}).",
             tokens_saved=tokens_avoided,
             status="REJECTED_BLACK_VIDEO",
         )
@@ -313,7 +313,7 @@ async def process_single_video(
             "filename": raw_filename,
             "video_md5": video_md5,
             "status": "REJECTED_BLACK_VIDEO",
-            "reason": "El video está completamente en negro o sin iluminación útil.",
+            "reason": "The video is completely black or has no usable lighting.",
             "duration_sec": duration_sec,
             "resolution": f"{width}x{height}",
             "fps": round(fps, 2),
@@ -385,9 +385,9 @@ async def process_single_video(
         model="OpenCV+FFmpeg Pre-Filter",
         operation=(
             f"Video '{raw_filename}' ({duration_sec}s, {width}x{height}): "
-            f"{len(retained_frames)} frames nítidos retenidos ({rescued_count} rescatados con CLAHE), "
-            f"{discarded_count} frames con motion blur descartados (umbral={blur_threshold}). "
-            f"Audio 16kHz mono listo (MD5={audio_info['audio_md5'][:10]}...)."
+            f"{len(retained_frames)} sharp frames kept ({rescued_count} rescued with CLAHE), "
+            f"{discarded_count} motion-blurred frames discarded (threshold={blur_threshold}). "
+            f"16kHz mono audio ready (MD5={audio_info['audio_md5'][:10]}...)."
         ),
         input_tokens=0,
         image_tokens=0,
@@ -440,9 +440,9 @@ async def run_phase1_preprocess(
     sample_fps: float = 2.0,
 ) -> Dict[str, Any]:
     if not files or len(files) == 0:
-        raise ValueError("Debes subir al menos 1 video para procesar.")
+        raise ValueError("Upload at least 1 video to process.")
     if len(files) > MAX_VIDEOS:
-        raise ValueError(f"Máximo {MAX_VIDEOS} videos permitidos por lote (recibidos: {len(files)}).")
+        raise ValueError(f"Maximum {MAX_VIDEOS} videos per batch (received: {len(files)}).")
 
     session_state = create_initial_session_state()
     session_id = session_state["session_id"]
@@ -451,7 +451,7 @@ async def run_phase1_preprocess(
     tracker.record_event(
         phase=1,
         model="OpenCV+FFmpeg Pre-Filter",
-        operation=f"Iniciando Fase 1 para {len(files)} video(s) en sesión {session_id} (Umbral Laplaciano={blur_threshold}, FPS muestreo={sample_fps})",
+        operation=f"Starting Phase 1 for {len(files)} video(s) in session {session_id} (Laplacian threshold={blur_threshold}, sampling FPS={sample_fps})",
         tokens_saved=0,
         status="ZERO_TOKEN_LOCAL",
     )

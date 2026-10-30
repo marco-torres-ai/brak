@@ -17,26 +17,27 @@ import cv2
 import numpy as np
 
 from backend.core.config import MUSE_SPARK_MODEL
+from backend.core import prompts
 from backend.core.muse_api import chat_json
 from backend.core.muse_client import get_cached_result, set_cached_result
 from backend.core.token_tracker import TokenTracker
 
-CUTOUT_CHECK_VERSION = "cutcheck_v2"
+CUTOUT_CHECK_VERSION = "cutcheck_v3"
 TILE_SIZE = 300
 SHEET_COLS = 4
 MAX_OPTIONS = 5
 PART_SEARCH_MARGIN = 0.2
 SAME_MASK_IOU = 0.9
 
-CHECK_SYSTEM_PROMPT = """Revisas recortes automáticos de productos para un catálogo e-commerce. Cada recorte es un PNG sin fondo mostrado sobre un fondo a cuadros grises, con su product_id escrito encima. Recibes también el nombre del producto esperado para cada product_id.
-Para cada recorte decide verdict:
-- OK: se ve el producto esperado completo o casi completo (puede faltar un borde mínimo), sin fondo ni mano relevantes.
-- INCOMPLETE: falta una parte importante del producto (cortado, tapado por la mano, solo una pieza de un par o set).
-- WRONG_OBJECT: es otro objeto, una superficie o el fondo.
-- EXTRA_CONTENT: incluye mano, fondo u otros objetos en una proporción importante.
-- UNRECOGNIZABLE: manchas o formas sin sentido; no se reconoce el producto.
-problem: explicación breve en español (cadena vacía si es OK).
-missing_part_prompt: si es INCOMPLETE, frase nominal corta EN INGLÉS de la parte que falta para que un segmentador la busque en la foto original (por ejemplo "felt spikes", "lid", "earbud"); cadena vacía si no es INCOMPLETE o si lo que falta es un accesorio que solo se nombra en la etiqueta."""
+CHECK_SYSTEM_PROMPT = """You review automatic product cutouts for an e-commerce catalog. Each cutout is a background-free PNG shown on a gray checkerboard, with its product_id written above it. You also receive the expected product name for each product_id.
+For each cutout decide the verdict:
+- OK: the expected product is visible, complete or nearly complete (a tiny edge may be missing), with no significant background or hand.
+- INCOMPLETE: an important part of the product is missing (cut off, covered by the hand, only one piece of a pair or set).
+- WRONG_OBJECT: it is a different object, a surface or the background.
+- EXTRA_CONTENT: it includes a hand, background or other objects in a significant proportion.
+- UNRECOGNIZABLE: blotches or meaningless shapes; the product cannot be recognized.
+problem: brief explanation in English (empty string if OK).
+missing_part_prompt: if INCOMPLETE, a short noun phrase IN ENGLISH for the missing part so a segmenter can look for it in the original photo (for example "felt spikes", "lid", "earbud"); empty string if not INCOMPLETE or if what is missing is an accessory that is only named in the label."""
 
 CHECK_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -60,9 +61,20 @@ CHECK_SCHEMA: Dict[str, Any] = {
     "additionalProperties": False,
 }
 
-CHOICE_SYSTEM_PROMPT = """Para cada producto recibes su nombre esperado y una imagen con varios recortes candidatos del mismo producto, rotulados con letras (A, B, C, D, E) y mostrados sobre un fondo a cuadros grises.
-Elige la letra del recorte que mejor sirve como foto de catálogo: el producto correcto, lo más completo posible, sin mano ni fondo, nítido.
-Si ninguno muestra el producto correcto de forma reconocible, responde NONE. reason: breve en español."""
+CHOICE_SYSTEM_PROMPT = """For each product you receive its expected name and an image with several candidate cutouts of the same product, labeled with letters (A, B, C, D, E) and shown on a gray checkerboard.
+Choose the letter of the cutout that works best as a catalog photo: the right product, as complete as possible, with no hand or background, sharp.
+If none shows the right product recognizably, answer NONE. reason: brief, in English."""
+
+prompts.register(
+    "p3_cut_check", CHECK_SYSTEM_PROMPT, phase=3, model="Muse Spark", group="advanced",
+    title="Cutout verifier",
+    description="Checks every SAM 3.1 cutout and detects whether it is incomplete, a different object, includes background or a hand, or is unrecognizable.",
+)
+prompts.register(
+    "p3_cut_choice", CHOICE_SYSTEM_PROMPT, phase=3, model="Muse Spark", group="advanced",
+    title="Best cutout picker",
+    description="Among several alternative cutouts of the same product, picks the one that works best as a catalog photo.",
+)
 
 CHOICE_SCHEMA: Dict[str, Any] = {
     "type": "object",
@@ -124,16 +136,17 @@ def _image_part(jpeg: bytes) -> Dict[str, Any]:
 
 
 def _call_spark(
-    tracker: TokenTracker, namespace: str, system: str, content: List[Dict[str, Any]], schema_name: str, schema: Dict[str, Any], key_src: str, label: str
+    tracker: TokenTracker, namespace: str, prompt_key: str, content: List[Dict[str, Any]], schema_name: str, schema: Dict[str, Any], key_src: str, label: str
 ) -> Dict[str, Any]:
-    cache_key = hashlib.md5(f"{MUSE_SPARK_MODEL}|{CUTOUT_CHECK_VERSION}|{key_src}".encode("utf-8")).hexdigest()
+    system = prompts.get(prompt_key)
+    cache_key = hashlib.md5(f"{MUSE_SPARK_MODEL}|{CUTOUT_CHECK_VERSION}|{key_src}{prompts.signature(prompt_key)}".encode("utf-8")).hexdigest()
     cached = get_cached_result(namespace, cache_key)
     if cached:
         usage = cached["usage"]
         tracker.record_event(
             phase=3,
-            model="Muse Spark (Verificador de recortes)",
-            operation=f"Caché MD5 HIT: {label} sin llamar a la API.",
+            model="Muse Spark (Cutout verifier)",
+            operation=f"MD5 cache HIT: {label} without calling the API.",
             tokens_saved=usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
             status="CACHE_HIT_MD5",
         )
@@ -148,8 +161,8 @@ def _call_spark(
     set_cached_result(namespace, cache_key, {"parsed": parsed, "usage": usage})
     tracker.record_event(
         phase=3,
-        model="Muse Spark (Verificador de recortes)",
-        operation=f"{MUSE_SPARK_MODEL}: {label} (razonamiento 'low': {usage['reasoning_tokens']} tokens).",
+        model="Muse Spark (Cutout verifier)",
+        operation=f"{MUSE_SPARK_MODEL}: {label} (reasoning 'low': {usage['reasoning_tokens']} tokens).",
         input_tokens=usage["input_tokens"],
         output_tokens=usage["output_tokens"],
         status="API_CALL",
@@ -223,7 +236,7 @@ def _alternatives(r: Dict[str, Any], missing_part_prompt: str) -> List[Dict[str,
             merged = current.copy()
             for i in pieces:
                 merged |= i["mask"]
-            options.append({"slot": r["slot"], "image": image, "spark_box": r["spark_box"], "seg": _seg_from(merged, "TEXT_PROMPT", f"{r['seg'].get('prompt')} + {part}", r["seg"], None), "desc": f"recorte original + parte faltante '{part}'"})
+            options.append({"slot": r["slot"], "image": image, "spark_box": r["spark_box"], "seg": _seg_from(merged, "TEXT_PROMPT", f"{r['seg'].get('prompt')} + {part}", r["seg"], None), "desc": f"original cutout + missing part '{part}'"})
 
     # Caja ampliada (máscara actual ∪ caja de Spark) como prompt de caja
     box = _union_box(r)
@@ -234,7 +247,7 @@ def _alternatives(r: Dict[str, Any], missing_part_prompt: str) -> List[Dict[str,
         if found:
             best = max(found, key=lambda i: i.get("confidence") or 0)
             if _mask_iou(best["mask"], current) < SAME_MASK_IOU:
-                options.append({"slot": r["slot"], "image": image, "spark_box": r["spark_box"], "seg": _seg_from(best["mask"], "BOX_PROMPT", "caja ampliada", r["seg"], best.get("confidence")), "desc": "caja ampliada como prompt de SAM"})
+                options.append({"slot": r["slot"], "image": image, "spark_box": r["spark_box"], "seg": _seg_from(best["mask"], "BOX_PROMPT", "expanded box", r["seg"], best.get("confidence")), "desc": "expanded box as SAM prompt"})
 
     text_attempts = [a for a in r["seg"].get("attempts", []) if a.get("prompt") != "BOX_PROMPT"]
     if not prompts or (text_attempts and all(a.get("matches", 0) == 0 for a in text_attempts)):
@@ -243,14 +256,14 @@ def _alternatives(r: Dict[str, Any], missing_part_prompt: str) -> List[Dict[str,
 
     same = segment_product(r["image"], None, prompts)
     if same["instance"] is not None and _mask_iou(same["instance"]["mask"], current) < SAME_MASK_IOU:
-        options.append({"slot": r["slot"], "image": image, "spark_box": r["spark_box"], "seg": same, "desc": f"frame {r['slot']} con la frase '{same['prompt']}'"})
+        options.append({"slot": r["slot"], "image": image, "spark_box": r["spark_box"], "seg": same, "desc": f"frame {r['slot']} with the phrase '{same['prompt']}'"})
 
     scores = {int(e.get("slot", 0)): float(e.get("score", 0) or 0) for e in r["v"].get("slot_evaluations", [])}
     for slot in sorted((k for k in range(1, len(candidates) + 1) if k != r["slot"]), key=lambda k: -scores.get(k, 0)):
         other = load_frame_for_sam(candidates[slot - 1])
         seg = segment_product(other, None, prompts)
         if seg["instance"] is not None:
-            options.append({"slot": slot, "image": other, "spark_box": None, "seg": seg, "desc": f"frame {slot} con la frase '{seg['prompt']}'"})
+            options.append({"slot": slot, "image": other, "spark_box": None, "seg": seg, "desc": f"frame {slot} with the phrase '{seg['prompt']}'"})
     return options[: MAX_OPTIONS - 1]
 
 
@@ -269,7 +282,7 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
 
     # 1. Revisión de todos los recortes en una hoja (1 imagen por cada 8 productos)
     names = {r["prod"]["product_id"]: r["v"]["resolved_name"] for r in results}
-    content: List[Dict[str, Any]] = [{"type": "text", "text": "Productos esperados:\n" + json.dumps(names, ensure_ascii=False)}]
+    content: List[Dict[str, Any]] = [{"type": "text", "text": "Expected products:\n" + json.dumps(names, ensure_ascii=False)}]
     digests = []
     for i in range(0, len(results), 2 * SHEET_COLS):
         chunk = results[i : i + 2 * SHEET_COLS]
@@ -279,19 +292,19 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
     parsed = _call_spark(
         tracker,
         "phase3_cutout_check",
-        CHECK_SYSTEM_PROMPT,
+        "p3_cut_check",
         content,
         "Phase3CutoutCheck",
         CHECK_SCHEMA,
         json.dumps([names, digests], sort_keys=True, ensure_ascii=False),
-        f"revisión de {len(results)} recorte(s) en {len(digests)} hoja(s)",
+        f"review of {len(results)} cutout(s) in {len(digests)} sheet(s)",
     )
     verdicts = {p["product_id"]: p for p in parsed.get("products", [])}
 
     failing = []
     for r in results:
         pid = r["prod"]["product_id"]
-        verdict = verdicts.get(pid, {"verdict": "OK", "problem": "Sin dictamen; se asume correcto."})
+        verdict = verdicts.get(pid, {"verdict": "OK", "problem": "No verdict; assumed correct."})
         r["cutout_check"] = {
             "verdict": verdict["verdict"],
             "problem": verdict["problem"],
@@ -301,7 +314,7 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
         if verdict["verdict"] != "OK":
             failing.append(r)
     if not failing:
-        tracker.record_event(phase=3, model="Verificador de recortes", operation=f"Los {len(results)} recortes pasaron la revisión.", status="ZERO_TOKEN_LOCAL")
+        tracker.record_event(phase=3, model="Cutout verifier", operation=f"All {len(results)} cutouts passed the review.", status="ZERO_TOKEN_LOCAL")
         return
 
     # 2. Alternativas con SAM (0 tokens) y 3. elección con Spark
@@ -309,7 +322,7 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
     slim = [{k: r[k] for k in ("item", "v", "slot", "image", "spark_box", "seg", "cutout_check")} for r in failing]
     alternatives = run_parallel(alternatives_job, [(r, r["cutout_check"]["missing_part_prompt"]) for r in slim])
     for r, alts in zip(failing, alternatives):
-        options = [{"slot": r["slot"], "image": r["image"], "spark_box": r["spark_box"], "seg": r["seg"], "desc": "recorte original"}]
+        options = [{"slot": r["slot"], "image": r["image"], "spark_box": r["spark_box"], "seg": r["seg"], "desc": "original cutout"}]
         options += alts
         r["_options"] = options
         if len(options) > 1:
@@ -328,17 +341,17 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
                 tiles.append(_tile(cutout_rgba(opt["image"], mask, box)[0], f"{pid}  {letter}"))
             jpeg = _jpeg(np.hstack(tiles))
             key_parts.append([pid, r["v"]["resolved_name"], hashlib.md5(jpeg).hexdigest()])
-            content.append({"type": "text", "text": f"product_id: {pid}\nProducto esperado: {r['v']['resolved_name']}\nOpciones: {', '.join('ABCDE'[: len(tiles)])}"})
+            content.append({"type": "text", "text": f"product_id: {pid}\nExpected product: {r['v']['resolved_name']}\nOptions: {', '.join('ABCDE'[: len(tiles)])}"})
             content.append(_image_part(jpeg))
         parsed = _call_spark(
             tracker,
             "phase3_cutout_choice",
-            CHOICE_SYSTEM_PROMPT,
+            "p3_cut_choice",
             content,
             "Phase3CutoutChoice",
             CHOICE_SCHEMA,
             json.dumps(key_parts, sort_keys=True, ensure_ascii=False),
-            f"elección entre recortes alternativos para {len(to_choose)} producto(s)",
+            f"choice among alternative cutouts for {len(to_choose)} product(s)",
         )
         choices = {c["product_id"]: c for c in parsed.get("choices", [])}
 
@@ -368,7 +381,7 @@ def verify_and_repair_cutouts(tracker: TokenTracker, results: List[Dict[str, Any
 
     tracker.record_event(
         phase=3,
-        model="Verificador de recortes",
+        model="Cutout verifier",
         operation="; ".join(
             f"{r['prod']['product_id']}: {r['cutout_check']['verdict']} -> {r['cutout_check']['status']}"
             + (f" ({r['cutout_check'].get('repaired_with')})" if r["cutout_check"].get("repaired_with") else "")

@@ -280,3 +280,199 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
 - **Detalle observado:** un título salió incompleto ("Peluche de Winnie the Pooh con roja"): error de redacción del modelo; queda para revisar en la prueba del usuario.
 - **Estado:** `READY_FOR_USER_TEST`.
 - **Ajuste previo a la prueba completa:** las Fases 2, 3 y el "Flujo Completo Automático" (`/api/v1/pipeline/run-all`) también corren en otro hilo (`asyncio.to_thread`), igual que las Fases 4 y 5: el servidor no se congela mientras trabajan.
+
+## v0.1.0-frontend — Brak Shop (rama `version-0.1`) (2026-10-29)
+- **Git:** se inicializó el repositorio con `.gitignore` (excluye `.env`, `storage/`, `session_state.json`, ZIPs y `__pycache__`); se verificó que la clave no está en ningún archivo versionado. Commit base en `main` y rama `version-0.1`.
+- **Frontend nuevo** (`frontend/index.html`, sin tocar archivos `.py`): estética Meta AI Dark Studio (fondo #020617 con halo azul Meta, glassmorphism, lienzo blanco para fotos, azul #0866FF, gradiente Meta AI, esmeralda para precios, ámbar para pendientes, coral para rechazar).
+  - Tienda Activa con filtros, buscador, orden, selector de vistas (IA marcadas), vista rápida, carrito por moneda y "Consultar precio".
+  - Pendientes de Aprobación (human-in-the-loop) con comparativa mejor frame / recorte SAM / vistas Muse Image, badges EXPLICIT/DEICTIC y calidad, edición rápida y Aceptar/Rechazar/Aceptar Todos (persistencia en `localStorage`).
+  - Drawer de carga (1–3 videos, valida ≤ 60 s en el navegador) que encadena las Fases 1→5 con stepper animado, temporizador, contadores reales de tokens/imágenes tras cada fase y reintento desde la fase fallida.
+  - Monitor de trazas del TokenTracker en un drawer.
+- **Verificación:** sintaxis JS OK; ejecución con DOM simulado contra el backend real: semilla con los 4 productos de `sess_20261029_213301`, imágenes 200, pipeline desde la Fase 5 (caché) → 4 pendientes y 7 pasos completos, aprobar/aceptar todos, carrito ($10 USD), vista rápida y monitor (26,623 tokens, 25 imágenes, 46 trazas).
+- **Estado:** `READY_FOR_USER_TEST`.
+
+## v5.1.0 — Recuperación rápida de peticiones trabadas en Meta + progreso en vivo (2026-10-29)
+- **Incidente:** en la prueba del frontend (`sess_20261029_215517`) la llamada de Spark visión de la Fase 3 quedó sin respuesta 5 min con la conexión abierta, mientras la API respondía en 1,3 s a una llamada de prueba. El reintento automático (a los 300 s) respondió en 13 s. Causa: petición trabada del lado de Meta; impacto: ~5 min de espera, sin errores ni datos perdidos.
+- **Mejora 1 — espera según tamaño y creciente** (`backend/core/muse_api.py`): Spark 90 s + 20 s/MB (máx. 300), Muse Image 120 s, SAM y Voice 60 s; tras un corte por tiempo, el reintento espera el doble (hasta el máximo), 4 intentos. Probado simulando una petición trabada: 90 s → 180 s y responde; petición de 6 MB: 210 → 300 s. El incidente de hoy se habría recuperado en ~1,5 min.
+- **Mejora 2 — progreso en vivo:** nuevo `backend/core/progress.py` + `GET /api/v1/progress`; el TokenTracker reporta cada evento y el cliente de la API cada espera/reintento. `main.py` marca inicio y fin de cada fase. Frontend: sondeo cada 2,5 s durante cada fase → el stepper avanza modelo por modelo dentro de la fase, contadores de tokens/imágenes/caché en vivo, última acción visible y aviso ámbar "Meta no respondió en N s; se reintenta automáticamente" (o "esperando hace N s" si pasan más de 45 s sin novedades).
+- **Prueba en vivo con el servidor real** (Fases 2→5 de `sess_20261029_215517` desde caché): stepper Spark visión → SAM 3.1 → Muse Image → Spark textos según los eventos; 3 productos en Pendientes en 57 s.
+- No cambian prompts, modelos ni resultados de ninguna fase.
+
+## v0.1.1-docs — Documentación del proyecto (2026-10-29)
+- `README.md` reescrito (estaba en UTF-16 por haberse creado con `echo` en PowerShell; ahora UTF-8): qué hace, rol de cada modelo de Meta, diagrama del pipeline, inicio rápido, uso de Brak Shop, consejos para grabar, costos y tiempos medidos, API, estructura, solución de problemas, limitaciones y recursos oficiales.
+- Nuevos: `docs/ARCHITECTURE.md` (fases, verificadores, caché, robustez, lecciones aprendidas con la API real), `docs/API.md` (endpoints, ejemplos curl/JS, contratos JSON, URLs de imágenes), `docs/assets/pipeline_example.jpg` (3 productos reales del recorte SAM a las vistas de Muse Image) y `.env.example` (plantilla sin clave; `.gitignore` la exceptúa).
+- Rama `version-0.1` recreada (había sido renombrada a `main` por `git branch -M main`).
+
+## v0.1.1-frontend — Brak Shop: base visual premium (Etapa 1) (rama `version-0.1.1`) (2026-10-29)
+- **Diagnóstico (captura real):** parecía un panel de administración: 7 botones de vista por tarjeta, todo en negrita gruesa, 4 botones azules iguales, cuadros blancos "pegados" sobre negro, emojis como íconos, fuente del sistema y nada de movimiento.
+- **Cambios (solo `frontend/index.html`; misma lógica, mismos endpoints):**
+  - Tipografía Inter (Google Fonts) con pesos medios; íconos SVG estilo Lucide en lugar de emojis; superficies con sombras finas en vez de bordes.
+  - Producto en un **estudio gris perla** con viñeta y sombra de piso; las fotos de fondo blanco se funden con `mix-blend-mode: multiply` (sin cuadros blancos).
+  - Tarjeta nueva: indicadores de puntos en lugar de 7 botones, **rotación automática de ángulos al pasar el mouse** (frente → vistas IA), insignia "Vista IA", precio con jerarquía y botón de carrito circular que aparece al pasar el mouse.
+  - Detalles: siluetas de carga (skeleton), contadores animados, el producto "vuela" al carrito, avisos con íconos, entrada escalonada de tarjetas, transiciones suaves; Pendientes, ficha del producto, carrito y paneles con el mismo lenguaje visual.
+- **Verificación:** capturas reales con Edge sin ventana (tienda, pendientes, ficha y carrito) y prueba funcional contra el backend (semilla de 7 productos, pipeline desde la Fase 5, aprobar/aceptar todos, carrito, ficha y monitor).
+- **Estado:** `READY_FOR_USER_TEST`. Etapas 2 (inicio de impacto, franja de modelos, estudio de carga con revelado progresivo) y 3 (antes/después, "Así lo creó la IA") pendientes.
+
+## v0.1.2-frontend — Brak Shop: lucir los modelos de Meta (Etapa 2) (rama `version-0.1.2`) (2026-10-30)
+- **Solo `frontend/index.html`; backend sin cambios.**
+- **Meta Muse Studio (pantalla completa)** en lugar del panel lateral: a la izquierda los videos (con miniatura generada en el navegador), el stepper, avisos y contadores; a la derecha el **lienzo en vivo**:
+  - tras la Fase 2 aparecen los productos detectados por Spark (nombre y precio);
+  - tras la Fase 3, los recortes de SAM 3.1;
+  - **durante la Fase 4 las fotos de Muse Image se revelan una por una a medida que se generan:** la página consulta con `HEAD` las rutas predecibles `storage/<sesión>/studio/<pid>_{master_studio,studio_white,angle_left,angle_right,angle_back,lifestyle}` y usa `last-modified` para ignorar archivos de ejecuciones anteriores;
+  - tras la Fase 5, los títulos finales.
+- **Antes / después arrastrable** (frame original del video vs. foto de estudio) como protagonista en Pendientes y como modo de la ficha del producto.
+- **Franja "Así trabaja Meta Muse":** los 7 pasos con su modelo, ícono y rol, unidos por una línea animada.
+- **Inicio de impacto:** titular "De un video a tu vitrina", llamados a la acción y hasta 3 productos reales flotando con efecto de profundidad al mover el mouse.
+- **Verificación:** capturas reales (inicio, franja, estudio a mitad de la Fase 4, Pendientes con antes/después, ficha en modo comparación); `HEAD` + `last-modified` comprobados en el servidor; prueba funcional completa y ejecución en vivo de las Fases 2→5 (desde caché) con el lienzo pasando de 7 productos a 7 recortes y de 7 a 42 imágenes reveladas.
+- **Estado:** `READY_FOR_USER_TEST`.
+- **Ajuste pedido por el usuario:** la franja de los 7 modelos empujaba los productos fuera de la pantalla (empezaban a ~1,000 px). Se quitó de la tienda: ahora vive en la ventana "Cómo lo hace Meta" (línea de tiempo vertical) y en el lienzo vacío de Meta Muse Studio. Inicio compactado: en 1440×900 la primera fila de productos queda a la vista.
+- **Segundo ajuste del usuario:** se quitaron también los 7 pasos del lienzo vacío de Meta Muse Studio ("Aquí verás trabajar a Meta Muse"); ahora solo muestra el mensaje centrado. Los 7 pasos quedan únicamente en la ventana "Cómo lo hace Meta". 0 tokens.
+
+## v0.2.0 — Configuración de prompts de los agentes (rama `version-0.2`) (2026-10-30)
+- **Pedido del usuario:** que se puedan configurar los prompts de los agentes desde la tienda. El usuario autorizó tocar el backend para esto.
+- **Backend: nuevo registro `backend/core/prompts.py`.**
+  - Los 13 prompts (Fases 2–5) se registran al importarse cada módulo.
+  - Las fases piden el texto con `prompts.get(key)` y agregan `prompts.signature(key)` a su clave de caché.
+  - Hay dos formas de personalizar: **instrucciones adicionales** (se suman al original; en los prompts de imagen se escapan las llaves) y **modo experto** (texto completo, con validación de marcadores `{desc}`, `{problems}` y `{category}`).
+  - **Perfiles** en `storage/prompts/`: crear, duplicar, activar, eliminar, exportar e importar.
+  - "Original de Meta Muse" es de solo lectura; el primer cambio crea "Mi perfil".
+  - Cambios en módulos ya `TESTED_OK`: solo se reemplazó la constante del prompt por `prompts.get(...)` y se agregó la firma a la clave de caché. Sin perfil activo, la firma es `""`, así que **todo queda idéntico**.
+- **Endpoints:**
+  - `GET /api/v1/prompts`
+  - `PUT` y `DELETE /api/v1/prompts/{key}`
+  - `POST /api/v1/prompts/profiles`, `PUT /api/v1/prompts/profiles/active` y `DELETE /api/v1/prompts/profiles/{slug}`
+  - `GET /api/v1/prompts/profiles/{slug}/export` y `POST /api/v1/prompts/profiles/import`
+  - Las escrituras responden 409 si hay una fase corriendo. La sesión guarda `prompt_customizations` cuando hubo prompts personalizados.
+- **Frontend:**
+  - Botón "Agentes" en el encabezado, que abre la vista a pantalla completa "Configuración de agentes".
+  - Barra de perfil: selector, Duplicar, Exportar, Importar y Eliminar.
+  - Tarjetas creativas por fase: extractor, máster, "Sesión de fotos" con pestañas Frente/Izq./Der./Atrás/Ambiente, y textos de venta.
+  - Sección "Avanzado · verificadores", colapsada y con aviso.
+  - En cada tarjeta: modo experto con marcadores que se insertan con un clic, "Volver al texto original", "Restaurar original", aviso de costo y solo lectura mientras corre una fase.
+  - Chip "Perfil: X" en Meta Muse Studio.
+- **Verificación (videos reales ya procesados):**
+  - Pruebas del registro: 13 agentes; textos y firmas idénticos sin perfil; rechazo de marcadores faltantes, desconocidos o desbalanceados; llaves en las instrucciones extra; perfiles, exportar/importar y volver al original.
+  - **Fases 2→5 sobre `sess_20261030_000404` sin perfil: 0 llamadas a la API, 40 caché HIT y `catalog_products` idéntico.**
+  - Con "tono juvenil" en `p5_copy`: solo la Fase 5 llamó a la API (1 llamada) y los textos cambiaron. Al volver al original, el catálogo quedó idéntico desde caché.
+  - Endpoints probados con curl (400 / guardar / exportar), capturas reales de la vista, y sintaxis JS y Python verificada.
+- **Costo de la verificación:** 1 llamada a Muse Spark (~2,600 tokens). 0 imágenes.
+- **Ajuste pedido por el usuario: perfiles más claros.**
+  - Se quitaron de la pantalla Exportar, Importar y "Duplicar"; los endpoints siguen en la API.
+  - Nueva barra: selector, **＋ Nuevo perfil** (ventanita con nombre y "Empezar desde: Original / Copia del perfil actual"), **Renombrar** y Eliminar. Renombrar y Eliminar se desactivan en el original.
+  - Si editas estando en el original, al pulsar Guardar se pide un nombre ("Guardar en un perfil nuevo") en lugar de crear "Mi perfil" a escondidas.
+  - Backend: nuevo `PUT /api/v1/prompts/profiles/{slug}` (renombrar) y slugs reservados `active` e `import` para que no choquen con las rutas.
+  - Verificación: curl (crear "Active" da `active-2`, renombrar, nombre vacío da 400), capturas de las dos ventanitas y flujo completo en el navegador (escribir, Guardar, nombre, Crear: perfil creado, activo y con el cambio). Perfiles de prueba borrados.
+- **Estado:** `READY_FOR_USER_TEST`.
+
+## v0.3.0 (Etapa 1): grafo visual del flujo de agentes (rama `version-0.3`) (2026-10-30)
+- **Plan acordado con el usuario:**
+  - **Enfoque A:** grafo de orden fijo con interruptores. No hay reordenamiento libre porque cada fase depende del resultado de la anterior.
+  - **Selección separada:** Perfil (prompts) + Flujo (estructura).
+  - **Etapas:** 1 = grafo visual en vivo (solo frontend); 2 = flujos configurables (`backend/core/flows.py`, interruptores y parámetros por bolita); 3 = estimador de costo y tiempo, "Regenerar desde esta bolita" (memoización con la caché MD5) y pausa tras la Fase 2.
+- **Etapa 1 (solo `frontend/index.html`; backend sin cambios respecto a v0.2):**
+  - Botón **"Flujo"** en el encabezado. Abre la vista a pantalla completa "Flujo de agentes": un grafo SVG con 17 bolitas (videos → validar y audio → escuchar → detectar productos → verificar audio↔video → ver y ubicar → recortar → verificar recortes → foto máster → 5 vistas en abanico → control de fidelidad → textos → catálogo), agrupadas en bandas por fase.
+  - Bolitas **obligatorias** con borde sólido y **opcionales** con borde punteado. Un punto índigo marca un prompt personalizado en el perfil activo.
+  - **Panel lateral al tocar una bolita:** modelo, fase, qué hace, qué recibe y qué entrega, por qué es obligatoria (o "opcional: se podrá apagar en la Etapa 2") y sus prompts del perfil activo, con **"Editar prompt"** (abre Agentes en esa tarjeta, cambiando la pestaña de vista o abriendo "Avanzado" si hace falta).
+  - **En vivo:** el mismo grafo aparece en Meta Muse Studio, encima del lienzo.
+    - Terminadas en verde, la activa late y las líneas en curso se animan.
+    - En las Fases 1, 2, 3 y 5 la bolita activa sale del último modelo informado por `/api/v1/progress` y nunca retrocede.
+    - En la Fase 4 se usan las fotos que ya existen en el lienzo (máster, cada vista) y los eventos de "Fidelidad".
+- **Verificación:** sintaxis JS; capturas reales del grafo en reposo y de una simulación a mitad de la Fase 4 (vista grande y Studio). Se corrigió una superposición de etiquetas con una nueva distribución y etiquetas en dos líneas. No se ejecutó el pipeline real, porque el perfil activo del usuario tiene prompts personalizados y habría generado imágenes con costo.
+- **Costo:** 0 tokens.
+- **Estado:** `TESTED_OK` (confirmado por el usuario).
+
+## v0.3.0 (Etapa 2): flujos configurables (rama `version-0.3`) (2026-10-30)
+- **Backend: nuevo registro `backend/core/flows.py`**, con el mismo patrón que los prompts. Hay 9 opciones; los valores por defecto salen del `.env`, así que el flujo "Completo de Meta Muse" es idéntico al de antes:
+  - Spark mira el video;
+  - verificador audio↔video;
+  - verificador de recortes;
+  - imágenes en paralelo (1–8);
+  - vistas izquierda, derecha, atrás y ambiente;
+  - control de fidelidad.
+  - Persistencia en `storage/flows/`; validación de tipos y rangos; slugs reservados `active` y `options`.
+- **Fases conectadas (cambio mínimo):**
+  - Fase 2 (`muse_client`, `phase2_semantic`) y Fase 3 (`phase3_vision_sam`): leen `flows.get(...)` en lugar de la constante del `.env`.
+  - Fase 4: vistas encendidas o apagadas (la frontal siempre); una vista apagada no se genera y se borra la de una ejecución anterior. Control de fidelidad opcional (sin él solo se reintentan los errores de generación). `images.parallel` reemplaza a `MUSE_IMAGE_PARALLEL`.
+- **Endpoints `/api/v1/flows*`** (leer, opciones, crear, activar, renombrar, eliminar). La sesión guarda `flow_customizations`. El 409 por fase corriendo se comparte con los prompts.
+- **Frontend:**
+  - Barra "Flujo activo": selector, Nuevo flujo, Renombrar, Eliminar y **estimación** (imágenes y costo por producto, pasos opcionales encendidos).
+  - **Interruptores** en el panel de cada bolita opcional y parámetros: "Spark mira el video" en Detectar productos y "Imágenes en paralelo" en Foto máster.
+  - Bolitas apagadas: tenues, tachadas y con "Apagada", con **desvíos** (Recortar salta a Foto máster; las vistas pasan directo a Textos).
+  - Si cambias algo estando en el flujo completo, se pide un nombre ("Guardar en un flujo nuevo"); la ventanita sirve para perfiles y flujos.
+  - Chip doble en el Studio: "Perfil: X · Flujo: Y".
+- **Verificación (sesión real `sess_20261030_000404`, prompts y flujos aislados en una carpeta temporal):**
+  - Registro: rechazos de opción desconocida, tipo y rango; nombre reservado.
+  - **Flujo completo: 0 llamadas a la API, 40 caché HIT y catálogo idéntico.**
+  - Flujo "Rápido" (sin ambiente, sin izquierda, sin fidelidad, 3 en paralelo): 0 llamadas; `lifestyle_url`/`angle_left_url` = null, `fidelity_checks` = {} y el catálogo solo con frente, derecha, atrás y la foto sin fondo.
+  - De vuelta al completo: 0 llamadas y catálogo idéntico.
+  - Endpoints probados con curl; capturas del flujo, del Studio y de las ventanitas de flujo y de perfil; flujo completo "cambiar → nombre → crear" en el navegador. Flujos de prueba borrados; el perfil del usuario no se tocó.
+- **Incidente durante la verificación:** el primer script de prueba no tenía `if __name__ == "__main__"`. En Windows, los procesos auxiliares de SAM lo volvieron a ejecutar y el pipeline corrió varias veces en paralelo sobre la misma sesión. Un recorte salió distinto y se generaron **5 imágenes (US$0.05) y ~13,300 tokens de Spark** (fidelidad) que no hacían falta. Caché y sesión verificadas sanas (960 archivos válidos); la ejecución limpia posterior dio 0 llamadas. El script se corrigió.
+- **Estado:** `TESTED_OK` (2026-10-30).
+
+## v0.3.0 (extra): aviso de productos repetidos en "Por revisar" (rama `version-0.3`) (2026-10-30)
+- **Problema:** al volver a subir el mismo video se crea una sesión nueva. La caché evita el costo, pero los productos llegan otra vez a "Por revisar" con otro id y, si se aceptan, quedan **duplicados en la tienda**.
+- **Solución (solo frontend, sin cambios en el backend):**
+  - Cada producto guarda el `video_md5` de su video (ya venía en el estado de la sesión) y su nombre original (`source_title`).
+  - Un producto pendiente se marca como repetido si coincide el **video y el nombre normalizado** con uno ya publicado ("Ya está en tu tienda") o con otro que está antes en "Por revisar" ("Repetido en Por revisar"). Los productos guardados antes de este cambio no traen MD5: para ellos basta el nombre.
+  - La tarjeta muestra la etiqueta y un aviso ámbar, y cambia los botones: "Descartar repetido" pasa a ser el principal y "Publicar de todos modos" queda como secundario.
+  - "Aceptar todos" salta los repetidos y avisa cuántos quedaron en "Por revisar". Al terminar de procesar, el aviso dice cuántos productos ya estaban.
+- **Verificación:** `node --check` del JS; captura con Edge headless usando los productos reales de la última sesión (el peluche publicado, las gafas nuevas y una copia de las gafas). La página temporal se borró. 0 llamadas a la API.
+- **Ajuste tras la prueba del usuario:** al re-subir el mismo video, los productos llegaron con **otro nombre** ("Peluche de Osito…" → "Peluche de Oso…") y no se marcaron.
+  - Ahora, con el mismo video, basta un nombre **parecido**: comparten ≥ 3/4 de las palabras importantes, sin contar "de", "con", etc. Probado con los nombres reales: los 4 productos encuentran a su original; "Peluche de Osito Beige" frente a "Peluche de Conejo Beige" no se marca.
+  - `backfillVideoMd5()`: al abrir la tienda, recupera el MD5 de los productos guardados antes de este cambio leyendo `/storage/<sesión>/session_state.json`.
+- **Hallazgo (error de caché en el backend, sin corregir):** la sesión `sess_20261030_100802` es el mismo video que `sess_20261030_000404` (MD5 `151a84ff`, solo y en la misma posición). Aun así hizo **19 llamadas a la API**: 1 de Spark en la Fase 2, 10 imágenes de Muse Image (~US$0.10), fidelidad, verificadores y textos.
+  - **Causa:** la clave de caché de la Fase 2 incluye el MD5 de la copia liviana del video (`video_proxies/*_480p.mp4`), y ffmpeg/x264 no genera los mismos bytes en cada ejecución (123,681 bytes distintos, mismo tamaño). Por eso la Fase 2 nunca acierta al re-subir un video, Spark renombra y redescribe, y las fases siguientes se regeneran.
+  - **Arreglo propuesto, pendiente del permiso del usuario:** usar el MD5 del video original más los parámetros de la copia, y conservar la búsqueda por la clave antigua para no perder la caché existente.
+- **Estado:** `TESTED_OK` (2026-10-30).
+
+## v0.3.0 (extra): nueva marca en el encabezado (rama `version-0.3`) (2026-10-30)
+- Se reemplazó la "B" dentro de un cuadrado con degradado y el subtítulo "Second-Hand Marketplace".
+- **Nombre** (aprobado por el usuario desde la primera propuesta): "brak" en Sora 700 más la plaquita "SHOP". Título de la pestaña: "Brak Shop | De tu video a tu vitrina".
+- **Símbolo** (segunda ronda; la placa con degradado violeta se veía "barata"):
+  - una "b" geométrica maciza: el palito es tangente al círculo y el hueco del círculo es un play (de video a tienda);
+  - toda en blanco, sin placa ni resplandor; el play es un hueco real (máscara SVG) por el que se ve el fondo. Al pasar el mouse baja a 80 % de opacidad. Elegida la opción 1, tras comparar con la 4 (play en azul Meta) en la página real.
+- **Ícono de la pestaña:** el mismo símbolo sobre una placa `#0b1120` (el triángulo con el color de la placa), para que se vea en barras claras.
+- Solo frontend. Verificado con capturas del encabezado real y del ícono a 128, 32 y 16 px.
+- **Estado:** `TESTED_OK` (2026-10-30).
+
+## v0.3.0 (extra): interfaz en inglés (requisito del hackathon) (rama `version-0.3`) (2026-10-30)
+- **Alcance elegido por el usuario: interfaz + etiquetas.** Los textos de los productos (títulos, descripciones, categorías) los sigue escribiendo Spark en español: cambiarlos exigiría tocar el prompt de textos y regenerar.
+- **Frontend** (`frontend/index.html`, ~300 textos):
+  - todo en inglés, con `lang="en"` y formato numérico `en-US`; categoría "All";
+  - vistas del catálogo re-etiquetadas por clave (`VIEW_LABELS` + `relabel()`), así los productos ya guardados en el navegador también salen en inglés;
+  - los patrones del grafo y del 409 son **bilingües** (p. ej. `/Fidelidad|Fidelity/`, `/fase en curso|phase is running/`): funcionan con las sesiones nuevas y con los registros viejos en español.
+- **Backend** (13 archivos, 273 líneas cambiadas una por una, solo textos visibles):
+  - mensajes de progreso y eventos, nombres de modelo en los registros (mapa fijo, p. ej. "Muse Spark (Fidelity)"), errores HTTP (409: "A phase is running…"), errores de validación;
+  - títulos y descripciones de agentes y opciones de flujo;
+  - nombres por defecto "Meta Muse Original", "Meta Muse Full", "My profile", "My flow";
+  - etiquetas de vistas de la Fase 5 y la plantilla del catálogo exportado.
+  - **Se dejó en español a propósito** todo lo que llega a un modelo o forma parte de una clave de caché: prompts, mensajes de usuario a Spark, textos de anomalías del verificador, "caja de Spark" (se reutiliza como prompt de SAM) y diagnósticos que la Fase 4 mete en el prompt de imagen.
+- **Regla de oro verificada:** las huellas de `prompts.get()`, las firmas y las 25 constantes de prompt/esquema/versión son **idénticas** entre el commit `e3c1aff` y la versión actual (52/52 líneas). No se hizo ninguna llamada a la API.
+- **Verificación del frontend:** `node --check`; capturas de la tienda, Por revisar, vista de producto, Studio, Flujo y Agentes con 0 errores de JavaScript. Durante la prueba apareció un error mío (una llamada a `relabel` antes de definirla dejaba la página en blanco); se corrigió antes de entregar.
+- **Nota:** los registros de sesiones viejas (`token_audit`) conservan sus textos en español; las sesiones nuevas ya se registran en inglés.
+- **Estado:** `TESTED_OK` (2026-10-30).
+
+## v0.3.2: pipeline en inglés de punta a punta (commit en la rama `version-0.3`) (2026-10-30)
+- **Motivo:** los requisitos del hackathon piden la app en inglés. Con la v0.3.0 la interfaz ya estaba en inglés, pero Spark seguía escribiendo productos en español porque los prompts lo pedían.
+- **Decisiones del usuario:** la voz escucha español e inglés; se borran los productos y las sesiones viejas; la caché se conserva.
+- **Prompts traducidos** (mismas reglas y numeración): `p2_extract`, `p2_verify`, `p3_vision`, `p3_cut_check`, `p3_cut_choice`, `p4_fidelity`, `p5_copy`. Los prompts de imagen de la Fase 4 ya estaban en inglés.
+  - Todos los campos de texto libre se piden en inglés aunque el vendedor hable español; `quote` sigue literal porque se usa para ubicar el fragmento en la transcripción.
+  - Ejemplos bilingües en las reglas de menciones señaladas ("this one here" / "esto de acá") y monedas ("dollars/dólares", "soles").
+- **Mensajes que arma el código** (en inglés): instrucciones extra de perfiles, pie de video y transcripciones de la Fase 2, detalles de anomalías y pie del clip del verificador, prefijos de las Fases 3 y 4, nombre provisional de menciones señaladas.
+- **Centinelas** cambiados en los dos lados, con alias en español para sesiones viejas: `"Optimal"`, `" | Cutout:"`, `"Not mentioned"` (`NOT_MENTIONED_VALUES`), `"No visual analysis"`.
+- **Sin cambios de lógica en SAM:** los marcadores de prompt de caja solo se tradujeron ("Spark box", "expanded box"). Se probó y se descartó un filtro para no mandarlos a SAM como texto en la Fase 4: el beneficio era mínimo y esta rama es solo el cambio de idioma.
+- **Voz:** `MUSE_VOICE_LANGUAGES` por defecto `Spanish,English` (también en `.env.example`); palabras clave bilingües. Las claves de caché de la transcripción y la re-transcripción ahora incluyen los idiomas, así que cada video se re-transcribe una vez.
+- **Caché:** versiones subidas (phase2_v7, verify_v2, phase3_v3, cutcheck_v3, fidelity_v5, phase5_v2). La primera vez que se procese cada video se pagan de nuevo Spark y Muse Image; las siguientes vuelven a ser caché.
+- **Frontend:** palabras vacías bilingües para detectar duplicados; claves de localStorage `brak_*_v2` (la tienda arranca limpia y se borran las `v1`).
+- **Limpieza:** se borraron las 13 sesiones (`storage/sess_*`, ~600 MB) y el `session_state.json` raíz. Antes se comprobó por MD5 que los 7 videos reales tienen copia idéntica en Descargas. Se conservaron `storage/cache` (301 MB), `storage/prompts` y `storage/flows`.
+- **Verificación sin costo:**
+  - el backend importa;
+  - los 13 prompts efectivos (`GET /api/v1/prompts` del servidor en vivo) están en inglés, salvo los ejemplos bilingües a propósito;
+  - `node --check`;
+  - captura de la tienda vacía en inglés con 0 errores de JavaScript.
+- **Perfil por defecto renombrado** de "Meta Muse Original" a **"Default"** (pedido del usuario). Es solo un nombre visible: no entra en prompts ni en claves de caché.
+- **Prueba real del usuario** (videos reales en español, primera ejecución con los prompts nuevos):
+  - `sess_20261030_144229` ("WhatsApp Video 2026-10-29 at 2.37.51 PM"): 4 productos, todos en inglés (p. ej. "Orange Charmander Plush Toy", "Toys & Collectibles"). **34,741 tokens de Spark** (20,889 de entrada y 13,852 de salida), 2 transcripciones, 19 imágenes de Muse Image por API (5 en caché) ≈ **US$0.19 en imágenes**.
+  - `sess_20261030_145146` ("WhatsApp Video 2026-10-29 at 6.50.14 PM"): 7 productos en inglés (p. ej. "White Angel Statue Holding Basket", "Home & Decor"). **48,567 tokens de Spark** (32,803 de entrada y 15,764 de salida), 2 transcripciones, 45 imágenes por API ≈ **US$0.45 en imágenes**.
+  - La condición no dicha llega como "Not mentioned" y el catálogo la muestra vacía; la frase del vendedor queda literal en español, como se planeó.
+- **Estado:** `TESTED_OK` (2026-10-30).

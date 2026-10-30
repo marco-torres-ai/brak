@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from backend.core.config import MUSE_PHASE2_VERIFY, STORAGE_DIR, load_session_state, save_session_state
+from backend.core import flows
+from backend.core.config import STORAGE_DIR, load_session_state, save_session_state
 from backend.core.muse_client import MuseClient
 from backend.core.token_tracker import TokenTracker
 from backend.services.phase2_verify import run_phase2_verification
@@ -21,7 +22,7 @@ async def run_phase2_semantic(session_id: Optional[str] = None) -> Dict[str, Any
 
     if not ready_videos:
         raise ValueError(
-            "No hay videos procesados en estado READY. Ejecuta primero la Fase 1."
+            "There are no processed videos in READY state. Run Phase 1 first."
         )
 
     tracker = TokenTracker(state.get("token_audit"))
@@ -36,11 +37,11 @@ async def run_phase2_semantic(session_id: Optional[str] = None) -> Dict[str, Any
         audio_meta = video.get("audio", {})
         rel_path = audio_meta.get("relative_path")
         if not rel_path:
-            raise ValueError(f"El video {vid_id} no posee archivo de audio 16kHz de Fase 1.")
+            raise ValueError(f"Video {vid_id} has no 16kHz audio file from Phase 1.")
 
         wav_path: Path = STORAGE_DIR / rel_path
         if not wav_path.exists():
-            raise ValueError(f"No se encontró el archivo de audio en disco: {wav_path}")
+            raise ValueError(f"Audio file not found on disk: {wav_path}")
 
         audio_md5 = audio_meta.get("audio_md5", "")
         duration_sec = float(
@@ -64,7 +65,7 @@ async def run_phase2_semantic(session_id: Optional[str] = None) -> Dict[str, Any
     products = spark_batch.get("products", [])
 
     verification_report: Optional[Dict[str, Any]] = None
-    if MUSE_PHASE2_VERIFY:
+    if flows.get("verify2.enabled"):
         products, verification_report = run_phase2_verification(
             tracker=tracker,
             products=products,
@@ -128,7 +129,7 @@ async def update_semantic_products(
     tracker.record_event(
         phase=2,
         model="Human-in-the-Loop State Editor",
-        operation=f"Usuario verificó/actualizó manualmente {len(merged_list)} productos en session_state.json antes de Fase 3.",
+        operation=f"User manually verified/updated {len(merged_list)} products in session_state.json before Phase 3.",
         input_tokens=0,
         image_tokens=0,
         output_tokens=0,

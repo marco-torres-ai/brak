@@ -37,7 +37,7 @@ MUSE_IMAGE_PARALLEL: int = int(os.getenv("MUSE_IMAGE_PARALLEL", "6"))
 MUSE_PHASE4_LIFESTYLE: bool = os.getenv("MUSE_PHASE4_LIFESTYLE", "1").lower() not in ("0", "false", "no")
 # Idiomas para sesgar el reconocimiento de voz (vacío = detección automática)
 MUSE_VOICE_LANGUAGES: list = [
-    lang.strip() for lang in os.getenv("MUSE_VOICE_LANGUAGES", "Spanish").split(",") if lang.strip()
+    lang.strip() for lang in os.getenv("MUSE_VOICE_LANGUAGES", "Spanish,English").split(",") if lang.strip()
 ]
 MAX_VIDEOS: int = int(os.getenv("MAX_VIDEOS", "3"))
 MAX_DURATION_SEC: float = float(os.getenv("MAX_DURATION_SEC", "60.0"))
