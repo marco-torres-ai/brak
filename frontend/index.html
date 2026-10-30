@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Brak Shop | Second-Hand Marketplace</title>
+<title>Brak Shop | From your video to your storefront</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b1120'/%3E%3Cg transform='translate(2.1 2.4) scale(.8)' fill='%23fff'%3E%3Crect x='4.6' y='1.8' width='4.6' height='14' rx='2.3'/%3E%3Ccircle cx='12.4' cy='14.4' r='7.8'/%3E%3C/g%3E%3Cpath d='M10.58 11.44v5.12l4.4-2.56z' fill='%230b1120'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700&display=swap" rel="stylesheet" />
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -40,6 +41,7 @@
   .studio { position: relative; background: radial-gradient(ellipse 85% 75% at 50% 38%, #ffffff 0%, #f5f5f7 52%, #e6e7ec 100%); }
   .studio::after { content: ''; position: absolute; left: 24%; right: 24%; bottom: 9%; height: 6%; border-radius: 50%; background: radial-gradient(ellipse, rgba(15, 23, 42, 0.22), transparent 70%); filter: blur(6px); pointer-events: none; }
   .studio img.blend { mix-blend-mode: multiply; }
+  .font-display { font-family: 'Sora', 'Inter', system-ui, sans-serif; }
   .meta-ai-gradient { background-image: linear-gradient(100deg, #2563eb 0%, #6366f1 50%, #9333ea 100%); }
   .meta-ai-text { background-image: linear-gradient(90deg, #60a5fa, #a5b4fc, #d8b4fe); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .card { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease; }
@@ -100,15 +102,19 @@
 <!-- ===================== HEADER ===================== -->
 <header class="sticky top-0 z-30 border-b border-white/5 bg-ink-900/70 backdrop-blur-xl">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4 justify-between">
-    <a href="#" data-action="tab" data-key="store" class="flex items-center gap-3 shrink-0">
-      <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white font-semibold shadow-lg shadow-indigo-600/30">B</div>
-      <div class="leading-tight">
-        <div class="text-[15px] font-semibold tracking-tight text-white">Brak Shop</div>
-        <div class="text-[11px] text-slate-400 hidden sm:block">Second-Hand Marketplace</div>
+    <a href="#" data-action="tab" data-key="store" aria-label="Brak Shop: go to the store" class="brand group flex items-center gap-3 shrink-0">
+      <!-- Monograma: "b" blanca cuyo hueco es un play recortado (de video a tienda) -->
+      <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true" class="shrink-0 transition-opacity duration-300 group-hover:opacity-80">
+        <defs><mask id="brandHole"><rect width="24" height="24" fill="#fff" /><path d="M10.6 11.3v6.4l5.5-3.2z" fill="#000" /></mask></defs>
+        <g transform="translate(-0.6 0)" fill="#fff" mask="url(#brandHole)"><rect x="4.6" y="1.8" width="4.6" height="14" rx="2.3" /><circle cx="12.4" cy="14.4" r="7.8" /></g>
+      </svg>
+      <div class="flex items-center gap-2 leading-none">
+        <span class="font-display text-[20px] font-bold tracking-[-0.03em] text-white">brak</span>
+        <span class="hidden sm:inline-flex h-5 px-2 items-center rounded-md text-[10px] font-semibold uppercase tracking-[.14em] text-slate-300 ring-1 ring-slate-400/25">shop</span>
       </div>
     </a>
 
-    <nav class="hidden md:flex items-center gap-1 p-1 rounded-full bg-white/[0.04] hairline" aria-label="Secciones">
+    <nav class="hidden md:flex items-center gap-1 p-1 rounded-full bg-white/[0.04] hairline" aria-label="Sections">
       <button data-action="tab" data-key="store" id="tabStore" class="px-4 h-8 rounded-full text-[13px] font-medium transition flex items-center gap-2"></button>
       <button data-action="tab" data-key="pending" id="tabPending" class="px-4 h-8 rounded-full text-[13px] font-medium transition flex items-center gap-2"></button>
     </nav>
@@ -117,21 +123,21 @@
       <span class="hidden lg:inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-medium bg-white/[0.04] hairline">
         <span id="iconSparkHeader"></span><span class="meta-ai-text">Powered by Meta Muse AI</span>
       </span>
-      <button data-action="open-flow" title="Ver el flujo de agentes" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
-        <span data-icon="workflow"></span><span class="hidden sm:inline font-medium">Flujo</span>
+      <button data-action="open-flow" title="See the agent flow" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
+        <span data-icon="workflow"></span><span class="hidden sm:inline font-medium">Flow</span>
       </button>
-      <button data-action="open-agents" title="Configurar los prompts de los agentes" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
-        <span data-icon="sliders"></span><span class="hidden sm:inline font-medium">Agentes</span><span id="agentsDot" class="hidden w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+      <button data-action="open-agents" title="Configure the agent prompts" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
+        <span data-icon="sliders"></span><span class="hidden sm:inline font-medium">Agents</span><span id="agentsDot" class="hidden w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
       </button>
-      <button data-action="open-tokens" title="Monitor de tokens" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
+      <button data-action="open-tokens" title="Token monitor" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
         <span id="iconChart"></span><span id="headerTokens" class="font-medium tabular-nums">0</span>
       </button>
-      <button id="cartButton" data-action="open-cart" aria-label="Carrito" class="relative w-9 h-9 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-slate-200 transition flex items-center justify-center">
+      <button id="cartButton" data-action="open-cart" aria-label="Cart" class="relative w-9 h-9 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-slate-200 transition flex items-center justify-center">
         <span id="iconBag"></span>
         <span id="cartCount" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-meta text-white text-[10px] font-semibold flex items-center justify-center">0</span>
       </button>
       <button data-action="open-upload" class="h-9 pl-3 pr-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/30 hover:brightness-110 transition flex items-center gap-2">
-        <span id="iconPlus"></span><span class="hidden sm:inline">Agregar con video</span><span class="sm:hidden">Agregar</span>
+        <span id="iconPlus"></span><span class="hidden sm:inline">Add with video</span><span class="sm:hidden">Add</span>
         <span class="hidden lg:inline text-white/70 font-medium">· Muse AI</span>
       </button>
     </div>
@@ -148,19 +154,19 @@
   <section id="viewStore">
     <div id="hero" class="relative grid lg:grid-cols-[1.1fr_1fr] gap-8 items-center mb-10">
       <div>
-        <span class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-white/[0.04] hairline"><span data-icon="sparkles" class="text-indigo-300"></span><span class="meta-ai-text">Video-to-catalog con Meta Muse</span></span>
-        <h1 class="mt-4 text-4xl sm:text-[48px] leading-[1.04] font-semibold tracking-tight text-white">De un video<br /><span class="meta-ai-text">a tu vitrina.</span></h1>
-        <p class="mt-4 max-w-xl text-[15px] text-slate-400 leading-relaxed">Muestra tus cosas y di el precio. Meta Muse escucha, encuentra cada objeto, lo recorta y le hace una sesión de fotos de estudio. Tú solo apruebas.</p>
+        <span class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-white/[0.04] hairline"><span data-icon="sparkles" class="text-indigo-300"></span><span class="meta-ai-text">Video-to-catalog with Meta Muse</span></span>
+        <h1 class="mt-4 text-4xl sm:text-[48px] leading-[1.04] font-semibold tracking-tight text-white">From one video<br /><span class="meta-ai-text">to your storefront.</span></h1>
+        <p class="mt-4 max-w-xl text-[15px] text-slate-400 leading-relaxed">Show your things and say the price. Meta Muse listens, finds every object, cuts it out and gives it a studio photo shoot. You just approve.</p>
         <div class="mt-6 flex flex-wrap items-center gap-3">
-          <button data-action="open-upload" class="h-12 pl-5 pr-6 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-xl shadow-indigo-600/30 hover:brightness-110 transition flex items-center gap-2"><span data-icon="sparkles"></span>Vender con un video</button>
-          <button data-action="open-how" class="h-12 px-5 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[14px] font-medium text-slate-200 transition flex items-center gap-2">Cómo lo hace Meta <span data-icon="arrow"></span></button>
+          <button data-action="open-upload" class="h-12 pl-5 pr-6 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-xl shadow-indigo-600/30 hover:brightness-110 transition flex items-center gap-2"><span data-icon="sparkles"></span>Sell with a video</button>
+          <button data-action="open-how" class="h-12 px-5 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[14px] font-medium text-slate-200 transition flex items-center gap-2">How Meta does it <span data-icon="arrow"></span></button>
         </div>
         <dl class="mt-7 flex items-center gap-6 text-sm">
-          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Artículos</dt><dd id="statProducts" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
+          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Items</dt><dd id="statProducts" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
           <div class="w-px h-10 bg-white/10"></div>
-          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Categorías</dt><dd id="statCategories" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
+          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Categories</dt><dd id="statCategories" class="text-2xl font-semibold text-white tabular-nums">0</dd></div>
           <div class="w-px h-10 bg-white/10"></div>
-          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">Por revisar</dt><dd id="statPending" class="text-2xl font-semibold text-amber-400 tabular-nums">0</dd></div>
+          <div><dt class="text-[11px] uppercase tracking-wide text-slate-500">To review</dt><dd id="statPending" class="text-2xl font-semibold text-amber-400 tabular-nums">0</dd></div>
         </dl>
       </div>
       <div id="heroArt" class="relative h-[300px] lg:h-[340px] hidden sm:block" aria-hidden="true"></div>
@@ -168,8 +174,8 @@
 
     <div class="flex items-end justify-between gap-3 mb-5">
       <div>
-        <div class="text-[12px] font-medium tracking-wide uppercase text-slate-400 mb-2">Tienda activa</div>
-        <h2 class="text-2xl font-semibold tracking-tight text-white">Segunda mano, <span class="meta-ai-text">fotos de estudio</span></h2>
+        <div class="text-[12px] font-medium tracking-wide uppercase text-slate-400 mb-2">Live store</div>
+        <h2 class="text-2xl font-semibold tracking-tight text-white">Second-hand, <span class="meta-ai-text">studio photos</span></h2>
       </div>
     </div>
 
@@ -178,12 +184,12 @@
       <div class="flex items-center gap-2 w-full sm:w-auto">
         <label class="relative flex-1 sm:flex-none">
           <span id="iconSearch" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></span>
-          <input id="searchInput" type="search" placeholder="Buscar productos" class="w-full sm:w-64 h-10 pl-9 pr-3 rounded-full bg-white/[0.04] hairline text-[13px] text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-meta/60" />
+          <input id="searchInput" type="search" placeholder="Search products" class="w-full sm:w-64 h-10 pl-9 pr-3 rounded-full bg-white/[0.04] hairline text-[13px] text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-meta/60" />
         </label>
         <select id="sortSelect" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-[13px] text-slate-200 focus:outline-none focus:ring-2 focus:ring-meta/60">
-          <option value="recent">Más recientes</option>
-          <option value="price_asc">Precio: menor a mayor</option>
-          <option value="price_desc">Precio: mayor a menor</option>
+          <option value="recent">Newest</option>
+          <option value="price_asc">Price: low to high</option>
+          <option value="price_desc">Price: high to low</option>
         </select>
       </div>
     </div>
@@ -191,9 +197,9 @@
     <div id="storeGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
     <div id="storeEmpty" class="hidden rounded-3xl surface py-20 text-center">
       <div id="iconEmptyStore" class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.04] hairline flex items-center justify-center text-slate-300"></div>
-      <p class="mt-4 text-white font-medium">Todavía no hay artículos publicados</p>
-      <p class="mt-1 text-sm text-slate-400">Sube un video mostrando lo que vendes y aprueba lo que detecte Meta Muse.</p>
-      <button data-action="open-upload" class="mt-6 h-10 px-5 rounded-full meta-ai-gradient text-white text-[13px] font-semibold">Agregar con video</button>
+      <p class="mt-4 text-white font-medium">No items published yet</p>
+      <p class="mt-1 text-sm text-slate-400">Upload a video showing what you sell and approve what Meta Muse detects.</p>
+      <button data-action="open-upload" class="mt-6 h-10 px-5 rounded-full meta-ai-gradient text-white text-[13px] font-semibold">Add with video</button>
     </div>
   </section>
 
@@ -201,26 +207,26 @@
   <section id="viewPending" class="hidden">
     <div class="flex flex-wrap items-end justify-between gap-6 mb-8">
       <div class="max-w-2xl">
-        <div class="text-[12px] font-medium tracking-wide uppercase text-amber-400/90 mb-2 flex items-center gap-2">Pendientes de aprobación <span id="pendingCount2" class="px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 text-[11px] tabular-nums">0</span></div>
-        <h1 class="text-3xl sm:text-[34px] leading-tight font-semibold tracking-tight text-white">Revisa antes de publicar</h1>
-        <p class="mt-2 text-[15px] text-slate-400">Compara lo que generó la IA con el video original, ajusta nombre, precio o estado y decide qué entra a la tienda.</p>
+        <div class="text-[12px] font-medium tracking-wide uppercase text-amber-400/90 mb-2 flex items-center gap-2">Awaiting approval <span id="pendingCount2" class="px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 text-[11px] tabular-nums">0</span></div>
+        <h1 class="text-3xl sm:text-[34px] leading-tight font-semibold tracking-tight text-white">Review before publishing</h1>
+        <p class="mt-2 text-[15px] text-slate-400">Compare what the AI generated with the original video, adjust name, price or condition, and decide what goes into the store.</p>
       </div>
       <div class="flex gap-2">
-        <button data-action="reject-all" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2"><span data-icon="trash"></span>Rechazar todos</button>
-        <button data-action="approve-all" class="h-10 px-5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold shadow-lg shadow-emerald-500/20 transition flex items-center gap-2"><span data-icon="check"></span>Aceptar todos</button>
+        <button data-action="reject-all" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2"><span data-icon="trash"></span>Reject all</button>
+        <button data-action="approve-all" class="h-10 px-5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold shadow-lg shadow-emerald-500/20 transition flex items-center gap-2"><span data-icon="check"></span>Accept all</button>
       </div>
     </div>
     <div id="pendingGrid" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
     <div id="pendingEmpty" class="hidden rounded-3xl surface py-20 text-center">
       <div id="iconEmptyPending" class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.04] hairline flex items-center justify-center text-slate-300"></div>
-      <p class="mt-4 text-white font-medium">No hay productos esperando revisión</p>
-      <button data-action="open-upload" class="mt-6 h-10 px-5 rounded-full meta-ai-gradient text-white text-[13px] font-semibold">Agregar con video</button>
+      <p class="mt-4 text-white font-medium">No products waiting for review</p>
+      <button data-action="open-upload" class="mt-6 h-10 px-5 rounded-full meta-ai-gradient text-white text-[13px] font-semibold">Add with video</button>
     </div>
   </section>
 </main>
 
 <footer class="border-t border-white/5 py-6 text-center text-[12px] text-slate-500">
-  Brak Shop · Video-to-catalog con Meta Muse — Voice Transcribe · Spark · SAM 3.1 · Muse Image
+  Brak Shop · Video-to-catalog with Meta Muse — Voice Transcribe · Spark · SAM 3.1 · Muse Image
 </footer>
 
 <!-- ===================== ESTUDIO DE CARGA (PANTALLA COMPLETA) ===================== -->
@@ -233,24 +239,24 @@
         <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white" data-icon="sparkles"></div>
         <div>
           <h3 class="text-[15px] font-semibold text-white">Meta Muse Studio</h3>
-          <p class="text-[12px] text-slate-400">Sube 1 a 3 videos (hasta 60 s) y mira cómo los modelos de Meta crean tu catálogo</p>
+          <p class="text-[12px] text-slate-400">Upload 1 to 3 videos (up to 60 s) and watch Meta's models build your catalog</p>
         </div>
       </div>
-      <button data-action="close-upload" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+      <button data-action="close-upload" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Close" data-icon="x"></button>
     </div>
 
     <div class="flex-1 min-h-0 grid lg:grid-cols-[420px_1fr]">
       <aside class="min-h-0 overflow-y-auto p-6 space-y-5 border-r border-white/5">
         <label id="dropZone" for="videoInput" class="block rounded-2xl border border-dashed border-white/15 hover:border-meta/70 bg-white/[0.02] p-7 text-center cursor-pointer transition">
           <div class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.05] flex items-center justify-center text-slate-200" data-icon="upload"></div>
-          <div class="mt-3 text-[14px] font-medium text-slate-100">Arrastra tus videos o haz clic</div>
-          <div class="text-[12px] text-slate-500 mt-1">MP4 o MOV · máximo 3 · hasta 60 s</div>
+          <div class="mt-3 text-[14px] font-medium text-slate-100">Drag your videos or click</div>
+          <div class="text-[12px] text-slate-500 mt-1">MP4 or MOV · max 3 · up to 60 s</div>
           <input id="videoInput" type="file" accept="video/*" multiple class="hidden" />
         </label>
         <div id="fileList" class="space-y-2"></div>
 
         <button id="btnProcess" data-action="process" disabled class="w-full h-11 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
-          <span data-icon="sparkles"></span>Procesar y extraer productos
+          <span data-icon="sparkles"></span>Process and extract products
         </button>
         <div id="profileChip" class="-mt-2 grid grid-cols-2 gap-2"></div>
 
@@ -264,13 +270,13 @@
           <div id="liveEvent" class="hidden rounded-xl bg-black/30 hairline p-2.5 text-[11px] font-mono text-slate-400"></div>
           <div class="grid grid-cols-3 gap-2 text-center">
             <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Tokens API</div><div id="liveTokens" class="mt-1 text-[15px] font-semibold tabular-nums text-white">0</div></div>
-            <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Caché</div><div id="liveSaved" class="mt-1 text-[15px] font-semibold tabular-nums text-emerald-400">0</div></div>
-            <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Imágenes</div><div id="liveImages" class="mt-1 text-[15px] font-semibold tabular-nums text-amber-300">0</div></div>
+            <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Cache</div><div id="liveSaved" class="mt-1 text-[15px] font-semibold tabular-nums text-emerald-400">0</div></div>
+            <div class="p-3 rounded-xl bg-white/[0.03] hairline"><div class="text-[10px] uppercase tracking-wide text-slate-500">Images</div><div id="liveImages" class="mt-1 text-[15px] font-semibold tabular-nums text-amber-300">0</div></div>
           </div>
           <div id="pipelineMessage" class="text-[12px] text-slate-400"></div>
           <div id="pipelineError" class="hidden rounded-2xl bg-rose-500/10 hairline p-4 space-y-3">
             <div id="pipelineErrorText" class="text-[13px] text-rose-200"></div>
-            <button data-action="retry" class="w-full h-10 rounded-full bg-meta hover:bg-meta-dark text-white text-[13px] font-semibold transition flex items-center justify-center gap-2"><span data-icon="retry"></span>Reintentar desde este paso</button>
+            <button data-action="retry" class="w-full h-10 rounded-full bg-meta hover:bg-meta-dark text-white text-[13px] font-semibold transition flex items-center justify-center gap-2"><span data-icon="retry"></span>Retry from this step</button>
           </div>
         </div>
       </aside>
@@ -278,15 +284,15 @@
       <section class="min-h-0 overflow-y-auto p-6">
         <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
           <div>
-            <div class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Lienzo en vivo</div>
-            <h4 id="canvasTitle" class="mt-1 text-xl font-semibold tracking-tight text-white">Aquí verás trabajar a Meta Muse</h4>
+            <div class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Live canvas</div>
+            <h4 id="canvasTitle" class="mt-1 text-xl font-semibold tracking-tight text-white">Watch Meta Muse work here</h4>
           </div>
           <div id="canvasStats" class="flex items-center gap-2 text-[12px]"></div>
         </div>
         <div class="mb-5 rounded-3xl surface p-3 overflow-x-auto"><div id="studioFlow" class="min-w-[980px]"></div></div>
         <div id="pipelineResult" class="hidden mb-5 rounded-2xl bg-emerald-500/10 hairline p-4 flex flex-wrap items-center justify-between gap-3">
           <div id="pipelineResultText" class="text-[14px] text-emerald-200 font-medium"></div>
-          <button data-action="go-pending" class="h-10 px-5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center gap-2">Revisar en pendientes <span data-icon="arrow"></span></button>
+          <button data-action="go-pending" class="h-10 px-5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center gap-2">Review in pending <span data-icon="arrow"></span></button>
         </div>
         <div id="studioCanvas" class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-5"></div>
       </section>
@@ -303,36 +309,36 @@
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white" data-icon="workflow"></div>
         <div>
-          <h3 class="text-[15px] font-semibold text-white">Flujo de agentes</h3>
-          <p class="text-[12px] text-slate-400">Así viaja tu video por los modelos de Meta. Toca una bolita para ver qué hace.</p>
+          <h3 class="text-[15px] font-semibold text-white">Agent flow</h3>
+          <p class="text-[12px] text-slate-400">This is how your video travels through Meta's models. Tap a node to see what it does.</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
         <button id="flowProfileChip" data-action="open-agents" class="hidden sm:flex h-9 px-4 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition items-center gap-2"></button>
-        <button data-action="close-flow" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+        <button data-action="close-flow" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Close" data-icon="x"></button>
       </div>
     </div>
     <div class="flex-1 min-h-0 grid lg:grid-cols-[1fr_380px]">
       <section class="min-h-0 overflow-auto p-6">
         <div class="mb-4 rounded-3xl surface p-4 flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-3 mr-auto min-w-0">
-            <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Flujo activo</span>
+            <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Active flow</span>
             <select id="flowSelect" class="h-10 pl-4 pr-9 rounded-full bg-white/[0.05] hairline text-[13px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60 max-w-[240px]"></select>
           </div>
-          <button data-action="flow-new" class="h-10 px-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/25 hover:brightness-110 transition flex items-center gap-2"><span data-icon="plus"></span>Nuevo flujo</button>
-          <button id="btnFlowRename" data-action="flow-rename" class="h-10 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="pencil"></span>Renombrar</button>
-          <button id="btnFlowDelete" data-action="flow-delete" class="h-10 px-4 rounded-full bg-rose-500/10 hairline hover:bg-rose-500/20 text-[13px] text-rose-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="trash"></span>Eliminar</button>
+          <button data-action="flow-new" class="h-10 px-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/25 hover:brightness-110 transition flex items-center gap-2"><span data-icon="plus"></span>New flow</button>
+          <button id="btnFlowRename" data-action="flow-rename" class="h-10 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="pencil"></span>Rename</button>
+          <button id="btnFlowDelete" data-action="flow-delete" class="h-10 px-4 rounded-full bg-rose-500/10 hairline hover:bg-rose-500/20 text-[13px] text-rose-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="trash"></span>Delete</button>
           <div id="flowEstimate" class="w-full flex items-center gap-2 pt-3 border-t border-white/5 text-[12px] text-slate-400"></div>
         </div>
-        <div id="flowLock" class="hidden mb-4 rounded-2xl bg-amber-400/10 hairline p-3 text-[13px] text-amber-200 items-center gap-2"><span data-icon="alert"></span>Hay una fase procesando videos: el flujo queda en solo lectura hasta que termine.</div>
+        <div id="flowLock" class="hidden mb-4 rounded-2xl bg-amber-400/10 hairline p-3 text-[13px] text-amber-200 items-center gap-2"><span data-icon="alert"></span>A phase is processing videos: the flow is read-only until it finishes.</div>
         <div class="rounded-3xl surface p-5 overflow-x-auto"><div id="flowGraphBig" class="min-w-[1100px]"></div></div>
         <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-slate-400">
-          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25"></span>Obligatoria</span>
-          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25 ring-offset-0" style="outline: 2px dashed rgba(255,255,255,.35); outline-offset: 1px"></span>Opcional</span>
-          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full meta-ai-gradient"></span>Trabajando</span>
-          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500/30 ring-2 ring-emerald-400"></span>Terminada</span>
-          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-ink-900" style="outline: 2px dashed rgba(255,255,255,.18); outline-offset: -2px"></span>Apagada</span>
-          <span class="flex items-center gap-2"><span class="text-indigo-300">●</span>Prompt personalizado</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25"></span>Required</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25 ring-offset-0" style="outline: 2px dashed rgba(255,255,255,.35); outline-offset: 1px"></span>Optional</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full meta-ai-gradient"></span>Working</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500/30 ring-2 ring-emerald-400"></span>Done</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-ink-900" style="outline: 2px dashed rgba(255,255,255,.18); outline-offset: -2px"></span>Off</span>
+          <span class="flex items-center gap-2"><span class="text-indigo-300">●</span>Custom prompt</span>
         </div>
       </section>
       <aside id="flowPanel" class="min-h-0 overflow-y-auto p-6 border-l border-white/5"></aside>
@@ -349,24 +355,24 @@
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white" data-icon="sliders"></div>
         <div>
-          <h3 class="text-[15px] font-semibold text-white">Configuración de agentes</h3>
-          <p class="text-[12px] text-slate-400">Ajusta cómo piensa cada modelo de Meta. Se aplica a los próximos videos que proceses.</p>
+          <h3 class="text-[15px] font-semibold text-white">Agent settings</h3>
+          <p class="text-[12px] text-slate-400">Tune how each Meta model thinks. Applies to the next videos you process.</p>
         </div>
       </div>
-      <button data-action="close-agents" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+      <button data-action="close-agents" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Close" data-icon="x"></button>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto">
       <div class="max-w-5xl mx-auto px-6 py-8 space-y-8">
         <div class="rounded-3xl surface p-5 flex flex-wrap items-center gap-3">
           <div class="flex items-center gap-3 mr-auto min-w-0">
-            <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Perfil activo</span>
+            <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Active profile</span>
             <select id="profileSelect" class="h-10 pl-4 pr-9 rounded-full bg-white/[0.05] hairline text-[13px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60 max-w-[260px]"></select>
           </div>
-          <button data-action="profile-new" class="h-10 px-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/25 hover:brightness-110 transition flex items-center gap-2"><span data-icon="plus"></span>Nuevo perfil</button>
-          <button id="btnProfileRename" data-action="profile-rename" class="h-10 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="pencil"></span>Renombrar</button>
-          <button id="btnProfileDelete" data-action="profile-delete" class="h-10 px-4 rounded-full bg-rose-500/10 hairline hover:bg-rose-500/20 text-[13px] text-rose-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="trash"></span>Eliminar</button>
+          <button data-action="profile-new" class="h-10 px-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/25 hover:brightness-110 transition flex items-center gap-2"><span data-icon="plus"></span>New profile</button>
+          <button id="btnProfileRename" data-action="profile-rename" class="h-10 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="pencil"></span>Rename</button>
+          <button id="btnProfileDelete" data-action="profile-delete" class="h-10 px-4 rounded-full bg-rose-500/10 hairline hover:bg-rose-500/20 text-[13px] text-rose-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="trash"></span>Delete</button>
         </div>
-        <div id="agentsLock" class="hidden rounded-2xl bg-amber-400/10 hairline p-4 text-[13px] text-amber-200 flex items-center gap-2"><span data-icon="alert"></span>Hay una fase procesando videos: los prompts quedan en solo lectura hasta que termine.</div>
+        <div id="agentsLock" class="hidden rounded-2xl bg-amber-400/10 hairline p-4 text-[13px] text-amber-200 flex items-center gap-2"><span data-icon="alert"></span>A phase is processing videos: prompts are read-only until it finishes.</div>
         <div id="agentsBody" class="space-y-10"></div>
       </div>
     </div>
@@ -379,15 +385,15 @@
   <form id="profileForm" class="relative rounded-[28px] bg-ink-800 shadow-2xl shadow-black/60 hairline max-w-md w-full p-7 fade-in">
     <h3 id="profileModalTitle" class="text-[18px] font-semibold text-white"></h3>
     <p id="profileModalText" class="mt-2 text-[13px] text-slate-400 leading-relaxed"></p>
-    <label id="profileNameLabel" class="block mt-5 text-[12px] font-medium text-slate-300">Nombre del perfil</label>
+    <label id="profileNameLabel" class="block mt-5 text-[12px] font-medium text-slate-300">Profile name</label>
     <input id="profileName" maxlength="60" autocomplete="off" class="mt-2 w-full h-11 px-4 rounded-full bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" />
     <div id="profileFromBox" class="mt-5">
-      <div class="text-[12px] font-medium text-slate-300">Empezar desde</div>
-      <label class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="original" class="mt-1 accent-indigo-500" checked /><span><span id="profileFromOrigTitle" class="block text-[13px] text-white">Original de Meta Muse</span><span id="profileFromOrigText" class="block text-[12px] text-slate-500">Un perfil limpio, sin cambios.</span></span></label>
-      <label id="profileFromCopy" class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="copy" class="mt-1 accent-indigo-500" /><span><span id="profileFromCopyTitle" class="block text-[13px] text-white">Copia del perfil actual</span><span id="profileFromCopyText" class="block text-[12px] text-slate-500"></span></span></label>
+      <div class="text-[12px] font-medium text-slate-300">Start from</div>
+      <label class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="original" class="mt-1 accent-indigo-500" checked /><span><span id="profileFromOrigTitle" class="block text-[13px] text-white">Default</span><span id="profileFromOrigText" class="block text-[12px] text-slate-500">A clean profile, no changes.</span></span></label>
+      <label id="profileFromCopy" class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="copy" class="mt-1 accent-indigo-500" /><span><span id="profileFromCopyTitle" class="block text-[13px] text-white">Copy of the current profile</span><span id="profileFromCopyText" class="block text-[12px] text-slate-500"></span></span></label>
     </div>
     <div class="mt-7 flex justify-end gap-2">
-      <button type="button" data-action="profile-cancel" class="h-10 px-5 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition">Cancelar</button>
+      <button type="button" data-action="profile-cancel" class="h-10 px-5 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition">Cancel</button>
       <button id="profileSubmit" type="submit" class="h-10 px-5 rounded-full bg-meta hover:bg-meta-dark text-white text-[13px] font-semibold transition"></button>
     </div>
   </form>
@@ -399,24 +405,24 @@
   <aside class="absolute right-0 top-0 h-full w-full max-w-lg bg-ink-800/95 border-l border-white/5 flex flex-col fade-in">
     <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between">
       <div>
-        <h3 class="text-[15px] font-semibold text-white">Monitor de tokens</h3>
+        <h3 class="text-[15px] font-semibold text-white">Token monitor</h3>
         <p id="tokenSession" class="text-[11px] text-slate-500 font-mono"></p>
       </div>
-      <button data-action="close-tokens" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+      <button data-action="close-tokens" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Close" data-icon="x"></button>
     </div>
     <div class="p-6 space-y-6 overflow-y-auto flex-1">
       <div class="grid grid-cols-2 gap-3">
-        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Tokens de la API</div><div id="tkTotal" class="mt-1 text-xl font-semibold tabular-nums">0</div></div>
-        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Evitados por caché</div><div id="tkSaved" class="mt-1 text-xl font-semibold tabular-nums text-emerald-400">0</div></div>
-        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Imágenes Muse Image</div><div id="tkImages" class="mt-1 text-xl font-semibold tabular-nums text-amber-300">0</div></div>
-        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Llamadas API / caché</div><div id="tkCalls" class="mt-1 text-xl font-semibold tabular-nums">0</div></div>
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">API tokens</div><div id="tkTotal" class="mt-1 text-xl font-semibold tabular-nums">0</div></div>
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Saved by cache</div><div id="tkSaved" class="mt-1 text-xl font-semibold tabular-nums text-emerald-400">0</div></div>
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">Muse Image images</div><div id="tkImages" class="mt-1 text-xl font-semibold tabular-nums text-amber-300">0</div></div>
+        <div class="p-4 rounded-2xl bg-white/[0.03] hairline"><div class="text-[11px] text-slate-500">API calls / cache</div><div id="tkCalls" class="mt-1 text-xl font-semibold tabular-nums">0</div></div>
       </div>
       <div>
-        <div class="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-3">Por modelo</div>
+        <div class="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-3">By model</div>
         <div id="tkModels" class="space-y-2"></div>
       </div>
       <div>
-        <div class="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-3">Trazas recientes</div>
+        <div class="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-3">Recent traces</div>
         <div id="tkLogs" class="space-y-1 font-mono text-[10.5px] leading-snug"></div>
       </div>
     </div>
@@ -428,13 +434,13 @@
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-action="close-cart"></div>
   <aside class="absolute right-0 top-0 h-full w-full max-w-md bg-ink-800/95 border-l border-white/5 flex flex-col fade-in">
     <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between">
-      <h3 class="text-[15px] font-semibold text-white">Tu carrito</h3>
-      <button data-action="close-cart" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+      <h3 class="text-[15px] font-semibold text-white">Your cart</h3>
+      <button data-action="close-cart" class="w-8 h-8 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Close" data-icon="x"></button>
     </div>
     <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-3"></div>
     <div class="p-6 border-t border-white/5 space-y-4">
       <div class="flex items-start justify-between"><span class="text-[13px] text-slate-400">Total</span><span id="cartTotal" class="text-right text-xl font-semibold tabular-nums text-white">—</span></div>
-      <button data-action="checkout" class="w-full h-11 rounded-full bg-meta hover:bg-meta-dark text-white text-[14px] font-semibold transition">Confirmar pedido</button>
+      <button data-action="checkout" class="w-full h-11 rounded-full bg-meta hover:bg-meta-dark text-white text-[14px] font-semibold transition">Place order</button>
     </div>
   </aside>
 </div>
@@ -443,7 +449,7 @@
 <div id="quickView" class="fixed inset-0 z-50 hidden items-center justify-center p-4" aria-modal="true" role="dialog">
   <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-action="close-quick"></div>
   <div class="relative rounded-[28px] bg-ink-800 shadow-2xl shadow-black/60 hairline max-w-5xl w-full max-h-[92vh] overflow-y-auto fade-in">
-    <button data-action="close-quick" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+    <button data-action="close-quick" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center" aria-label="Close" data-icon="x"></button>
     <div id="quickBody"></div>
   </div>
 </div>
@@ -452,13 +458,13 @@
 <div id="howModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" aria-modal="true" role="dialog">
   <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-action="close-how"></div>
   <div class="relative rounded-[28px] bg-ink-800 shadow-2xl shadow-black/60 hairline max-w-2xl w-full max-h-[90vh] overflow-y-auto fade-in">
-    <button data-action="close-how" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+    <button data-action="close-how" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center" aria-label="Close" data-icon="x"></button>
     <div class="p-7 sm:p-8">
-      <span class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-white/[0.04] hairline"><span data-icon="sparkles" class="text-indigo-300"></span><span class="meta-ai-text">Así trabaja Meta Muse</span></span>
-      <h2 class="mt-4 text-2xl font-semibold tracking-tight text-white">7 pasos, de tu voz a la vitrina</h2>
-      <p class="mt-2 text-[14px] text-slate-400">Cada fase tiene un agente que revisa y corrige el trabajo de la anterior. Tú apruebas al final.</p>
+      <span class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-medium bg-white/[0.04] hairline"><span data-icon="sparkles" class="text-indigo-300"></span><span class="meta-ai-text">How Meta Muse works</span></span>
+      <h2 class="mt-4 text-2xl font-semibold tracking-tight text-white">7 steps, from your voice to the storefront</h2>
+      <p class="mt-2 text-[14px] text-slate-400">Each phase has an agent that checks and fixes the previous one's work. You approve at the end.</p>
       <ol id="modelsList" class="relative mt-7 space-y-1"></ol>
-      <button data-action="how-to-upload" class="mt-6 w-full h-12 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-xl shadow-indigo-600/30 hover:brightness-110 transition flex items-center justify-center gap-2"><span data-icon="sparkles"></span>Probarlo con un video</button>
+      <button data-action="how-to-upload" class="mt-6 w-full h-12 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-xl shadow-indigo-600/30 hover:brightness-110 transition flex items-center justify-center gap-2"><span data-icon="sparkles"></span>Try it with a video</button>
     </div>
   </div>
 </div>
@@ -478,7 +484,9 @@
    Imágenes: /storage/<sesión>/... (las del catálogo son relativas a /storage/<sesión>/catalog/)
    ============================================================ */
 const API = (localStorage.getItem('brak_api_base') || '').replace(/\/$/, '');
-const LS = { approved: 'brak_approved_v1', pending: 'brak_pending_v1', cart: 'brak_cart_v1', seeded: 'brak_seeded_v1' };
+// v2 (v0.3.2, pipeline en inglés): la tienda arranca limpia; se borran los productos en español guardados en v1
+const LS = { approved: 'brak_approved_v2', pending: 'brak_pending_v2', cart: 'brak_cart_v2', seeded: 'brak_seeded_v2' };
+['approved', 'pending', 'cart', 'seeded'].forEach((k) => localStorage.removeItem(`brak_${k}_v1`));
 const SYMBOL = { USD: '$', PEN: 'S/', EUR: '€', MXN: '$', COP: '$', ARS: '$', CLP: '$', BOB: 'Bs' };
 
 /* ---------- Íconos SVG (trazos estilo Lucide) ---------- */
@@ -517,19 +525,19 @@ const ICONS = {
 const icon = (name, size = 16, cls = '') => `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
 const STEPS = [
-  { model: 'OpenCV + FFmpeg', what: 'Valida los videos, descarta frames borrosos y extrae el audio 16 kHz', short: 'Valida el video y separa el audio', icon: 'film', phase: 1 },
-  { model: 'Muse Voice Transcribe', what: 'Transcribe la voz del vendedor con sus tiempos', short: 'Escucha lo que dices, con tiempos', icon: 'mic', phase: 2 },
-  { model: 'Muse Spark', what: 'Detecta productos, precios y estado; verifica audio ↔ video', short: 'Entiende qué vendes y a qué precio', icon: 'sparkles', phase: 2 },
-  { model: 'Muse Spark · visión', what: 'Elige el mejor frame y ubica el objeto (cumple el rol de Glimmer)', short: 'Mira el video y encuentra el objeto', icon: 'eye', phase: 3 },
-  { model: 'SAM 3.1', what: 'Recorta el producto sin fondo y verifica el recorte', short: 'Lo recorta al píxel, sin fondo', icon: 'scissors', phase: 3 },
-  { model: 'Muse Image', what: 'Máster de estudio, frente, 3 vistas IA y ambiente', short: 'Sesión de fotos: estudio, ángulos y ambiente', icon: 'image', phase: 4 },
-  { model: 'Muse Spark · textos', what: 'Escribe los textos de venta y arma el catálogo (cumple el rol de Muse Code)', short: 'Escribe los textos y arma la tienda', icon: 'tag', phase: 5 },
+  { model: 'OpenCV + FFmpeg', what: 'Validates the videos, drops blurry frames and extracts 16 kHz audio', short: 'Checks the video and splits out the audio', icon: 'film', phase: 1 },
+  { model: 'Muse Voice Transcribe', what: 'Transcribes the seller\'s voice with timestamps', short: 'Listens to what you say, with timestamps', icon: 'mic', phase: 2 },
+  { model: 'Muse Spark', what: 'Detects products, prices and condition; checks audio ↔ video', short: 'Understands what you sell and for how much', icon: 'sparkles', phase: 2 },
+  { model: 'Muse Spark · vision', what: 'Picks the best frame and locates the object (plays the Glimmer role)', short: 'Watches the video and finds the object', icon: 'eye', phase: 3 },
+  { model: 'SAM 3.1', what: 'Cuts the product out of the background and checks the cutout', short: 'Cuts it out pixel-perfect, no background', icon: 'scissors', phase: 3 },
+  { model: 'Muse Image', what: 'Studio master, front, 3 AI views and lifestyle', short: 'Photo shoot: studio, angles and lifestyle', icon: 'image', phase: 4 },
+  { model: 'Muse Spark · copy', what: 'Writes the sales copy and builds the catalog (plays the Muse Code role)', short: 'Writes the copy and builds the store', icon: 'tag', phase: 5 },
 ];
 const PHASES = {
-  2: { url: '/api/v1/phase2/semantic', hint: 'suele tardar ~1 min' },
-  3: { url: '/api/v1/phase3/vision-sam', hint: 'suele tardar 1–3 min' },
-  4: { url: '/api/v1/phase4/studio', hint: 'la más larga: ~30 s por producto' },
-  5: { url: '/api/v1/phase5/codegen', hint: 'suele tardar ~20 s' },
+  2: { url: '/api/v1/phase2/semantic', hint: 'usually ~1 min' },
+  3: { url: '/api/v1/phase3/vision-sam', hint: 'usually 1–3 min' },
+  4: { url: '/api/v1/phase4/studio', hint: 'the longest: ~30 s per product' },
+  5: { url: '/api/v1/phase5/codegen', hint: 'usually ~20 s' },
 };
 
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -538,7 +546,7 @@ let approved = load(LS.approved, []);
 let pending = load(LS.pending, []);
 let cart = load(LS.cart, []);
 let activeTab = 'store';
-let activeCategory = 'Todas';
+let activeCategory = 'All';
 const activeView = {};
 const rotateTimers = new Map();
 let selectedFiles = [];
@@ -548,19 +556,23 @@ let loadingSeed = !approved.length && !localStorage.getItem(LS.seeded);
 let pollHandle = null;
 // Lienzo en vivo del estudio de carga: productos que aparecen a medida que cada modelo termina.
 const STUDIO_FILES = { master: '_master_studio.png', front: '_studio_white.jpg', left: '_angle_left.jpg', right: '_angle_right.jpg', back: '_angle_back.jpg', life: '_lifestyle.jpg' };
-const STUDIO_LABELS = { master: 'Máster', front: 'Frente', left: 'Izq. IA', right: 'Der. IA', back: 'Atrás IA', life: 'Ambiente' };
+const STUDIO_LABELS = { master: 'Master', front: 'Front', left: 'Left · AI', right: 'Right · AI', back: 'Back · AI', life: 'Lifestyle' };
+// Etiquetas de las vistas del catálogo por clave (los productos guardados antes traen la etiqueta en español)
+const VIEW_LABELS = { front: 'Front', left: 'Left', right: 'Right', back: 'Back', life: 'Lifestyle', png: 'No background', frame: 'Original frame' };
+const relabel = (list) => list.forEach((p) => (p.views || []).forEach((v) => { v.label = VIEW_LABELS[v.key] || v.label; }));
+relabel(approved); relabel(pending);
 let canvas = { sid: null, items: [], shown: new Set() };
 let studioPoll = null;
 // El progreso informa la última acción TERMINADA; el paso activo es el que viene después.
 const STEP_BY_MODEL = [
-  [/Voice Transcribe/i, 2], [/OpenCV Frame/i, 3], [/Visi[oó]n|SAM 3\.1|Verificador de recortes/i, 4],
-  [/Muse Image|Fidelidad|Estudio Fase 4/i, 5], [/Textos|Cat[aá]logo HTML/i, 6],
+  [/Voice Transcribe/i, 2], [/OpenCV Frame/i, 3], [/Visi[oó]n|Vision|SAM 3\.1|Verificador de recortes|Cutout verifier/i, 4],
+  [/Muse Image|Fidelidad|Fidelity|Estudio Fase 4|Phase 4 studio/i, 5], [/Textos|\(Copy\)|Cat[aá]logo HTML|HTML catalog/i, 6],
 ];
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const money = (v, cur) => `${SYMBOL[cur] || ''}${Number(v).toLocaleString('es', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
-const fmtNum = (n) => Number(n || 0).toLocaleString('es');
+const money = (v, cur) => `${SYMBOL[cur] || ''}${Number(v).toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+const fmtNum = (n) => Number(n || 0).toLocaleString('en-US');
 const isStudio = (v) => v && v.bg !== 'dark';
 const rotatable = (p) => p.views.filter((v) => isStudio(v) && v.key !== 'png');
 const findProduct = (uid) => approved.find((x) => x.uid === uid) || pending.find((x) => x.uid === uid);
@@ -606,8 +618,8 @@ function buildProducts(state) {
     const s = studio[c.id] || {};
     const gl = s.glimmer_selection || {};
     const sam = s.sam31_cutout || {};
-    const views = (c.views || []).map((v) => ({ key: v.key, label: v.label, url: `${API}/storage/${sid}/catalog/${v.src}`, ai: !!v.ai_inferred, bg: v.bg }));
-    if (gl.best_frame_url) views.push({ key: 'frame', label: 'Frame original', url: API + gl.best_frame_url, ai: false, bg: 'dark' });
+    const views = (c.views || []).map((v) => ({ key: v.key, label: VIEW_LABELS[v.key] || v.label, url: `${API}/storage/${sid}/catalog/${v.src}`, ai: !!v.ai_inferred, bg: v.bg }));
+    if (gl.best_frame_url) views.push({ key: 'frame', label: VIEW_LABELS.frame, url: API + gl.best_frame_url, ai: false, bg: 'dark' });
     return {
       uid: `${sid}:${c.id}`, session_id: sid, id: c.id, video_id: c.video_id, video_md5: videoMd5[c.video_id] || '',
       title: c.title, source_title: c.title, short_description: c.short_description, description: c.description,
@@ -626,7 +638,7 @@ async function api(path, options = {}) {
   const res = await fetch(API + path, options);
   let data = null;
   try { data = await res.json(); } catch { /* sin cuerpo JSON */ }
-  if (!res.ok) throw new Error((data && data.detail) || `HTTP ${res.status} en ${path}`);
+  if (!res.ok) throw new Error((data && data.detail) || `HTTP ${res.status} on ${path}`);
   return data;
 }
 
@@ -639,7 +651,7 @@ async function seedIfEmpty() {
     const seeds = buildProducts(state).map((p, i) => ({ ...p, published_at: Date.now() - i }));
     if (seeds.length) {
       approved = seeds; save(LS.approved, approved);
-      toast(`Se cargaron ${seeds.length} artículos de la última sesión`, 'info');
+      toast(`Loaded ${seeds.length} items from the last session`, 'info');
     }
   } catch { /* sin sesión previa: la tienda arranca vacía */ }
   loadingSeed = false;
@@ -653,8 +665,8 @@ function stageInner(p, v) {
     ? `<img src="${esc(v.url)}" alt="${esc(p.title)}" loading="lazy" class="stage-img blend absolute inset-0 w-full h-full object-contain p-6" />`
     : `<img src="${esc(v.url)}" alt="${esc(p.title)}" loading="lazy" class="stage-img absolute inset-0 w-full h-full object-cover" />`;
   const badge = v.ai
-    ? `<span class="absolute top-3 left-3 inline-flex items-center gap-1 h-6 px-2 rounded-full bg-white/85 backdrop-blur text-[10px] font-semibold text-indigo-700 shadow-sm">${icon('sparkles', 11)}Vista IA</span>`
-    : p.real_photo_only ? '<span class="absolute top-3 left-3 h-6 px-2 inline-flex items-center rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-white">Foto real del video</span>'
+    ? `<span class="absolute top-3 left-3 inline-flex items-center gap-1 h-6 px-2 rounded-full bg-white/85 backdrop-blur text-[10px] font-semibold text-indigo-700 shadow-sm">${icon('sparkles', 11)}AI view</span>`
+    : p.real_photo_only ? '<span class="absolute top-3 left-3 h-6 px-2 inline-flex items-center rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-white">Real photo from the video</span>'
     : !isStudio(v) ? `<span class="absolute top-3 left-3 h-6 px-2 inline-flex items-center rounded-full bg-black/55 backdrop-blur text-[10px] font-semibold text-white">${esc(v.label)}</span>` : '';
   return `${img}${badge}`;
 }
@@ -662,7 +674,7 @@ function stageInner(p, v) {
 function dots(p, current) {
   if (p.views.length < 2) return '';
   const dark = !isStudio(current);
-  return `<div class="absolute bottom-3 inset-x-0 flex justify-center gap-1.5">${p.views.map((v) => `<button data-action="view" data-uid="${esc(p.uid)}" data-key="${v.key}" title="${esc(v.label)}${v.ai ? ' · IA' : ''}" aria-label="${esc(v.label)}"
+  return `<div class="absolute bottom-3 inset-x-0 flex justify-center gap-1.5">${p.views.map((v) => `<button data-action="view" data-uid="${esc(p.uid)}" data-key="${v.key}" title="${esc(v.label)}${v.ai ? ' · AI' : ''}" aria-label="${esc(v.label)}"
     class="h-1.5 rounded-full transition-all ${v.key === current.key ? `w-5 ${dark ? 'bg-white' : 'bg-slate-900/80'}` : `w-1.5 ${dark ? 'bg-white/40 hover:bg-white/70' : 'bg-slate-900/25 hover:bg-slate-900/50'}`}"></button>`).join('')}</div>`;
 }
 
@@ -677,11 +689,11 @@ function beforeAfter(beforeUrl, afterView, title) {
     : `<img src="${esc(afterView ? afterView.url : '')}" alt="${esc(title)}" class="absolute inset-0 w-full h-full object-cover" />`;
   return `<div class="ba aspect-square" style="--pos:50%">
     ${after}
-    <div class="ba-before"><img src="${esc(beforeUrl)}" alt="Video original" class="absolute inset-0 w-full h-full object-cover" /></div>
-    <span class="absolute top-3 left-3 h-6 px-2.5 inline-flex items-center rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-white">Video original</span>
+    <div class="ba-before"><img src="${esc(beforeUrl)}" alt="Original video" class="absolute inset-0 w-full h-full object-cover" /></div>
+    <span class="absolute top-3 left-3 h-6 px-2.5 inline-flex items-center rounded-full bg-black/60 backdrop-blur text-[10px] font-semibold text-white">Original video</span>
     <span class="absolute top-3 right-3 h-6 px-2.5 inline-flex items-center gap-1 rounded-full bg-white/85 backdrop-blur text-[10px] font-semibold text-indigo-700">${icon('sparkles', 11)}Muse Image</span>
     <div class="ba-line"><div class="ba-knob">${icon('move', 18)}</div></div>
-    <input type="range" min="0" max="100" value="50" aria-label="Comparar antes y después" />
+    <input type="range" min="0" max="100" value="50" aria-label="Compare before and after" />
   </div>`;
 }
 
@@ -708,7 +720,7 @@ function renderHero() {
         </div>
       </div>
     </div>`;
-  }).join('') + `<div class="absolute right-[2%] bottom-[18%] parallax" style="--d:2.4"><span class="floaty inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/90 text-[12px] font-semibold text-indigo-700 shadow-xl" style="animation-delay:-1s">${icon('sparkles', 13)}Fotos de estudio con IA</span></div>`;
+  }).join('') + `<div class="absolute right-[2%] bottom-[18%] parallax" style="--d:2.4"><span class="floaty inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/90 text-[12px] font-semibold text-indigo-700 shadow-xl" style="animation-delay:-1s">${icon('sparkles', 13)}AI studio photos</span></div>`;
 }
 
 function modelsTimeline(compact = false) {
@@ -717,7 +729,7 @@ function modelsTimeline(compact = false) {
     ${i < STEPS.length - 1 ? `<span class="absolute left-[21px] top-12 bottom-0 w-px bg-gradient-to-b from-indigo-400/60 to-white/5"></span>` : ''}
     <span class="relative shrink-0 ${compact ? 'w-10 h-10' : 'w-11 h-11'} rounded-2xl meta-ai-gradient flex items-center justify-center text-white shadow-lg shadow-indigo-600/30">${icon(s.icon, compact ? 17 : 19)}</span>
     <div class="pt-1 min-w-0">
-      <div class="flex flex-wrap items-baseline gap-x-2"><span class="text-[14px] font-semibold text-white">${esc(s.model)}</span><span class="text-[11px] text-slate-500 tabular-nums">Fase ${s.phase}</span></div>
+      <div class="flex flex-wrap items-baseline gap-x-2"><span class="text-[14px] font-semibold text-white">${esc(s.model)}</span><span class="text-[11px] text-slate-500 tabular-nums">Phase ${s.phase}</span></div>
       <div class="mt-0.5 text-[13px] text-slate-400 leading-snug">${esc(compact ? s.short : s.what)}</div>
     </div>
   </li>`).join('');
@@ -804,22 +816,22 @@ function renderCanvas() {
   const imgs = canvas.items.reduce((a, it) => a + Object.keys(it.files).length, 0);
   const cuts = canvas.items.filter((it) => it.cutout).length;
   $('canvasStats').innerHTML = canvas.items.length ? `
-    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('sparkles', 12)}${canvas.items.length} productos</span>
-    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('scissors', 12)}${cuts} recortes</span>
-    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('image', 12)}${imgs} imágenes</span>` : '';
-  $('canvasTitle').textContent = !canvas.items.length ? 'Aquí verás trabajar a Meta Muse'
-    : canvas.items.every((it) => it.done) ? 'Catálogo listo' : imgs ? 'Muse Image está fotografiando tus productos' : cuts ? 'SAM 3.1 recortó tus productos' : 'Spark encontró estos productos';
+    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('sparkles', 12)}${canvas.items.length} products</span>
+    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('scissors', 12)}${cuts} cutouts</span>
+    <span class="h-7 px-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] hairline text-slate-300">${icon('image', 12)}${imgs} images</span>` : '';
+  $('canvasTitle').textContent = !canvas.items.length ? 'Watch Meta Muse work here'
+    : canvas.items.every((it) => it.done) ? 'Catalog ready' : imgs ? 'Muse Image is photographing your products' : cuts ? 'SAM 3.1 cut out your products' : 'Spark found these products';
   if (!canvas.items.length) {
     box.innerHTML = `<div class="col-span-full rounded-3xl surface py-20 px-6 text-center">
       <div class="mx-auto w-14 h-14 rounded-2xl meta-ai-gradient flex items-center justify-center text-white shadow-xl shadow-indigo-600/30">${icon('sparkles', 24)}</div>
-      <p class="mt-5 text-[17px] text-white font-semibold">Los productos aparecerán aquí en cuanto Spark los detecte</p>
-      <p class="mt-2 text-[14px] text-slate-400 leading-relaxed max-w-md mx-auto">Después SAM 3.1 los recortará y Muse Image les hará una sesión de fotos que verás aparecer imagen por imagen.</p></div>`;
+      <p class="mt-5 text-[17px] text-white font-semibold">Products will appear here as soon as Spark detects them</p>
+      <p class="mt-2 text-[14px] text-slate-400 leading-relaxed max-w-md mx-auto">Then SAM 3.1 will cut them out and Muse Image will give them a photo shoot you'll watch appear image by image.</p></div>`;
     return;
   }
   const isNew = (url) => { if (!url || canvas.shown.has(url)) return ''; canvas.shown.add(url); return 'reveal'; };
   box.innerHTML = canvas.items.map((it) => {
     const main = it.files.master || it.files.front || it.cutout;
-    const source = it.files.master || it.files.front ? ['Muse Image', 'bg-white/85 text-indigo-700'] : it.cutout ? ['SAM 3.1', 'bg-white/85 text-slate-800'] : ['Detectado por Spark', 'bg-black/60 text-white'];
+    const source = it.files.master || it.files.front ? ['Muse Image', 'bg-white/85 text-indigo-700'] : it.cutout ? ['SAM 3.1', 'bg-white/85 text-slate-800'] : ['Detected by Spark', 'bg-black/60 text-white'];
     const thumbs = Object.keys(STUDIO_FILES).map((k) => it.files[k]
       ? `<div class="relative aspect-square rounded-lg overflow-hidden ${k === 'life' ? 'bg-slate-900' : 'studio'}" title="${STUDIO_LABELS[k]}"><img src="${esc(it.files[k])}" alt="" class="${isNew(it.files[k])} absolute inset-0 w-full h-full ${k === 'life' ? 'object-cover' : 'object-contain p-1 blend'}" /></div>`
       : `<div class="aspect-square rounded-lg bg-white/[0.04] ${it.cutout && !it.done ? 'pulse-soft' : ''}" title="${STUDIO_LABELS[k]}"></div>`).join('');
@@ -828,12 +840,12 @@ function renderCanvas() {
         ${main ? `<img src="${esc(main)}" alt="${esc(it.name)}" class="${isNew(main)} blend absolute inset-0 w-full h-full object-contain p-6" />`
           : `<div class="absolute inset-0 skeleton"></div><div class="absolute inset-0 flex items-center justify-center text-slate-500">${icon('scissors', 26)}</div>`}
         <span class="absolute top-3 left-3 h-6 px-2.5 inline-flex items-center gap-1 rounded-full ${source[1]} backdrop-blur text-[10px] font-semibold">${icon(source[0] === 'SAM 3.1' ? 'scissors' : source[0] === 'Muse Image' ? 'image' : 'sparkles', 11)}${source[0]}</span>
-        ${it.lowQuality ? '<span class="absolute top-3 right-3 h-6 px-2.5 inline-flex items-center rounded-full bg-rose-500/80 text-[10px] font-semibold text-white">Toma insuficiente</span>' : ''}
+        ${it.lowQuality ? '<span class="absolute top-3 right-3 h-6 px-2.5 inline-flex items-center rounded-full bg-rose-500/80 text-[10px] font-semibold text-white">Poor shot</span>' : ''}
       </div>
       <div class="p-4 space-y-3">
         <div class="flex items-start justify-between gap-3">
           <div class="text-[14px] font-semibold text-white leading-snug line-clamp-2">${esc(it.name)}</div>
-          <span class="shrink-0 text-[14px] font-semibold tabular-nums ${it.price == null ? 'text-amber-300' : 'text-emerald-400'}">${it.price == null ? 'Consultar' : esc(money(it.price, it.currency))}</span>
+          <span class="shrink-0 text-[14px] font-semibold tabular-nums ${it.price == null ? 'text-amber-300' : 'text-emerald-400'}">${it.price == null ? 'Ask' : esc(money(it.price, it.currency))}</span>
         </div>
         <div class="grid grid-cols-6 gap-1.5">${thumbs}</div>
       </div>
@@ -844,8 +856,8 @@ function renderCanvas() {
 /* ---------- Render: navegación ---------- */
 function renderTabs() {
   const on = 'bg-white/10 text-white', off = 'text-slate-400 hover:text-white';
-  const storeLabel = `${icon('store', 15)}<span>Tienda</span>`;
-  const pendLabel = `${icon('inbox', 15)}<span>Pendientes</span><span class="min-w-[20px] h-5 px-1.5 rounded-full ${pending.length ? 'bg-amber-400 text-slate-950' : 'bg-white/10 text-slate-300'} text-[11px] font-semibold tabular-nums flex items-center justify-center">${pending.length}</span>`;
+  const storeLabel = `${icon('store', 15)}<span>Store</span>`;
+  const pendLabel = `${icon('inbox', 15)}<span>Pending</span><span class="min-w-[20px] h-5 px-1.5 rounded-full ${pending.length ? 'bg-amber-400 text-slate-950' : 'bg-white/10 text-slate-300'} text-[11px] font-semibold tabular-nums flex items-center justify-center">${pending.length}</span>`;
   [['tabStore', 'store', storeLabel], ['tabStoreM', 'store', storeLabel], ['tabPending', 'pending', pendLabel], ['tabPendingM', 'pending', pendLabel]].forEach(([id, key, html]) => {
     const el = $(id); if (!el) return;
     el.innerHTML = html;
@@ -868,17 +880,17 @@ function renderStore() {
       <div class="aspect-square skeleton"></div><div class="p-5 space-y-3"><div class="h-3 w-20 rounded skeleton"></div><div class="h-4 w-4/5 rounded skeleton"></div><div class="h-5 w-16 rounded skeleton"></div></div></div>`).join('');
     return;
   }
-  const cats = ['Todas', ...new Set(approved.map((p) => p.category))];
-  if (!cats.includes(activeCategory)) activeCategory = 'Todas';
+  const cats = ['All', ...new Set(approved.map((p) => p.category))];
+  if (!cats.includes(activeCategory)) activeCategory = 'All';
   $('categoryBar').innerHTML = cats.map((c) => `<button data-action="category" data-key="${esc(c)}"
     class="h-9 px-4 rounded-full text-[13px] font-medium transition ${c === activeCategory ? 'bg-meta text-white shadow-lg shadow-blue-600/25' : 'bg-white/[0.04] hairline text-slate-300 hover:text-white hover:bg-white/[0.08]'}">
-    ${esc(c)} <span class="ml-1 ${c === activeCategory ? 'text-white/70' : 'text-slate-500'} tabular-nums">${c === 'Todas' ? approved.length : approved.filter((p) => p.category === c).length}</span></button>`).join('');
+    ${esc(c)} <span class="ml-1 ${c === activeCategory ? 'text-white/70' : 'text-slate-500'} tabular-nums">${c === 'All' ? approved.length : approved.filter((p) => p.category === c).length}</span></button>`).join('');
   countUp($('statProducts'), approved.length);
   countUp($('statCategories'), cats.length - 1);
 
   const q = $('searchInput').value.trim().toLowerCase();
   const sort = $('sortSelect').value;
-  let list = approved.filter((p) => (activeCategory === 'Todas' || p.category === activeCategory) &&
+  let list = approved.filter((p) => (activeCategory === 'All' || p.category === activeCategory) &&
     (!q || `${p.title} ${p.short_description} ${p.category} ${(p.tags || []).join(' ')}`.toLowerCase().includes(q)));
   if (sort === 'recent') list = [...list].sort((a, b) => (b.published_at || 0) - (a.published_at || 0));
   if (sort === 'price_asc') list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
@@ -897,11 +909,11 @@ function renderStore() {
         <h3 class="mt-1.5 text-[15px] font-semibold leading-snug text-white line-clamp-2 cursor-pointer" data-action="quick" data-uid="${esc(p.uid)}">${esc(p.title)}</h3>
         <div class="mt-4 flex items-end justify-between gap-3">
           ${p.price == null
-            ? '<span class="text-[14px] font-semibold text-amber-300">Consultar precio</span>'
+            ? '<span class="text-[14px] font-semibold text-amber-300">Price on request</span>'
             : `<span class="text-[22px] font-semibold tracking-tight text-emerald-400 tabular-nums">${esc(money(p.price, p.currency))}<span class="ml-1 text-[12px] font-medium text-slate-500">${esc(p.currency)}</span></span>`}
           ${p.price == null
-            ? `<button data-action="quick" data-uid="${esc(p.uid)}" class="cart-fab w-10 h-10 rounded-full bg-white/[0.06] hairline text-slate-200 hover:bg-white/10 flex items-center justify-center" aria-label="Ver detalle">${icon('eye', 17)}</button>`
-            : `<button data-action="add-cart" data-uid="${esc(p.uid)}" class="cart-fab w-10 h-10 rounded-full bg-meta hover:bg-meta-dark text-white shadow-lg shadow-blue-600/30 flex items-center justify-center" aria-label="Agregar al carrito">${icon('plus', 18)}</button>`}
+            ? `<button data-action="quick" data-uid="${esc(p.uid)}" class="cart-fab w-10 h-10 rounded-full bg-white/[0.06] hairline text-slate-200 hover:bg-white/10 flex items-center justify-center" aria-label="View details">${icon('eye', 17)}</button>`
+            : `<button data-action="add-cart" data-uid="${esc(p.uid)}" class="cart-fab w-10 h-10 rounded-full bg-meta hover:bg-meta-dark text-white shadow-lg shadow-blue-600/30 flex items-center justify-center" aria-label="Add to cart">${icon('plus', 18)}</button>`}
         </div>
       </div>
     </article>`;
@@ -949,49 +961,49 @@ function renderPending() {
     const front = p.views.find((x) => x.key === 'front');
     const deictic = p.mention_type === 'DEICTIC';
     const chip = (text, cls, title = '') => `<span title="${esc(title)}" class="h-6 px-2.5 inline-flex items-center rounded-full text-[11px] font-medium ${cls}">${text}</span>`;
-    const mention = p.mention_type ? chip(deictic ? 'DEICTIC · “esto de acá”' : 'EXPLICIT · lo nombró', deictic ? 'bg-amber-400/10 text-amber-300' : 'bg-blue-500/10 text-blue-300',
-      deictic ? 'El vendedor solo lo señaló: la IA lo identificó mirando el video' : 'El vendedor nombró el producto') : '';
-    const quality = p.quality_score != null ? chip(`Calidad ${esc(p.quality_score)}/10`, 'bg-white/[0.05] text-slate-300') : '';
+    const mention = p.mention_type ? chip(deictic ? 'DEICTIC · “this one here”' : 'EXPLICIT · named it', deictic ? 'bg-amber-400/10 text-amber-300' : 'bg-blue-500/10 text-blue-300',
+      deictic ? 'The seller only pointed at it: the AI identified it by watching the video' : 'The seller named the product') : '';
+    const quality = p.quality_score != null ? chip(`Quality ${esc(p.quality_score)}/10`, 'bg-white/[0.05] text-slate-300') : '';
     const dup = duplicateOf(p);
-    const dupText = dup === 'store' ? 'Ya está en tu tienda' : 'Repetido en Por revisar';
+    const dupText = dup === 'store' ? 'Already in your store' : 'Repeated in To review';
     const thumb = (url, label, studioBg) => url ? `<figure><div class="aspect-square rounded-2xl overflow-hidden ${studioBg ? 'studio' : 'bg-slate-900'} relative">
       <img src="${esc(url)}" alt="${esc(label)}" class="absolute inset-0 w-full h-full ${studioBg ? 'object-contain p-3' : 'object-cover'}" /></div>
       <figcaption class="mt-1.5 text-[11px] text-slate-500 text-center">${esc(label)}</figcaption></figure>` : '';
     return `<article id="card-${esc(p.uid)}" class="rise rounded-3xl overflow-hidden surface" style="animation-delay:${Math.min(i, 8) * 50}ms">
       <div class="px-5 h-14 flex items-center gap-2 border-b border-white/5">
         <span class="text-[11px] font-mono text-slate-500">${esc(p.id)} · ${esc(p.video_id)}</span>
-        <span class="flex-1"></span>${dup ? chip(dupText, 'bg-amber-400/15 text-amber-300', 'Mismo video y mismo nombre que otro producto') : ''}${mention}${quality}
-        ${p.real_photo_only ? chip('Toma insuficiente', 'bg-rose-500/10 text-rose-300', 'Se muestra la foto real: la toma estaba movida') : ''}
+        <span class="flex-1"></span>${dup ? chip(dupText, 'bg-amber-400/15 text-amber-300', 'Same video and same name as another product') : ''}${mention}${quality}
+        ${p.real_photo_only ? chip('Poor shot', 'bg-rose-500/10 text-rose-300', 'Showing the real photo: the shot was blurry') : ''}
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-[1.1fr_1fr]">
         <div>${p.best_frame_url && front ? beforeAfter(p.best_frame_url, front, p.title) : stageBox(p, v)}
-          <div class="px-4 py-3 border-t border-white/5 grid grid-cols-6 gap-1.5">${p.views.filter((x) => x.key !== 'frame').slice(0, 6).map((x) => `<button data-action="quick" data-uid="${esc(p.uid)}" title="${esc(x.label)}${x.ai ? ' · IA' : ''}" class="relative aspect-square rounded-lg overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'}"><img src="${esc(x.url)}" alt="" class="absolute inset-0 w-full h-full ${isStudio(x) ? 'object-contain p-1 blend' : 'object-cover'}" /></button>`).join('')}</div>
+          <div class="px-4 py-3 border-t border-white/5 grid grid-cols-6 gap-1.5">${p.views.filter((x) => x.key !== 'frame').slice(0, 6).map((x) => `<button data-action="quick" data-uid="${esc(p.uid)}" title="${esc(x.label)}${x.ai ? ' · AI' : ''}" class="relative aspect-square rounded-lg overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'}"><img src="${esc(x.url)}" alt="" class="absolute inset-0 w-full h-full ${isStudio(x) ? 'object-contain p-1 blend' : 'object-cover'}" /></button>`).join('')}</div>
         </div>
         <div class="p-5 space-y-4">
           <div class="grid grid-cols-2 gap-3">
-            ${thumb(p.sam_cutout_url, 'Recorte SAM 3.1', true)}
-            ${thumb((p.views.find((x) => x.key === 'life') || {}).url, 'Ambiente · Muse Image', false)}
+            ${thumb(p.sam_cutout_url, 'SAM 3.1 cutout', true)}
+            ${thumb((p.views.find((x) => x.key === 'life') || {}).url, 'Lifestyle · Muse Image', false)}
           </div>
-          <label class="block"><span class="text-[11px] text-slate-500">Nombre</span>
+          <label class="block"><span class="text-[11px] text-slate-500">Name</span>
             <input data-field="title" data-uid="${esc(p.uid)}" value="${esc(p.title)}" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
           <div class="grid grid-cols-2 gap-3">
-            <label class="block"><span class="text-[11px] text-slate-500">Precio (${esc(p.currency)})</span>
-              <input data-field="price" data-uid="${esc(p.uid)}" type="number" min="0" step="0.5" value="${p.price ?? ''}" placeholder="Consultar" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] font-semibold text-emerald-400 tabular-nums focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
-            <label class="block"><span class="text-[11px] text-slate-500">Estado</span>
-              <input data-field="condition" data-uid="${esc(p.uid)}" value="${esc(p.condition)}" placeholder="Ej. Como nuevo" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
+            <label class="block"><span class="text-[11px] text-slate-500">Price (${esc(p.currency)})</span>
+              <input data-field="price" data-uid="${esc(p.uid)}" type="number" min="0" step="0.5" value="${p.price ?? ''}" placeholder="On request" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] font-semibold text-emerald-400 tabular-nums focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
+            <label class="block"><span class="text-[11px] text-slate-500">Condition</span>
+              <input data-field="condition" data-uid="${esc(p.uid)}" value="${esc(p.condition)}" placeholder="E.g. Like new" class="mt-1 w-full h-10 px-3 rounded-xl bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" /></label>
           </div>
           ${p.seller_phrase ? `<p class="flex gap-2 text-[12px] text-slate-400"><span class="shrink-0 mt-0.5 text-slate-500">${icon('mic', 14)}</span><span>“${esc(p.seller_phrase)}”</span></p>` : ''}
         </div>
       </div>
       ${dup ? `<div class="px-5 py-3 border-t border-amber-400/15 bg-amber-400/[0.06] flex items-start gap-2.5 text-[12px] text-amber-200">
         <span class="shrink-0 mt-0.5 text-amber-300">${icon('alert', 15)}</span>
-        <span>${dup === 'store' ? 'Este producto ya está publicado en tu tienda (mismo video y mismo nombre).' : 'Este producto ya está más arriba en Por revisar (mismo video y mismo nombre).'} Descártalo para no duplicarlo; “Aceptar todos” lo salta.</span></div>` : ''}
+        <span>${dup === 'store' ? 'This product is already published in your store (same video and same name).' : 'This product is already higher up in To review (same video and same name).'} Discard it to avoid a duplicate; “Accept all” skips it.</span></div>` : ''}
       <div class="px-5 py-4 border-t border-white/5 flex gap-3">
         ${dup
-          ? `<button data-action="approve" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-slate-300 hover:bg-white/[0.08] text-[13px] font-medium transition flex items-center gap-2">${icon('check', 15)}Publicar de todos modos</button>
-        <button data-action="reject" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('trash', 16)}Descartar repetido</button>`
-          : `<button data-action="reject" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2">${icon('trash', 15)}Rechazar</button>
-        <button data-action="approve" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('check', 16)}Aceptar y publicar</button>`}
+          ? `<button data-action="approve" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-slate-300 hover:bg-white/[0.08] text-[13px] font-medium transition flex items-center gap-2">${icon('check', 15)}Publish anyway</button>
+        <button data-action="reject" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('trash', 16)}Discard duplicate</button>`
+          : `<button data-action="reject" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2">${icon('trash', 15)}Reject</button>
+        <button data-action="approve" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('check', 16)}Accept and publish</button>`}
       </div>
     </article>`;
   }).join('');
@@ -1011,12 +1023,12 @@ function openQuick(uid) {
   $('quickBody').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-[1.15fr_1fr]">
     <div class="p-5 md:p-6 space-y-3">
       <div class="rounded-[22px] overflow-hidden">${comparing ? beforeAfter(p.best_frame_url, front, p.title) : stageBox(p, v)}</div>
-      ${canCompare ? `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${comparing ? 'front' : 'ba'}" class="w-full h-10 rounded-full ${comparing ? 'bg-meta text-white' : 'bg-white/[0.04] hairline text-slate-200 hover:bg-white/[0.08]'} text-[13px] font-medium transition flex items-center justify-center gap-2">${icon('move', 15)}${comparing ? 'Ver galería' : 'Antes / después: video vs. estudio'}</button>` : ''}
+      ${canCompare ? `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${comparing ? 'front' : 'ba'}" class="w-full h-10 rounded-full ${comparing ? 'bg-meta text-white' : 'bg-white/[0.04] hairline text-slate-200 hover:bg-white/[0.08]'} text-[13px] font-medium transition flex items-center justify-center gap-2">${icon('move', 15)}${comparing ? 'View gallery' : 'Before / after: video vs. studio'}</button>` : ''}
       <div class="grid grid-cols-7 gap-2">${p.views.map((x) => `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${x.key}"
-        class="relative aspect-square rounded-xl overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'} ring-2 ${!comparing && x.key === v.key ? 'ring-meta' : 'ring-transparent hover:ring-white/20'} transition" title="${esc(x.label)}${x.ai ? ' · IA' : ''}">
+        class="relative aspect-square rounded-xl overflow-hidden ${isStudio(x) ? 'studio' : 'bg-slate-900'} ring-2 ${!comparing && x.key === v.key ? 'ring-meta' : 'ring-transparent hover:ring-white/20'} transition" title="${esc(x.label)}${x.ai ? ' · AI' : ''}">
         <img src="${esc(x.url)}" alt="" class="absolute inset-0 w-full h-full ${isStudio(x) ? 'object-contain p-1 blend' : 'object-cover'}" />
         ${x.ai ? `<span class="absolute top-1 right-1 text-indigo-600">${icon('sparkles', 10)}</span>` : ''}</button>`).join('')}</div>
-      ${p.views.some((x) => x.ai) ? `<p class="flex items-center gap-1.5 text-[12px] text-indigo-300/90">${icon('sparkles', 12)}Las vistas IA no se filmaron: Muse Image las generó a partir del producto real.</p>` : ''}
+      ${p.views.some((x) => x.ai) ? `<p class="flex items-center gap-1.5 text-[12px] text-indigo-300/90">${icon('sparkles', 12)}AI views were not filmed: Muse Image generated them from the real product.</p>` : ''}
     </div>
     <div class="p-6 md:p-8 md:pl-2 space-y-5">
       <div>
@@ -1024,18 +1036,18 @@ function openQuick(uid) {
         <h2 class="mt-2 text-2xl font-semibold tracking-tight text-white leading-tight">${esc(p.title)}</h2>
       </div>
       <div class="flex items-center gap-3">
-        ${p.price == null ? '<span class="text-xl font-semibold text-amber-300">Consultar precio</span>'
+        ${p.price == null ? '<span class="text-xl font-semibold text-amber-300">Price on request</span>'
           : `<span class="text-3xl font-semibold tracking-tight text-emerald-400 tabular-nums">${esc(money(p.price, p.currency))}<span class="ml-1.5 text-sm font-medium text-slate-500">${esc(p.currency)}</span></span>`}
         ${p.condition ? `<span class="h-7 px-3 inline-flex items-center rounded-full bg-white/[0.06] text-[12px] text-slate-200">${esc(p.condition)}</span>` : ''}
       </div>
       <p class="text-[15px] text-slate-300 leading-relaxed">${esc(p.description || p.short_description)}</p>
       ${p.highlights.length ? `<ul class="space-y-2">${p.highlights.map((h) => `<li class="flex gap-2.5 text-[14px] text-slate-300"><span class="mt-0.5 text-emerald-400">${icon('check', 15)}</span>${esc(h)}</li>`).join('')}</ul>` : ''}
       ${p.tags.length ? `<div class="flex flex-wrap gap-1.5">${p.tags.map((t) => `<span class="h-6 px-2.5 inline-flex items-center rounded-full bg-white/[0.04] text-[11px] text-slate-400">#${esc(t)}</span>`).join('')}</div>` : ''}
-      ${p.seller_phrase ? `<div class="flex gap-3 p-4 rounded-2xl bg-white/[0.03] hairline"><span class="text-slate-400">${icon('mic', 16)}</span><div class="text-[13px] text-slate-400">Lo que dijo el vendedor<div class="mt-1 text-slate-200 italic">“${esc(p.seller_phrase)}”</div></div></div>` : ''}
+      ${p.seller_phrase ? `<div class="flex gap-3 p-4 rounded-2xl bg-white/[0.03] hairline"><span class="text-slate-400">${icon('mic', 16)}</span><div class="text-[13px] text-slate-400">What the seller said<div class="mt-1 text-slate-200 italic">“${esc(p.seller_phrase)}”</div></div></div>` : ''}
       ${inStore ? (p.price == null
-        ? `<button data-action="contact" data-uid="${esc(uid)}" class="w-full h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[14px] font-semibold transition">Consultar precio al vendedor</button>`
-        : `<button data-action="add-cart" data-uid="${esc(uid)}" class="w-full h-12 rounded-full bg-meta hover:bg-meta-dark text-white text-[14px] font-semibold shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">${icon('bag', 17)}Agregar al carrito</button>`) : ''}
-      ${inStore ? `<button data-action="unpublish" data-uid="${esc(uid)}" class="w-full text-[12px] text-slate-500 hover:text-rose-300 transition">Retirar de la tienda</button>` : ''}
+        ? `<button data-action="contact" data-uid="${esc(uid)}" class="w-full h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[14px] font-semibold transition">Ask the seller for the price</button>`
+        : `<button data-action="add-cart" data-uid="${esc(uid)}" class="w-full h-12 rounded-full bg-meta hover:bg-meta-dark text-white text-[14px] font-semibold shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">${icon('bag', 17)}Add to cart</button>`) : ''}
+      ${inStore ? `<button data-action="unpublish" data-uid="${esc(uid)}" class="w-full text-[12px] text-slate-500 hover:text-rose-300 transition">Remove from store</button>` : ''}
     </div>
   </div>`;
   $('quickView').classList.remove('hidden'); $('quickView').classList.add('flex');
@@ -1069,11 +1081,11 @@ function renderCart() {
       ${v ? `<div class="w-16 h-16 rounded-xl overflow-hidden studio relative shrink-0"><img src="${esc(v.url)}" alt="" class="absolute inset-0 w-full h-full object-contain p-1.5 blend" /></div>` : ''}
       <div class="flex-1 min-w-0"><div class="text-[14px] font-medium text-white truncate">${esc(p.title)}</div><div class="text-[13px] text-emerald-400 font-semibold tabular-nums">${esc(money(p.price, p.currency))} ${esc(p.currency)}</div></div>
       <div class="flex items-center gap-1">
-        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="-1" class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/10 text-slate-200 flex items-center justify-center" aria-label="Quitar uno">${icon('minus', 14)}</button>
+        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="-1" class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/10 text-slate-200 flex items-center justify-center" aria-label="Remove one">${icon('minus', 14)}</button>
         <span class="w-6 text-center text-[13px] tabular-nums">${i.qty}</span>
-        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="1" class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/10 text-slate-200 flex items-center justify-center" aria-label="Agregar uno">${icon('plus', 14)}</button>
+        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="1" class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/10 text-slate-200 flex items-center justify-center" aria-label="Add one">${icon('plus', 14)}</button>
       </div></div>`;
-  }).join('') : `<div class="py-16 text-center"><div class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.04] hairline flex items-center justify-center text-slate-400">${icon('bag', 20)}</div><p class="mt-3 text-[14px] text-slate-400">Tu carrito está vacío</p></div>`;
+  }).join('') : `<div class="py-16 text-center"><div class="mx-auto w-12 h-12 rounded-2xl bg-white/[0.04] hairline flex items-center justify-center text-slate-400">${icon('bag', 20)}</div><p class="mt-3 text-[14px] text-slate-400">Your cart is empty</p></div>`;
   $('cartTotal').innerHTML = Object.keys(totals).length ? Object.entries(totals).map(([c, v]) => `${esc(money(v, c))} <span class="text-[12px] text-slate-500">${esc(c)}</span>`).join('<br>') : '—';
 }
 
@@ -1094,7 +1106,7 @@ function renderTokens(state) {
   if (!state) return;
   const n = auditNumbers(state);
   countUp($('headerTokens'), n.total);
-  $('tokenSession').textContent = state.session_id ? `Sesión ${state.session_id}` : 'Sin sesión';
+  $('tokenSession').textContent = state.session_id ? `Session ${state.session_id}` : 'No session';
   $('tkTotal').textContent = fmtNum(n.total);
   $('tkSaved').textContent = fmtNum(n.saved);
   $('tkImages').textContent = `${n.images} · US$${(n.images * 0.01).toFixed(2)}`;
@@ -1106,8 +1118,8 @@ function renderTokens(state) {
   });
   const max = Math.max(1, ...Object.values(byModel).map((s) => s.tokens));
   $('tkModels').innerHTML = Object.entries(byModel).map(([m, s]) => `<div class="p-3 rounded-xl bg-white/[0.03] hairline">
-    <div class="flex items-center justify-between gap-2 text-[12px]"><span class="text-slate-200 truncate">${esc(m)}</span><span class="tabular-nums text-slate-400 shrink-0">${fmtNum(s.tokens)} tok · ${s.api} API · ${s.cache} caché</span></div>
-    <div class="mt-2 h-1 rounded-full bg-white/5 overflow-hidden"><div class="h-full rounded-full meta-ai-gradient" style="width:${Math.max(2, (s.tokens / max) * 100)}%"></div></div></div>`).join('') || '<p class="text-[12px] text-slate-500">Sin datos.</p>';
+    <div class="flex items-center justify-between gap-2 text-[12px]"><span class="text-slate-200 truncate">${esc(m)}</span><span class="tabular-nums text-slate-400 shrink-0">${fmtNum(s.tokens)} tok · ${s.api} API · ${s.cache} cache</span></div>
+    <div class="mt-2 h-1 rounded-full bg-white/5 overflow-hidden"><div class="h-full rounded-full meta-ai-gradient" style="width:${Math.max(2, (s.tokens / max) * 100)}%"></div></div></div>`).join('') || '<p class="text-[12px] text-slate-500">No data.</p>';
   const color = { API_CALL: 'text-blue-300', CACHE_HIT_MD5: 'text-emerald-300', API_ERROR: 'text-rose-300', ZERO_TOKEN_LOCAL: 'text-slate-400' };
   $('tkLogs').innerHTML = n.logs.slice(-150).reverse().map((l) => `<div class="p-2 rounded-lg bg-black/25 ${color[l.status] || 'text-slate-300'}">${esc((l.trace_line || '').replace('[MUSE-TRACE] ', ''))}</div>`).join('');
 }
@@ -1147,8 +1159,8 @@ async function setFiles(fileList) {
     return `<div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] hairline ${long ? 'ring-1 ring-rose-500/50' : ''}">
       ${s.thumb ? `<img src="${s.thumb}" alt="" class="w-14 h-10 shrink-0 rounded-lg object-cover" />` : `<span class="w-14 h-10 shrink-0 rounded-lg bg-white/[0.05] flex items-center justify-center text-slate-300">${icon('film', 16)}</span>`}
       <span class="flex-1 text-[13px] text-slate-200 truncate">${esc(s.file.name)}</span>
-      <span class="text-[12px] tabular-nums ${long ? 'text-rose-300' : 'text-slate-400'} shrink-0">${isNaN(s.duration) ? '—' : `${s.duration.toFixed(1)} s`}${long ? ' · supera 60 s' : ''}</span></div>`;
-  }).join('') + (tooMany ? '<p class="text-[12px] text-amber-300">Solo se usarán los 3 primeros videos.</p>' : '');
+      <span class="text-[12px] tabular-nums ${long ? 'text-rose-300' : 'text-slate-400'} shrink-0">${isNaN(s.duration) ? '—' : `${s.duration.toFixed(1)} s`}${long ? ' · over 60 s' : ''}</span></div>`;
+  }).join('') + (tooMany ? '<p class="text-[12px] text-amber-300">Only the first 3 videos will be used.</p>' : '');
   const valid = selectedFiles.length > 0 && selectedFiles.every((s) => !(s.duration > 60.8));
   $('btnProcess').disabled = !valid || Boolean(run && run.running);
 }
@@ -1168,7 +1180,7 @@ function renderStepper(activePhase, donePhases, errorPhase, activeStep = null) {
     return `<li class="${active ? 'step-active shimmer' : ''} flex items-start gap-3 p-3 rounded-xl ${active ? 'ring-1 ring-indigo-400/50' : done ? 'bg-emerald-500/[0.04]' : error ? 'bg-rose-500/[0.06]' : 'bg-white/[0.02]'} transition">
       <span class="step-dot w-7 h-7 shrink-0 rounded-full ${dot} flex items-center justify-center font-semibold text-white">${mark}</span>
       <div class="min-w-0">
-        <div class="text-[13px] font-semibold ${active ? 'meta-ai-text' : done ? 'text-emerald-300' : 'text-slate-300'}">${esc(s.model)} <span class="text-[10px] font-normal text-slate-500">· Fase ${s.phase}</span></div>
+        <div class="text-[13px] font-semibold ${active ? 'meta-ai-text' : done ? 'text-emerald-300' : 'text-slate-300'}">${esc(s.model)} <span class="text-[10px] font-normal text-slate-500">· Phase ${s.phase}</span></div>
         <div class="text-[12px] text-slate-400">${esc(s.what)}</div>
       </div></li>`;
   }).join('');
@@ -1214,7 +1226,7 @@ function startPolling(phase, baseline, done) {
         warn.textContent = `⏳ ${pr.warning}`;
         warn.classList.remove('hidden');
       } else if (pr.seconds_since_update > 45) {
-        warn.textContent = `⏳ Esperando la respuesta de Meta hace ${Math.round(pr.seconds_since_update)} s. Si se traba, el sistema reintenta solo.`;
+        warn.textContent = `⏳ Waiting for Meta's response for ${Math.round(pr.seconds_since_update)} s. If it stalls, the system retries on its own.`;
         warn.classList.remove('hidden');
       } else {
         warn.classList.add('hidden');
@@ -1235,12 +1247,12 @@ function phaseMessage(phase, state) {
   if (phase === 1) {
     const vids = state.videos || [];
     const ok = vids.filter((v) => v.status === 'READY').length;
-    return `Fase 1: ${ok} de ${vids.length} video(s) listos.`;
+    return `Phase 1: ${ok} of ${vids.length} video(s) ready.`;
   }
-  if (phase === 2) return `Fase 2: ${(state.semantic_products || []).length} producto(s) detectados en el audio.`;
-  if (phase === 3) return `Fase 3: ${(state.grounded_products || []).length} producto(s) recortados con SAM 3.1.`;
-  if (phase === 4) { const s = state.phase4_summary || {}; return `Fase 4: ${s.images_generated_api ?? 0} imagen(es) nuevas (US$${Number(s.cost_usd ?? 0).toFixed(2)}).`; }
-  if (phase === 5) return `Fase 5: catálogo listo con ${(state.catalog_products || []).length} producto(s).`;
+  if (phase === 2) return `Phase 2: ${(state.semantic_products || []).length} product(s) detected in the audio.`;
+  if (phase === 3) return `Phase 3: ${(state.grounded_products || []).length} product(s) cut out with SAM 3.1.`;
+  if (phase === 4) { const s = state.phase4_summary || {}; return `Phase 4: ${s.images_generated_api ?? 0} new image(s) (US$${Number(s.cost_usd ?? 0).toFixed(2)}).`; }
+  if (phase === 5) return `Phase 5: catalog ready with ${(state.catalog_products || []).length} product(s).`;
   return '';
 }
 
@@ -1257,14 +1269,14 @@ async function runPipeline(fromPhase) {
   try {
     if (phase === 1) {
       renderStepper(1, done, null);
-      $('pipelineMessage').textContent = 'Subiendo videos y validando calidad…';
+      $('pipelineMessage').textContent = 'Uploading videos and checking quality…';
       const form = new FormData();
       selectedFiles.forEach((s) => form.append('files', s.file));
       const state = await api('/api/v1/phase1/preprocess', { method: 'POST', body: form });
       const ready = (state.videos || []).filter((v) => v.status === 'READY');
       if (!ready.length) {
         const reasons = (state.videos || []).map((v) => `${v.filename}: ${v.reason || v.status}`).join(' • ');
-        throw new Error(`Ningún video pasó la validación. ${reasons}`);
+        throw new Error(`No video passed validation. ${reasons}`);
       }
       run.sid = state.session_id;
       canvasReset(run.sid);
@@ -1276,7 +1288,7 @@ async function runPipeline(fromPhase) {
     let baseline = { saved: 0, images: 0 };
     for (; phase <= 5; phase++) {
       renderStepper(phase, done, null);
-      $('pipelineMessage').textContent = `Fase ${phase} en curso (${PHASES[phase].hint})…`;
+      $('pipelineMessage').textContent = `Phase ${phase} running (${PHASES[phase].hint})…`;
       startPolling(phase, baseline, done);
       if (canvas.sid !== run.sid) canvasReset(run.sid);
       if (phase === 4) startStudioPoll();
@@ -1291,7 +1303,7 @@ async function runPipeline(fromPhase) {
       baseline = { saved: n.saved, images: n.images };
       $('pipelineMessage').textContent = phaseMessage(phase, state);
       done.push(phase);
-      if (phase === 2 && !(state.semantic_products || []).length) throw new Error('No se detectaron productos en el audio. Prueba diciendo “vendo esto a 10 dólares” mientras muestras cada objeto.');
+      if (phase === 2 && !(state.semantic_products || []).length) throw new Error('No products were detected in the audio. Try saying “I\'m selling this for 10 dollars” while showing each object.');
     }
     renderStepper(null, done, null);
     const products = buildProducts(state);
@@ -1299,18 +1311,18 @@ async function runPipeline(fromPhase) {
     pending = [...pending.filter((p) => !uids.has(p.uid)), ...products];
     save(LS.pending, pending);
     clearInterval(timerHandle);
-    $('pipelineResultText').textContent = `¡Listo! ${products.length} producto(s) llegaron a Pendientes en ${$('pipelineTimer').textContent}.`;
+    $('pipelineResultText').textContent = `Done! ${products.length} product(s) arrived in Pending in ${$('pipelineTimer').textContent}.`;
     $('pipelineResult').classList.remove('hidden');
     run = null;
     renderAll();
     const repeated = products.filter((p) => duplicateOf(pending.find((q) => q.uid === p.uid) || p)).length;
-    toast(`${products.length} producto(s) nuevos en Pendientes${repeated ? ` · ${repeated} ya estaban en tu tienda o en Por revisar` : ''}`, repeated ? 'info' : undefined);
+    toast(`${products.length} new product(s) in Pending${repeated ? ` · ${repeated} were already in your store or in To review` : ''}`, repeated ? 'info' : undefined);
   } catch (err) {
     stopPolling();
     stopStudioPoll();
     clearInterval(timerHandle);
     renderStepper(null, done, phase);
-    $('pipelineErrorText').textContent = `Falló la Fase ${phase}: ${err.message}`;
+    $('pipelineErrorText').textContent = `Phase ${phase} failed: ${err.message}`;
     $('pipelineError').classList.remove('hidden');
     run.nextPhase = phase;
     run.running = false;
@@ -1320,7 +1332,8 @@ async function runPipeline(fromPhase) {
 
 /* ---------- Repetidos: mismo video (MD5) y mismo nombre ---------- */
 const normTitle = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-const TITLE_STOP = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'con', 'en', 'y', 'para', 'por', 'un', 'una', 'a', 'al']);
+// Palabras vacías en inglés (títulos nuevos) y en español (productos de sesiones anteriores a la v0.3.2)
+const TITLE_STOP = new Set(['the', 'of', 'with', 'and', 'for', 'in', 'on', 'an', 'to', 'by', 'or', 'de', 'del', 'la', 'el', 'los', 'las', 'con', 'en', 'y', 'para', 'por', 'un', 'una', 'a', 'al']);
 const titleWords = (s) => new Set(normTitle(s).split(' ').filter((w) => w.length > 1 && !TITLE_STOP.has(w)));
 // Spark puede renombrar al re-analizar ("Peluche de Osito…" → "Peluche de Oso…"): basta que compartan 3/4 de las palabras
 function similarTitles(a, b) {
@@ -1377,40 +1390,40 @@ function animateOut(uids, then) {
 // kind: io = entrada/salida · req = obligatoria · opt = opcional. advance: su evento indica que ya terminó.
 const FLOW_Y = 175;
 const FLOW_NODES = [
-  { id: 'video', x: 50, y: FLOW_Y, g: ['Tus videos'], m: 'Entrada', label: 'Tus videos', model: 'Entrada', phase: 0, kind: 'io', icon: 'upload',
-    what: 'De 1 a 3 videos de hasta 60 s donde muestras cada objeto y dices su precio.', input: '—', output: 'Videos' },
-  { id: 'prep', x: 160, y: FLOW_Y, g: ['Validar', 'y audio'], m: 'OpenCV + FFmpeg', label: 'Validar y audio', model: 'OpenCV + FFmpeg', phase: 1, kind: 'req', icon: 'film', re: /OpenCV\+FFmpeg/,
-    what: 'Revisa duración, oscuridad y nitidez, descarta frames borrosos y separa el audio a 16 kHz. Corre en tu PC: 0 tokens.', input: 'Videos', output: 'Frames nítidos y audio', why: 'Sin audio ni frames válidos no hay nada que analizar.' },
-  { id: 'asr', x: 275, y: FLOW_Y, g: ['Escuchar'], m: 'Voice Transcribe', label: 'Escuchar', model: 'Muse Voice Transcribe', phase: 2, kind: 'req', icon: 'mic', re: /Voice Transcribe/, advance: true,
-    what: 'Transcribe tu voz con el tiempo de cada frase.', input: 'Audio', output: 'Transcripción por turnos', why: 'Los productos y precios salen de lo que dices.' },
-  { id: 'extract', x: 385, y: FLOW_Y, g: ['Detectar', 'productos'], m: 'Spark', label: 'Detectar productos', model: 'Muse Spark', phase: 2, kind: 'req', icon: 'sparkles', re: /^Muse Spark$/, advance: true, prompts: ['p2_extract'],
-    what: 'Lee la transcripción y mira el video para decidir qué productos ofreces, con nombre, precio, moneda y estado.', input: 'Transcripción y video', output: 'Lista de productos', why: 'Es quien decide qué productos existen.' },
-  { id: 'verify2', x: 495, y: FLOW_Y, g: ['Verificar', 'audio ↔ video'], m: 'Spark', label: 'Verificar audio ↔ video', model: 'Muse Spark', phase: 2, kind: 'opt', icon: 'check', re: /Verificador Fase 2|Spark \(Verificador\)/, prompts: ['p2_verify'],
-    what: 'Revisa los tramos dudosos (objetos mostrados sin precio, voz sin transcribir) y agrega o corrige productos.', input: 'Productos, audio y video', output: 'Productos corregidos' },
-  { id: 'vision', x: 610, y: FLOW_Y, g: ['Ver y', 'ubicar'], m: 'Spark visión', label: 'Ver y ubicar', model: 'Muse Spark · visión', phase: 3, kind: 'req', icon: 'eye', re: /Visi[oó]n|OpenCV Frame|^OpenCV$/, prompts: ['p3_vision'],
-    what: 'Elige el mejor fotograma de cada producto, lo nombra y marca la caja donde está.', input: 'Productos y frames', output: 'Mejor frame y caja', why: 'SAM necesita saber dónde está el objeto.' },
-  { id: 'sam', x: 720, y: FLOW_Y, g: ['Recortar'], m: 'SAM 3.1', label: 'Recortar', model: 'SAM 3.1', phase: 3, kind: 'req', icon: 'scissors', re: /SAM 3\.1/,
-    what: 'Recorta el producto al píxel y le quita el fondo.', input: 'Mejor frame y caja', output: 'Recorte PNG sin fondo', why: 'Sin recorte no hay foto de estudio.' },
-  { id: 'verify3', x: 830, y: FLOW_Y, g: ['Verificar', 'recortes'], m: 'Spark', label: 'Verificar recortes', model: 'Muse Spark', phase: 3, kind: 'opt', icon: 'check', re: /Verificador de recortes/, prompts: ['p3_cut_check', 'p3_cut_choice'],
-    what: 'Revisa cada recorte; si salió incompleto o con fondo, prueba alternativas con SAM y elige la mejor.', input: 'Recortes', output: 'Recortes revisados' },
-  { id: 'master', x: 950, y: FLOW_Y, g: ['Foto', 'máster'], m: 'Muse Image', label: 'Foto máster', model: 'Muse Image', phase: 4, kind: 'req', icon: 'image', canvasKey: 'master', prompts: ['p4_master'],
-    what: 'Completa lo que tapó la mano o cortó el borde y deja el producto sobre fondo blanco. Es la base de todas las vistas.', input: 'Recorte y frame', output: 'Foto máster', why: 'Todas las vistas parten de la máster.' },
-  { id: 'v_front', x: 1050, y: FLOW_Y - 100, label: 'Frente', model: 'Muse Image', phase: 4, kind: 'req', icon: 'image', canvasKey: 'front', view: true, prompts: ['p4_view_front'],
-    what: 'Foto de catálogo de frente, fondo blanco.', input: 'Foto máster', output: 'Foto frontal', why: 'Es la foto principal del producto.' },
-  { id: 'v_left', x: 1050, y: FLOW_Y - 50, label: 'Izq. IA', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'left', view: true, prompts: ['p4_view_left'],
-    what: 'Rota el producto ~90° para mostrar su lado izquierdo (deducido por IA).', input: 'Foto máster', output: 'Vista izquierda' },
-  { id: 'v_right', x: 1050, y: FLOW_Y, label: 'Der. IA', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'right', view: true, prompts: ['p4_view_right'],
-    what: 'Rota el producto ~90° para mostrar su lado derecho (deducido por IA).', input: 'Foto máster', output: 'Vista derecha' },
-  { id: 'v_back', x: 1050, y: FLOW_Y + 50, label: 'Atrás IA', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'back', view: true, prompts: ['p4_view_back'],
-    what: 'Rota el producto 180° para mostrar la parte de atrás (deducida por IA).', input: 'Foto máster', output: 'Vista trasera' },
-  { id: 'v_life', x: 1050, y: FLOW_Y + 100, label: 'Ambiente', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'life', view: true, prompts: ['p4_view_lifestyle'],
-    what: 'Coloca el producto en un ambiente realista acorde a su categoría.', input: 'Foto máster', output: 'Foto de ambiente' },
-  { id: 'fidelity', x: 1185, y: FLOW_Y, g: ['Control de', 'fidelidad'], m: 'Spark', label: 'Control de fidelidad', model: 'Muse Spark', phase: 4, kind: 'opt', icon: 'eye', re: /Fidelidad/, prompts: ['p4_fidelity'],
-    what: 'Compara cada foto generada con el producto real y repite las que inventan partes, cambian colores o cortan el producto.', input: 'Fotos generadas y frame', output: 'Fotos aprobadas' },
-  { id: 'copy', x: 1300, y: FLOW_Y, g: ['Textos', 'de venta'], m: 'Spark', label: 'Textos de venta', model: 'Muse Spark', phase: 5, kind: 'req', icon: 'tag', re: /Textos/, advance: true, prompts: ['p5_copy'],
-    what: 'Escribe título, descripción, puntos destacados, categoría y etiquetas, y el nombre de la tienda.', input: 'Productos y fotos', output: 'Textos del catálogo', why: 'Sin textos no hay ficha de producto.' },
-  { id: 'catalog', x: 1395, y: FLOW_Y, g: ['Catálogo'], m: 'Tu tienda', label: 'Catálogo', model: 'Tu tienda', phase: 5, kind: 'io', icon: 'store', re: /Cat[aá]logo HTML/,
-    what: 'Los productos llegan a Pendientes para que los apruebes y publiques.', input: 'Todo lo anterior', output: 'Productos en Pendientes' },
+  { id: 'video', x: 50, y: FLOW_Y, g: ['Your videos'], m: 'Input', label: 'Your videos', model: 'Input', phase: 0, kind: 'io', icon: 'upload',
+    what: '1 to 3 videos up to 60 s where you show each object and say its price.', input: '—', output: 'Videos' },
+  { id: 'prep', x: 160, y: FLOW_Y, g: ['Validate', '& audio'], m: 'OpenCV + FFmpeg', label: 'Validate & audio', model: 'OpenCV + FFmpeg', phase: 1, kind: 'req', icon: 'film', re: /OpenCV\+FFmpeg/,
+    what: 'Checks duration, darkness and sharpness, drops blurry frames and splits the audio at 16 kHz. Runs on your PC: 0 tokens.', input: 'Videos', output: 'Sharp frames and audio', why: 'Without audio or valid frames there is nothing to analyze.' },
+  { id: 'asr', x: 275, y: FLOW_Y, g: ['Listen'], m: 'Voice Transcribe', label: 'Listen', model: 'Muse Voice Transcribe', phase: 2, kind: 'req', icon: 'mic', re: /Voice Transcribe/, advance: true,
+    what: 'Transcribes your voice with the timing of each phrase.', input: 'Audio', output: 'Turn-by-turn transcript', why: 'Products and prices come from what you say.' },
+  { id: 'extract', x: 385, y: FLOW_Y, g: ['Detect', 'products'], m: 'Spark', label: 'Detect products', model: 'Muse Spark', phase: 2, kind: 'req', icon: 'sparkles', re: /^Muse Spark$/, advance: true, prompts: ['p2_extract'],
+    what: 'Reads the transcript and watches the video to decide which products you offer, with name, price, currency and condition.', input: 'Transcript and video', output: 'Product list', why: 'It decides which products exist.' },
+  { id: 'verify2', x: 495, y: FLOW_Y, g: ['Verify', 'audio ↔ video'], m: 'Spark', label: 'Verify audio ↔ video', model: 'Muse Spark', phase: 2, kind: 'opt', icon: 'check', re: /Verificador Fase 2|Spark \(Verificador\)|Phase 2 verifier|Spark \(Verifier\)/, prompts: ['p2_verify'],
+    what: 'Reviews doubtful stretches (objects shown without a price, untranscribed speech) and adds or fixes products.', input: 'Products, audio and video', output: 'Corrected products' },
+  { id: 'vision', x: 610, y: FLOW_Y, g: ['See and', 'locate'], m: 'Spark vision', label: 'See and locate', model: 'Muse Spark · vision', phase: 3, kind: 'req', icon: 'eye', re: /Visi[oó]n|Vision|OpenCV Frame|^OpenCV$/, prompts: ['p3_vision'],
+    what: 'Picks the best frame of each product, names it and marks the box where it is.', input: 'Products and frames', output: 'Best frame and box', why: 'SAM needs to know where the object is.' },
+  { id: 'sam', x: 720, y: FLOW_Y, g: ['Cut out'], m: 'SAM 3.1', label: 'Cut out', model: 'SAM 3.1', phase: 3, kind: 'req', icon: 'scissors', re: /SAM 3\.1/,
+    what: 'Cuts the product out pixel-perfect and removes the background.', input: 'Best frame and box', output: 'Background-free PNG cutout', why: 'No cutout, no studio photo.' },
+  { id: 'verify3', x: 830, y: FLOW_Y, g: ['Verify', 'cutouts'], m: 'Spark', label: 'Verify cutouts', model: 'Muse Spark', phase: 3, kind: 'opt', icon: 'check', re: /Verificador de recortes|Cutout verifier/, prompts: ['p3_cut_check', 'p3_cut_choice'],
+    what: 'Checks every cutout; if it is incomplete or has background left, tries alternatives with SAM and picks the best.', input: 'Cutouts', output: 'Reviewed cutouts' },
+  { id: 'master', x: 950, y: FLOW_Y, g: ['Master', 'photo'], m: 'Muse Image', label: 'Master photo', model: 'Muse Image', phase: 4, kind: 'req', icon: 'image', canvasKey: 'master', prompts: ['p4_master'],
+    what: 'Fills in what the hand covered or the edge cut off and puts the product on a white background. It is the base for every view.', input: 'Cutout and frame', output: 'Master photo', why: 'Every view starts from the master.' },
+  { id: 'v_front', x: 1050, y: FLOW_Y - 100, label: 'Front', model: 'Muse Image', phase: 4, kind: 'req', icon: 'image', canvasKey: 'front', view: true, prompts: ['p4_view_front'],
+    what: 'Front catalog photo on a white background.', input: 'Master photo', output: 'Front photo', why: 'It is the product\'s main photo.' },
+  { id: 'v_left', x: 1050, y: FLOW_Y - 50, label: 'Left · AI', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'left', view: true, prompts: ['p4_view_left'],
+    what: 'Rotates the product ~90° to show its left side (inferred by AI).', input: 'Master photo', output: 'Left view' },
+  { id: 'v_right', x: 1050, y: FLOW_Y, label: 'Right · AI', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'right', view: true, prompts: ['p4_view_right'],
+    what: 'Rotates the product ~90° to show its right side (inferred by AI).', input: 'Master photo', output: 'Right view' },
+  { id: 'v_back', x: 1050, y: FLOW_Y + 50, label: 'Back · AI', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'back', view: true, prompts: ['p4_view_back'],
+    what: 'Rotates the product 180° to show the back (inferred by AI).', input: 'Master photo', output: 'Back view' },
+  { id: 'v_life', x: 1050, y: FLOW_Y + 100, label: 'Lifestyle', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'life', view: true, prompts: ['p4_view_lifestyle'],
+    what: 'Places the product in a realistic setting that fits its category.', input: 'Master photo', output: 'Lifestyle photo' },
+  { id: 'fidelity', x: 1185, y: FLOW_Y, g: ['Fidelity', 'check'], m: 'Spark', label: 'Fidelity check', model: 'Muse Spark', phase: 4, kind: 'opt', icon: 'eye', re: /Fidelidad|Fidelity/, prompts: ['p4_fidelity'],
+    what: 'Compares each generated photo with the real product and redoes those that invent parts, change colors or crop the product.', input: 'Generated photos and frame', output: 'Approved photos' },
+  { id: 'copy', x: 1300, y: FLOW_Y, g: ['Sales', 'copy'], m: 'Spark', label: 'Sales copy', model: 'Muse Spark', phase: 5, kind: 'req', icon: 'tag', re: /Textos|\(Copy\)/, advance: true, prompts: ['p5_copy'],
+    what: 'Writes title, description, highlights, category and tags, plus the store name.', input: 'Products and photos', output: 'Catalog copy', why: 'No copy, no product page.' },
+  { id: 'catalog', x: 1395, y: FLOW_Y, g: ['Catalog'], m: 'Your store', label: 'Catalog', model: 'Your store', phase: 5, kind: 'io', icon: 'store', re: /Cat[aá]logo HTML|HTML catalog/,
+    what: 'Products land in Pending so you can approve and publish them.', input: 'Everything above', output: 'Products in Pending' },
 ];
 const FLOW_EDGES = [['video', 'prep'], ['prep', 'asr'], ['asr', 'extract'], ['extract', 'verify2'], ['verify2', 'vision'], ['vision', 'sam'], ['sam', 'verify3'], ['verify3', 'master'],
   ...['v_front', 'v_left', 'v_right', 'v_back', 'v_life'].flatMap((v) => [['master', v], [v, 'fidelity']]), ['fidelity', 'copy'], ['copy', 'catalog']];
@@ -1433,7 +1446,7 @@ function flowResetLive() { flowLive = { activePhase: null, done: [], error: null
 
 // Lo llama el sondeo de progreso: el último modelo que trabajó mueve la bolita activa (nunca hacia atrás).
 function flowNoteModel(phase, model, events) {
-  if (/Fidelidad/.test(model) || (events || []).some((e) => e.phase === 4 && /Fidelidad/.test(e.model || ''))) flowLive.fidelitySeen = true;
+  if (/Fidelidad|Fidelity/.test(model) || (events || []).some((e) => e.phase === 4 && /Fidelidad|Fidelity/.test(e.model || ''))) flowLive.fidelitySeen = true;
   const order = FLOW_ORDER[phase];
   const n = order && FLOW_NODES.find((x) => x.re && order.includes(x.id) && x.re.test(model));
   if (n) flowLive.idx[phase] = Math.max(flowLive.idx[phase] || 0, order.indexOf(n.id) + (n.advance ? 1 : 0));
@@ -1488,7 +1501,7 @@ function flowSvg({ compact = false } = {}) {
     return `<path class="flow-edge ${cls}" d="M${x1} ${A.y} C${mx} ${A.y}, ${mx} ${B.y}, ${x2} ${B.y}"/>`;
   }).join('');
   const bands = FLOW_BANDS.map(([p, x1, x2]) => `<rect x="${x1}" y="22" width="${x2 - x1}" height="${compact ? 300 : 316}" rx="18" fill="rgba(255,255,255,.018)" stroke="rgba(255,255,255,.05)"/>
-    <text x="${(x1 + x2) / 2}" y="44" text-anchor="middle" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1.2">FASE ${p}</text>`).join('');
+    <text x="${(x1 + x2) / 2}" y="44" text-anchor="middle" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1.2">PHASE ${p}</text>`).join('');
   const nodes = FLOW_NODES.map((n) => {
     const s = st[n.id], r = R(n), sel = !compact && n.id === flowSelected;
     const off = s === 'off';
@@ -1500,7 +1513,7 @@ function flowSvg({ compact = false } = {}) {
     const label = n.view
       ? `<text x="${n.x + r + 8}" y="${n.y + 4}" fill="${off ? '#64748b' : s === 'idle' ? '#cbd5e1' : color}" font-size="11.5" font-weight="500" ${off ? 'text-decoration="line-through"' : ''}>${esc(n.label)}</text>`
       : (n.g || [n.label]).map((line, i) => `<text x="${n.x}" y="${n.y + r + 19 + i * 15}" text-anchor="middle" fill="${off ? '#64748b' : '#f1f5f9'}" font-size="12" font-weight="600">${esc(line)}</text>`).join('')
-        + (compact ? '' : `<text x="${n.x}" y="${n.y + r + 19 + (n.g || [n.label]).length * 15 + 1}" text-anchor="middle" fill="${off ? '#f59e0b' : '#64748b'}" font-size="10.5">${off ? 'Apagada' : esc(n.m || n.model)}</text>`);
+        + (compact ? '' : `<text x="${n.x}" y="${n.y + r + 19 + (n.g || [n.label]).length * 15 + 1}" text-anchor="middle" fill="${off ? '#f59e0b' : '#64748b'}" font-size="10.5">${off ? 'Off' : esc(n.m || n.model)}</text>`);
     return `<g class="flow-node ${s}" data-action="flow-node" data-key="${n.id}" role="button" aria-label="${esc(n.label)}">
       ${s === 'active' ? `<circle class="ring" cx="${n.x}" cy="${n.y}" r="${r}" fill="none" stroke="#818cf8" stroke-width="2"/>` : ''}
       ${sel ? `<circle cx="${n.x}" cy="${n.y}" r="${r + 7}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>` : ''}
@@ -1512,7 +1525,7 @@ function flowSvg({ compact = false } = {}) {
       ${label}
     </g>`;
   }).join('');
-  return `<svg viewBox="0 ${compact ? 14 : 0} 1440 ${compact ? 312 : 345}" width="100%" class="block select-none" aria-label="Flujo de agentes">
+  return `<svg viewBox="0 ${compact ? 14 : 0} 1440 ${compact ? 312 : 345}" width="100%" class="block select-none" aria-label="Agent flow">
     <defs><linearGradient id="flowGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#0866FF"/><stop offset=".55" stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
     ${bands}${edges}${nodes}</svg>`;
 }
@@ -1521,29 +1534,29 @@ function renderFlowPanel() {
   const n = flowNode(flowSelected);
   if (!n) return;
   const st = flowNodeStates()[n.id];
-  const stateChip = { active: ['Trabajando ahora', 'bg-indigo-500/20 text-indigo-200'], done: ['Terminada', 'bg-emerald-500/15 text-emerald-300'], error: ['Falló', 'bg-rose-500/15 text-rose-200'] }[st];
-  const kindChip = n.kind === 'req' ? ['Obligatoria', 'bg-white/[0.06] text-slate-300'] : n.kind === 'opt' ? ['Opcional', 'bg-white/[0.06] text-slate-300'] : ['Entrada / salida', 'bg-white/[0.06] text-slate-400'];
+  const stateChip = { active: ['Working now', 'bg-indigo-500/20 text-indigo-200'], done: ['Done', 'bg-emerald-500/15 text-emerald-300'], error: ['Failed', 'bg-rose-500/15 text-rose-200'] }[st];
+  const kindChip = n.kind === 'req' ? ['Required', 'bg-white/[0.06] text-slate-300'] : n.kind === 'opt' ? ['Optional', 'bg-white/[0.06] text-slate-300'] : ['Input / output', 'bg-white/[0.06] text-slate-400'];
   const agents = (n.prompts || []).map((k) => agentOf(k)).filter(Boolean);
   const promptBlock = (n.prompts || []).length ? `
     <div class="mt-7">
-      <div class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Prompt${agents.length > 1 ? 's' : ''} · perfil "${esc(promptsState ? promptsState.active_profile_name : '…')}"</div>
+      <div class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Prompt${agents.length > 1 ? 's' : ''} · profile "${esc(promptsState ? promptsState.active_profile_name : '…')}"</div>
       <div class="mt-3 space-y-2">${agents.map((a) => `
         <div class="rounded-2xl bg-white/[0.03] hairline p-4">
           <div class="flex items-center justify-between gap-3">
             <span class="text-[13px] font-medium text-white">${esc(a.title)}</span>
-            ${a.is_custom ? '<span class="h-6 px-2.5 rounded-full bg-indigo-500/15 text-[11px] text-indigo-200 flex items-center">Personalizado</span>' : '<span class="text-[11px] text-slate-500">Original</span>'}
+            ${a.is_custom ? '<span class="h-6 px-2.5 rounded-full bg-indigo-500/15 text-[11px] text-indigo-200 flex items-center">Custom</span>' : '<span class="text-[11px] text-slate-500">Original</span>'}
           </div>
           ${a.extra ? `<p class="mt-2 text-[12px] text-indigo-200/90 leading-relaxed">+ ${esc(a.extra)}</p>` : ''}
           <p class="mt-2 text-[11.5px] text-slate-500 leading-relaxed line-clamp-3 font-mono">${esc((a.full_text ?? a.default_text).slice(0, 260))}…</p>
-          <button data-action="flow-edit-prompt" data-key="${a.key}" class="mt-3 h-9 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[12px] text-slate-200 transition flex items-center gap-2">${icon('sliders', 13)}Editar prompt</button>
-        </div>`).join('') || '<p class="text-[12px] text-slate-500">No se pudieron leer los prompts del backend.</p>'}</div>
-    </div>` : `<p class="mt-7 text-[12px] text-slate-500">${n.kind === 'io' ? '' : 'Este paso no usa un prompt de texto: trabaja con '}${n.kind === 'io' ? '' : n.id === 'sam' ? 'la caja que marcó Spark y las palabras que propuso.' : 'reglas fijas en tu PC.'}</p>`;
+          <button data-action="flow-edit-prompt" data-key="${a.key}" class="mt-3 h-9 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[12px] text-slate-200 transition flex items-center gap-2">${icon('sliders', 13)}Edit prompt</button>
+        </div>`).join('') || '<p class="text-[12px] text-slate-500">Could not read the prompts from the backend.</p>'}</div>
+    </div>` : `<p class="mt-7 text-[12px] text-slate-500">${n.kind === 'io' ? '' : 'This step uses no text prompt: it works with '}${n.kind === 'io' ? '' : n.id === 'sam' ? 'the box Spark marked and the words it suggested.' : 'fixed rules on your PC.'}</p>`;
   $('flowPanel').innerHTML = `
     <div class="flex items-center gap-3">
       <span class="w-12 h-12 rounded-2xl ${n.kind === 'io' ? 'bg-white/[0.06] text-slate-200' : 'meta-ai-gradient text-white shadow-lg shadow-indigo-600/30'} flex items-center justify-center">${icon(n.icon, 22)}</span>
       <div class="min-w-0">
         <h4 class="text-[17px] font-semibold text-white leading-tight">${esc(n.label)}</h4>
-        <div class="text-[12px] text-slate-400">${esc(n.model)}${n.phase ? ` · Fase ${n.phase}` : ''}</div>
+        <div class="text-[12px] text-slate-400">${esc(n.model)}${n.phase ? ` · Phase ${n.phase}` : ''}</div>
       </div>
     </div>
     <div class="mt-4 flex flex-wrap gap-2">
@@ -1552,10 +1565,10 @@ function renderFlowPanel() {
     </div>
     <p class="mt-5 text-[14px] text-slate-300 leading-relaxed">${esc(n.what)}</p>
     <dl class="mt-5 grid grid-cols-2 gap-2 text-[12px]">
-      <div class="rounded-xl bg-white/[0.03] hairline p-3"><dt class="text-slate-500">Recibe</dt><dd class="mt-1 text-slate-200">${esc(n.input)}</dd></div>
-      <div class="rounded-xl bg-white/[0.03] hairline p-3"><dt class="text-slate-500">Entrega</dt><dd class="mt-1 text-slate-200">${esc(n.output)}</dd></div>
+      <div class="rounded-xl bg-white/[0.03] hairline p-3"><dt class="text-slate-500">Takes</dt><dd class="mt-1 text-slate-200">${esc(n.input)}</dd></div>
+      <div class="rounded-xl bg-white/[0.03] hairline p-3"><dt class="text-slate-500">Returns</dt><dd class="mt-1 text-slate-200">${esc(n.output)}</dd></div>
     </dl>
-    ${n.kind === 'req' ? `<p class="mt-4 text-[12px] text-slate-500 flex items-start gap-2">${icon('info', 14, 'shrink-0 mt-0.5')}No se puede quitar: ${esc(n.why || '')}</p>` : ''}
+    ${n.kind === 'req' ? `<p class="mt-4 text-[12px] text-slate-500 flex items-start gap-2">${icon('info', 14, 'shrink-0 mt-0.5')}Can't be removed: ${esc(n.why || '')}</p>` : ''}
     ${[FLOW_TOGGLES[n.id], ...(FLOW_PARAMS[n.id] || [])].filter(Boolean).map(flowControl).join('')}
     ${promptBlock}`;
 }
@@ -1571,7 +1584,7 @@ function flowControl(key) {
   return `<div class="mt-4 rounded-2xl bg-white/[0.03] hairline p-4 flex items-start justify-between gap-4">
     <div class="min-w-0"><div class="text-[13px] font-medium text-white">${esc(o.label)}</div>
       <p class="mt-1 text-[12px] text-slate-400 leading-relaxed">${esc(o.description)}</p>
-      <p class="mt-2 text-[11px] ${same ? 'text-slate-500' : 'text-indigo-300'}">${same ? `Igual que "${esc(flowsState.default_flow_name)}"` : `Cambiado en "${esc(flowsState.active_flow_name)}"`}</p></div>
+      <p class="mt-2 text-[11px] ${same ? 'text-slate-500' : 'text-indigo-300'}">${same ? `Same as "${esc(flowsState.default_flow_name)}"` : `Changed in "${esc(flowsState.active_flow_name)}"`}</p></div>
     ${control}</div>`;
 }
 
@@ -1581,7 +1594,7 @@ function flowEstimate() {
   const imgs = 2 + views;
   const optKeys = Object.values(FLOW_TOGGLES);
   const on = optKeys.filter((k) => flowOpt(k)).length;
-  return `Por producto: <b class="text-slate-200 font-medium">${imgs} imágenes</b> (~US$${(imgs * 0.01).toFixed(2)}${flowOpt('fidelity.enabled') ? ' + reintentos si la fidelidad rechaza' : ''}) · ${on} de ${optKeys.length} pasos opcionales encendidos`;
+  return `Per product: <b class="text-slate-200 font-medium">${imgs} images</b> (~US$${(imgs * 0.01).toFixed(2)}${flowOpt('fidelity.enabled') ? ' + retries if the fidelity check rejects' : ''}) · ${on} of ${optKeys.length} optional steps on`;
 }
 
 function renderFlowBar() {
@@ -1613,7 +1626,7 @@ async function flowsWrite(path, req, okMsg) {
     return true;
   } catch (err) {
     toast(err.message, 'error');
-    if (/fase en curso/i.test(err.message)) { agentsLocked = true; renderFlowViews(); }
+    if (/fase en curso|phase is running/i.test(err.message)) { agentsLocked = true; renderFlowViews(); }
     return false;
   }
 }
@@ -1632,7 +1645,7 @@ function renderFlowViews() {
     renderFlowBar();
     renderFlowPanel();
     const chip = $('flowProfileChip');
-    chip.innerHTML = `${icon('sliders', 13)}<span>Perfil: <b class="text-slate-200 font-medium">${esc(promptsState ? promptsState.active_profile_name : '…')}</b></span>`;
+    chip.innerHTML = `${icon('sliders', 13)}<span>Profile: <b class="text-slate-200 font-medium">${esc(promptsState ? promptsState.active_profile_name : '…')}</b></span>`;
   }
 }
 
@@ -1659,7 +1672,7 @@ async function editPromptFromFlow(key) {
 }
 
 /* ---------- Configuración de agentes (GET/PUT/DELETE /api/v1/prompts) ---------- */
-const AGENT_VIEWS = [['front', 'Frente'], ['left', 'Izq.'], ['right', 'Der.'], ['back', 'Atrás'], ['lifestyle', 'Ambiente']];
+const AGENT_VIEWS = [['front', 'Front'], ['left', 'Left'], ['right', 'Right'], ['back', 'Back'], ['lifestyle', 'Lifestyle']];
 const AGENT_ICON = { 2: 'sparkles', 3: 'eye', 4: 'image', 5: 'tag' };
 let promptsState = null;
 let agentDraft = {};
@@ -1693,14 +1706,14 @@ function renderProfileChip() {
   const dot = $('agentsDot');
   const n = promptsState ? promptsState.agents.filter((a) => a.is_custom).length : 0;
   const btn = 'h-9 px-3 min-w-0 rounded-full bg-white/[0.03] hairline hover:bg-white/[0.06] text-[12px] text-slate-400 transition flex items-center justify-center gap-1.5';
-  chip.innerHTML = `<button data-action="open-agents" class="${btn}" title="${n ? `${n} agente(s) con prompt personalizado` : 'Prompts originales'}">${icon('sliders', 13)}<span class="truncate">Perfil: <b class="text-slate-200 font-medium">${esc(promptsState ? promptsState.active_profile_name : '…')}</b></span></button>
-    <button data-action="open-flow" class="${btn}" title="Qué pasos corren">${icon('workflow', 13)}<span class="truncate">Flujo: <b class="text-slate-200 font-medium">${esc(flowsState ? flowsState.active_flow_name : '…')}</b></span></button>`;
+  chip.innerHTML = `<button data-action="open-agents" class="${btn}" title="${n ? `${n} agent(s) with a custom prompt` : 'Original prompts'}">${icon('sliders', 13)}<span class="truncate">Profile: <b class="text-slate-200 font-medium">${esc(promptsState ? promptsState.active_profile_name : '…')}</b></span></button>
+    <button data-action="open-flow" class="${btn}" title="Which steps run">${icon('workflow', 13)}<span class="truncate">Flow: <b class="text-slate-200 font-medium">${esc(flowsState ? flowsState.active_flow_name : '…')}</b></span></button>`;
   dot.classList.toggle('hidden', !n);
 }
 
 function costNote(a) {
-  const base = `Al guardar, la próxima vez que corra la Fase ${a.phase} se volverá a llamar a ${a.model}`;
-  return a.kind === 'image' ? `${base} (~US$0.01 por imagen regenerada).` : `${base}.`;
+  const base = `After saving, the next time Phase ${a.phase} runs it will call ${a.model} again`;
+  return a.kind === 'image' ? `${base} (~US$0.01 per regenerated image).` : `${base}.`;
 }
 
 function agentFields(a) {
@@ -1708,24 +1721,24 @@ function agentFields(a) {
   const dis = agentsLocked ? 'disabled' : '';
   const ph = [...a.placeholders.required.map((p) => [p, true]), ...a.placeholders.optional.map((p) => [p, false])];
   return `
-    <label class="block mt-5 text-[12px] font-medium text-slate-300">Instrucciones adicionales <span class="text-slate-500 font-normal">· se suman al prompt original sin reemplazarlo</span></label>
-    <textarea data-agent-extra="${a.key}" ${dis} rows="3" placeholder="${esc(a.hint || 'Ej.: escribe con un tono más formal.')}" class="mt-2 w-full rounded-2xl bg-black/30 hairline p-3.5 text-[13px] text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-meta/60 resize-y">${esc(d.extra)}</textarea>
+    <label class="block mt-5 text-[12px] font-medium text-slate-300">Additional instructions <span class="text-slate-500 font-normal">· added to the original prompt without replacing it</span></label>
+    <textarea data-agent-extra="${a.key}" ${dis} rows="3" placeholder="${esc(a.hint || 'E.g. write in a more formal tone.')}" class="mt-2 w-full rounded-2xl bg-black/30 hairline p-3.5 text-[13px] text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-meta/60 resize-y">${esc(d.extra)}</textarea>
     <button data-action="agent-expert" data-key="${a.key}" class="mt-3 inline-flex items-center gap-2 text-[12px] ${d.expert ? 'text-indigo-300' : 'text-slate-400 hover:text-slate-200'} transition">
       <span class="relative w-8 h-[18px] rounded-full ${d.expert ? 'bg-indigo-500' : 'bg-white/10'} transition"><span class="absolute top-[2px] ${d.expert ? 'left-[16px]' : 'left-[2px]'} w-[14px] h-[14px] rounded-full bg-white transition-all"></span></span>
-      ${icon('code', 14)}Modo experto: reescribir el prompt completo
+      ${icon('code', 14)}Expert mode: rewrite the full prompt
     </button>
-    ${!d.expert && d.full !== a.default_text ? '<span class="ml-2 text-[11px] text-indigo-300">· usa un prompt reescrito</span>' : ''}
+    ${!d.expert && d.full !== a.default_text ? '<span class="ml-2 text-[11px] text-indigo-300">· uses a rewritten prompt</span>' : ''}
     ${d.expert ? `<div class="mt-3 rounded-2xl bg-black/30 hairline p-3.5">
-      ${ph.length ? `<div class="flex flex-wrap items-center gap-1.5 mb-2.5"><span class="text-[11px] text-slate-500 mr-1">Marcadores (clic para insertar):</span>${ph.map(([p, req]) => `<button data-action="agent-insert" data-key="${a.key}" data-ph="${p}" ${dis} class="h-6 px-2 rounded-md font-mono text-[11px] ${req ? 'bg-indigo-500/15 text-indigo-200' : 'bg-white/5 text-slate-300'} hover:brightness-125" title="${req ? 'Obligatorio' : 'Opcional'}">{${p}}</button>`).join('')}</div>` : ''}
+      ${ph.length ? `<div class="flex flex-wrap items-center gap-1.5 mb-2.5"><span class="text-[11px] text-slate-500 mr-1">Placeholders (click to insert):</span>${ph.map(([p, req]) => `<button data-action="agent-insert" data-key="${a.key}" data-ph="${p}" ${dis} class="h-6 px-2 rounded-md font-mono text-[11px] ${req ? 'bg-indigo-500/15 text-indigo-200' : 'bg-white/5 text-slate-300'} hover:brightness-125" title="${req ? 'Required' : 'Optional'}">{${p}}</button>`).join('')}</div>` : ''}
       <textarea id="full-${a.key}" data-agent-full="${a.key}" ${dis} rows="12" spellcheck="false" class="w-full rounded-xl bg-transparent text-[12px] leading-relaxed font-mono text-slate-200 focus:outline-none resize-y">${esc(d.full)}</textarea>
-      <div class="mt-2 flex items-center justify-between gap-3 text-[11px] text-slate-500"><span>${d.full === a.default_text ? 'Texto original' : '<span class="text-indigo-300">Texto modificado</span>'}</span>
-        <button data-action="agent-original" data-key="${a.key}" ${dis} class="text-slate-400 hover:text-white">Volver al texto original</button></div>
+      <div class="mt-2 flex items-center justify-between gap-3 text-[11px] text-slate-500"><span>${d.full === a.default_text ? 'Original text' : '<span class="text-indigo-300">Modified text</span>'}</span>
+        <button data-action="agent-original" data-key="${a.key}" ${dis} class="text-slate-400 hover:text-white">Back to the original text</button></div>
     </div>` : ''}
     <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
       <p class="text-[11px] text-slate-500 max-w-md">${esc(costNote(a))}</p>
       <div class="flex items-center gap-2">
-        ${a.is_custom ? `<button data-action="agent-reset" data-key="${a.key}" ${dis} class="h-9 px-4 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-1.5">${icon('retry', 13)}Restaurar original</button>` : ''}
-        <button data-action="agent-save" data-key="${a.key}" data-save="${a.key}" ${agentsLocked || !agentDirty(a) ? 'disabled' : ''} class="h-9 px-5 rounded-full bg-meta hover:bg-meta-dark text-white text-[12px] font-semibold disabled:opacity-35 disabled:cursor-not-allowed transition">Guardar</button>
+        ${a.is_custom ? `<button data-action="agent-reset" data-key="${a.key}" ${dis} class="h-9 px-4 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-1.5">${icon('retry', 13)}Restore original</button>` : ''}
+        <button data-action="agent-save" data-key="${a.key}" data-save="${a.key}" ${agentsLocked || !agentDirty(a) ? 'disabled' : ''} class="h-9 px-5 rounded-full bg-meta hover:bg-meta-dark text-white text-[12px] font-semibold disabled:opacity-35 disabled:cursor-not-allowed transition">Save</button>
       </div>
     </div>`;
 }
@@ -1738,8 +1751,8 @@ function agentCard(a, { title, description, tabs = '' } = {}) {
         <div class="flex flex-wrap items-center gap-2">
           <h4 class="text-[15px] font-semibold text-white">${esc(title || a.title)}</h4>
           <span class="h-6 px-2.5 rounded-full bg-white/[0.05] text-[11px] text-slate-300 flex items-center">${esc(a.model)}</span>
-          <span class="h-6 px-2.5 rounded-full bg-white/[0.05] text-[11px] text-slate-400 flex items-center">Fase ${a.phase}</span>
-          ${a.is_custom ? '<span class="h-6 px-2.5 rounded-full bg-indigo-500/15 text-[11px] text-indigo-200 flex items-center">Personalizado</span>' : ''}
+          <span class="h-6 px-2.5 rounded-full bg-white/[0.05] text-[11px] text-slate-400 flex items-center">Phase ${a.phase}</span>
+          ${a.is_custom ? '<span class="h-6 px-2.5 rounded-full bg-indigo-500/15 text-[11px] text-indigo-200 flex items-center">Custom</span>' : ''}
         </div>
         <p class="mt-1 text-[13px] text-slate-400 leading-relaxed">${esc(description || a.description)}</p>
       </div>
@@ -1756,13 +1769,13 @@ function viewsCard() {
   const tabs = `<div class="mt-5 flex flex-wrap gap-1 p-1 rounded-full bg-white/[0.04] hairline w-fit">${views.map(([a, k, label]) =>
     `<button data-action="agent-view-tab" data-key="${k}" class="h-8 px-4 rounded-full text-[12px] font-medium transition flex items-center gap-1.5 ${k === agentViewTab ? 'bg-white text-slate-900' : 'text-slate-300 hover:text-white'}">${esc(label)}${a.is_custom ? '<span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>' : ''}</button>`).join('')}</div>
     <p class="mt-3 text-[12px] text-slate-500">${esc(current.title)}: ${esc(current.description)}</p>`;
-  return agentCard(current, { title: 'Sesión de fotos: vistas del catálogo', description: 'Muse Image genera 5 fotos a partir de la máster: frente, izquierda, derecha y atrás (deducidas por IA) y una foto de ambiente. Cada una tiene su propio prompt.', tabs });
+  return agentCard(current, { title: 'Photo shoot: catalog views', description: 'Muse Image generates 5 photos from the master: front, left, right and back (inferred by AI) and a lifestyle photo. Each one has its own prompt.', tabs });
 }
 
 function renderAgents() {
   const body = $('agentsBody');
   if (!promptsState) {
-    body.innerHTML = '<div class="rounded-3xl surface p-10 text-center text-slate-400 text-[14px]">No se pudo conectar con el backend para leer los prompts.</div>';
+    body.innerHTML = '<div class="rounded-3xl surface p-10 text-center text-slate-400 text-[14px]">Could not connect to the backend to read the prompts.</div>';
     return;
   }
   const sel = $('profileSelect');
@@ -1782,17 +1795,17 @@ function renderAgents() {
   const nAdvCustom = advanced.filter((a) => a.is_custom).length;
 
   body.innerHTML = `
-    ${isOriginal ? `<div class="rounded-2xl bg-white/[0.03] hairline p-4 text-[13px] text-slate-400 flex items-center gap-2">${icon('info', 16, 'text-blue-300 shrink-0')}Estás en el Original de Meta Muse, que nunca se modifica. Puedes editar y, al guardar, te pediremos un nombre para crear tu perfil. También puedes crearlo ahora con "Nuevo perfil".</div>` : ''}
-    ${section('Fase 2 · Entender lo que vendes', '', card('p2_extract'))}
-    ${section('Fase 4 · Sesión de fotos con Muse Image', 'Los prompts de imagen funcionan mejor en inglés. Los marcadores como {desc} se reemplazan por los datos de cada producto.', card('p4_master') + viewsCard())}
-    ${section('Fase 5 · Textos de venta', '', card('p5_copy'))}
+    ${isOriginal ? `<div class="rounded-2xl bg-white/[0.03] hairline p-4 text-[13px] text-slate-400 flex items-center gap-2">${icon('info', 16, 'text-blue-300 shrink-0')}You are on the Default profile, which is never modified. You can edit, and when you save we will ask for a name to create your profile. You can also create it now with "New profile".</div>` : ''}
+    ${section('Phase 2 · Understanding what you sell', '', card('p2_extract'))}
+    ${section('Phase 4 · Photo shoot with Muse Image', 'Image prompts work best in English. Placeholders like {desc} are replaced with each product\'s data.', card('p4_master') + viewsCard())}
+    ${section('Phase 5 · Sales copy', '', card('p5_copy'))}
     <section>
       <button data-action="agents-advanced" class="w-full rounded-2xl surface p-5 flex items-center justify-between text-left">
-        <span><span class="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Avanzado · verificadores${nAdvCustom ? ` <span class="text-indigo-300 normal-case">(${nAdvCustom} personalizado/s)</span>` : ''}</span>
-        <span class="block mt-1 text-[13px] text-slate-500">${advanced.length} agentes que revisan y corrigen el trabajo de los demás.</span></span>
+        <span><span class="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Advanced · verifiers${nAdvCustom ? ` <span class="text-indigo-300 normal-case">(${nAdvCustom} custom)</span>` : ''}</span>
+        <span class="block mt-1 text-[13px] text-slate-500">${advanced.length} agents that check and fix the others' work.</span></span>
         <span class="text-slate-400 transition ${agentsAdvancedOpen ? 'rotate-180' : ''}">${icon('chevron', 18)}</span>
       </button>
-      ${agentsAdvancedOpen ? `<div class="mt-4 rounded-2xl bg-amber-400/10 hairline p-4 text-[13px] text-amber-200 flex items-start gap-2">${icon('alert', 16, 'shrink-0 mt-0.5')}Estos agentes cuidan la calidad: deciden qué recorte sirve, qué foto es fiel al producto real y qué productos se agregan. Cambiarlos puede bajar la calidad del catálogo.</div>
+      ${agentsAdvancedOpen ? `<div class="mt-4 rounded-2xl bg-amber-400/10 hairline p-4 text-[13px] text-amber-200 flex items-start gap-2">${icon('alert', 16, 'shrink-0 mt-0.5')}These agents guard quality: they decide which cutout works, which photo is faithful to the real product and which products get added. Changing them can lower catalog quality.</div>
         <div class="mt-5 space-y-5">${advanced.map((a) => agentCard(a)).join('')}</div>` : ''}
     </section>`;
 }
@@ -1818,7 +1831,7 @@ async function promptsWrite(path, req, okMsg) {
     return true;
   } catch (err) {
     toast(err.message, 'error');
-    if (/fase en curso/i.test(err.message)) { agentsLocked = true; renderAgents(); }
+    if (/fase en curso|phase is running/i.test(err.message)) { agentsLocked = true; renderAgents(); }
     return false;
   }
 }
@@ -1834,17 +1847,17 @@ function openProfileModal(mode, key = null, target = 'prompts') {
   const active = isFlow ? S.active_flow : S.active_profile;
   const activeName = isFlow ? S.active_flow_name : S.active_profile_name;
   const W = isFlow
-    ? { one: 'flujo', def: S.default_flow_name, auto: 'Mi flujo', what: 'Un flujo decide qué pasos opcionales corren y con qué parámetros. Al crearlo queda activo y los próximos videos se procesan con él.', keeps: 'los pasos del flujo', fresh: 'Todos los pasos encendidos, como siempre.' }
-    : { one: 'perfil', def: S.default_profile_name, auto: 'Mi perfil', what: 'Un perfil es un juego de prompts con nombre. Al crearlo queda activo y los próximos videos se procesan con él.', keeps: 'los prompts del perfil', fresh: 'Un perfil limpio, sin cambios.' };
+    ? { one: 'flow', def: S.default_flow_name, auto: 'My flow', what: 'A flow decides which optional steps run and with which settings. Once created it becomes active and the next videos are processed with it.', keeps: 'the flow\'s steps', fresh: 'Every step on, as always.' }
+    : { one: 'profile', def: S.default_profile_name, auto: 'My profile', what: 'A profile is a named set of prompts. Once created it becomes active and the next videos are processed with it.', keeps: 'the profile\'s prompts', fresh: 'A clean profile, no changes.' };
   const copy = {
-    new: [`Nuevo ${W.one}`, W.what, '', 'Crear y activar'],
-    rename: [`Renombrar ${W.one}`, `Solo cambia el nombre; ${W.keeps} no se tocan.`, activeName, 'Guardar nombre'],
-    save: [`Guardar en un ${W.one} nuevo`, `El "${W.def}" nunca se modifica. Para guardar este cambio, crea un ${W.one}: quedará activo con tu cambio y podrás volver al original cuando quieras desde el selector.`, W.auto, 'Crear y guardar'],
+    new: [`New ${W.one}`, W.what, '', 'Create and activate'],
+    rename: [`Rename ${W.one}`, `Only the name changes; ${W.keeps} stay untouched.`, activeName, 'Save name'],
+    save: [`Save to a new ${W.one}`, `"${W.def}" is never modified. To keep this change, create a ${W.one}: it becomes active with your change, and you can switch back to the original anytime from the selector.`, W.auto, 'Create and save'],
   }[mode];
-  $('profileNameLabel').textContent = `Nombre del ${W.one}`;
+  $('profileNameLabel').textContent = `${W.one[0].toUpperCase()}${W.one.slice(1)} name`;
   $('profileFromOrigTitle').textContent = W.def;
   $('profileFromOrigText').textContent = W.fresh;
-  $('profileFromCopyTitle').textContent = `Copia del ${W.one} actual`;
+  $('profileFromCopyTitle').textContent = `Copy of the current ${W.one}`;
   $('profileModalTitle').textContent = copy[0];
   $('profileModalText').textContent = copy[1];
   $('profileName').value = copy[2];
@@ -1852,7 +1865,7 @@ function openProfileModal(mode, key = null, target = 'prompts') {
   $('profileFromBox').classList.toggle('hidden', mode !== 'new');
   $('profileFromCopy').classList.toggle('hidden', !active);
   $('profileFromCopy').classList.toggle('flex', !!active);
-  $('profileFromCopyText').textContent = active ? `Parte de "${activeName}" con todos sus cambios.` : '';
+  $('profileFromCopyText').textContent = active ? `Starts from "${activeName}" with all its changes.` : '';
   document.querySelector('input[name=profileFrom][value=original]').checked = true;
   $('profileModal').classList.remove('hidden'); $('profileModal').classList.add('flex');
   setTimeout(() => { $('profileName').focus(); $('profileName').select(); }, 30);
@@ -1862,21 +1875,21 @@ function closeProfileModal() { profileModal = null; $('profileModal').classList.
 async function submitProfileModal() {
   if (!profileModal) return;
   const name = $('profileName').value.trim();
-  if (!name) { $('profileName').focus(); return toast('Escribe un nombre', 'info'); }
+  if (!name) { $('profileName').focus(); return toast('Type a name', 'info'); }
   const { mode, key, target } = profileModal;
   if (target === 'flows') {
     const activeFlow = flowsState.active_flow;
     closeProfileModal();
-    if (mode === 'rename') return flowsWrite(`/api/v1/flows/${encodeURIComponent(activeFlow)}`, jsonReq('PUT', { name }), `Flujo renombrado a "${name}"`);
+    if (mode === 'rename') return flowsWrite(`/api/v1/flows/${encodeURIComponent(activeFlow)}`, jsonReq('PUT', { name }), `Flow renamed to "${name}"`);
     const fromCopy = mode === 'new' && document.querySelector('input[name=profileFrom]:checked').value === 'copy';
-    return flowsWrite('/api/v1/flows', jsonReq('POST', { name, copy_from: fromCopy ? activeFlow : null, options: mode === 'save' ? key : null }), mode === 'new' ? `Flujo "${name}" creado y activo` : `Flujo "${name}" creado con tu cambio`);
+    return flowsWrite('/api/v1/flows', jsonReq('POST', { name, copy_from: fromCopy ? activeFlow : null, options: mode === 'save' ? key : null }), mode === 'new' ? `Flow "${name}" created and active` : `Flow "${name}" created with your change`);
   }
   const active = promptsState.active_profile;
   closeProfileModal();
-  if (mode === 'rename') return promptsWrite(`/api/v1/prompts/profiles/${encodeURIComponent(active)}`, jsonReq('PUT', { name }), `Perfil renombrado a "${name}"`);
+  if (mode === 'rename') return promptsWrite(`/api/v1/prompts/profiles/${encodeURIComponent(active)}`, jsonReq('PUT', { name }), `Profile renamed to "${name}"`);
   const fromCopy = mode === 'new' && document.querySelector('input[name=profileFrom]:checked').value === 'copy';
   if (mode === 'new') agentDraft = {};
-  const ok = await promptsWrite('/api/v1/prompts/profiles', jsonReq('POST', { name, copy_from: fromCopy ? active : null }), mode === 'new' ? `Perfil "${name}" creado y activo` : null);
+  const ok = await promptsWrite('/api/v1/prompts/profiles', jsonReq('POST', { name, copy_from: fromCopy ? active : null }), mode === 'new' ? `Profile "${name}" created and active` : null);
   if (ok && mode === 'save' && key) saveAgent(key);
 }
 
@@ -1890,7 +1903,7 @@ async function saveAgent(key) {
   delete agentDraft[key];
   const ok = await promptsWrite(`/api/v1/prompts/${encodeURIComponent(key)}`, jsonReq('PUT', { extra: d.extra.trim(), full_text: full }), null);
   if (!ok) { agentDraft[key] = prev; renderAgents(); }
-  else if (promptsState) toast(`Guardado en "${promptsState.active_profile_name}" · se aplica desde el próximo procesamiento`);
+  else if (promptsState) toast(`Saved in "${promptsState.active_profile_name}" · applies from the next run`);
 }
 
 function updateSaveButton(key) {
@@ -1909,26 +1922,26 @@ const actions = {
   quick: (uid) => openQuick(uid),
   'quick-view': (uid, key) => { activeView[uid] = key; openQuick(uid); if (key !== 'ba') setStage(uid, key); },
   'close-quick': closeQuick,
-  approve: (uid) => animateOut([uid], () => { publish([uid]); renderAll(); toast('Publicado en la tienda'); }),
-  reject: (uid) => animateOut([uid], () => { pending = pending.filter((p) => p.uid !== uid); save(LS.pending, pending); renderAll(); toast('Producto rechazado', 'info'); }),
+  approve: (uid) => animateOut([uid], () => { publish([uid]); renderAll(); toast('Published to the store'); }),
+  reject: (uid) => animateOut([uid], () => { pending = pending.filter((p) => p.uid !== uid); save(LS.pending, pending); renderAll(); toast('Product rejected', 'info'); }),
   'approve-all': () => {
-    if (!pending.length) return toast('No hay pendientes', 'info');
+    if (!pending.length) return toast('Nothing pending', 'info');
     const uids = pending.filter((p) => !duplicateOf(p)).map((p) => p.uid);
     const skipped = pending.length - uids.length;
-    if (!uids.length) return toast(`Los ${skipped} pendientes ya están en tu tienda: descártalos o publícalos uno a uno`, 'info');
+    if (!uids.length) return toast(`All ${skipped} pending items are already in your store: discard them or publish them one by one`, 'info');
     animateOut(uids, () => {
       publish(uids); if (!skipped) activeTab = 'store'; renderAll();
-      toast(`${uids.length} producto(s) publicados${skipped ? ` · ${skipped} repetido(s) siguen en Por revisar` : ''}`);
+      toast(`${uids.length} product(s) published${skipped ? ` · ${skipped} duplicate(s) still in To review` : ''}`);
     });
   },
   'reject-all': () => {
-    if (!pending.length) return toast('No hay pendientes', 'info');
-    if (!confirm(`¿Rechazar los ${pending.length} productos pendientes?`)) return;
+    if (!pending.length) return toast('Nothing pending', 'info');
+    if (!confirm(`Reject all ${pending.length} pending products?`)) return;
     pending = []; save(LS.pending, pending); renderAll();
   },
   unpublish: (uid) => {
     approved = approved.filter((p) => p.uid !== uid); cart = cart.filter((i) => i.uid !== uid);
-    save(LS.approved, approved); save(LS.cart, cart); closeQuick(); renderAll(); toast('Retirado de la tienda', 'info');
+    save(LS.approved, approved); save(LS.cart, cart); closeQuick(); renderAll(); toast('Removed from the store', 'info');
   },
   'add-cart': (uid, key, el, e) => {
     if (e) e.stopPropagation();
@@ -1939,7 +1952,7 @@ const actions = {
     save(LS.cart, cart);
     flyToCart(uid);
     setTimeout(renderTabs, 650);
-    toast(`${p.title} · agregado al carrito`, 'cart');
+    toast(`${p.title} · added to cart`, 'cart');
   },
   qty: (uid, key) => {
     const item = cart.find((i) => i.uid === uid);
@@ -1948,19 +1961,19 @@ const actions = {
     cart = cart.filter((i) => i.qty > 0);
     save(LS.cart, cart); renderCart(); renderTabs();
   },
-  contact: (uid) => { const p = approved.find((x) => x.uid === uid); toast(`Consulta enviada por “${p ? p.title : ''}”`, 'info'); },
+  contact: (uid) => { const p = approved.find((x) => x.uid === uid); toast(`Inquiry sent about “${p ? p.title : ''}”`, 'info'); },
   'open-cart': () => { renderCart(); openDrawer('cartDrawer'); },
   'close-cart': () => closeDrawer('cartDrawer'),
   checkout: () => {
-    if (!cart.length) return toast('Tu carrito está vacío', 'info');
-    toast('¡Pedido confirmado! (demo)');
+    if (!cart.length) return toast('Your cart is empty', 'info');
+    toast('Order placed! (demo)');
     cart = []; save(LS.cart, cart); renderCart(); renderTabs();
   },
   'open-tokens': () => { openDrawer('tokenDrawer'); refreshTokens(); },
   'close-tokens': () => closeDrawer('tokenDrawer'),
   'open-upload': () => { openDrawer('uploadDrawer'); loadPrompts(false); loadFlows(); },
   'close-upload': () => {
-    if (run && run.running && !confirm('El pipeline sigue procesando en el servidor. ¿Cerrar el panel? (seguirá corriendo, pero no verás el progreso)')) return;
+    if (run && run.running && !confirm('The pipeline is still running on the server. Close the panel? (it keeps running, but you will not see the progress)')) return;
     closeDrawer('uploadDrawer');
   },
   process: () => {
@@ -1993,12 +2006,12 @@ const actions = {
   'flow-rename': () => { if (flowsState && flowsState.active_flow) openProfileModal('rename', null, 'flows'); },
   'flow-delete': () => {
     if (!flowsState || !flowsState.active_flow || agentsLocked) return;
-    if (!confirm(`¿Eliminar el flujo "${flowsState.active_flow_name}"? Se volverá al "${flowsState.default_flow_name}".`)) return;
-    flowsWrite(`/api/v1/flows/${encodeURIComponent(flowsState.active_flow)}`, jsonReq('DELETE'), 'Flujo eliminado · flujo completo activo');
+    if (!confirm(`Delete the flow "${flowsState.active_flow_name}"? It will switch back to "${flowsState.default_flow_name}".`)) return;
+    flowsWrite(`/api/v1/flows/${encodeURIComponent(flowsState.active_flow)}`, jsonReq('DELETE'), 'Flow deleted · full flow active');
   },
   'close-agents': () => {
     const dirty = promptsState && promptsState.agents.some((a) => agentDraft[a.key] && agentDirty(a));
-    if (dirty && !confirm('Tienes cambios sin guardar en los prompts. ¿Cerrar de todos modos?')) return;
+    if (dirty && !confirm('You have unsaved prompt changes. Close anyway?')) return;
     agentDraft = {};
     closeDrawer('agentsDrawer');
   },
@@ -2018,19 +2031,19 @@ const actions = {
   'agent-save': (_, key) => { if (!agentsLocked) saveAgent(key); },
   'agent-reset': (_, key) => {
     const a = agentOf(key);
-    if (!a || agentsLocked || !confirm(`¿Restaurar el prompt original de "${a.title}" en este perfil?`)) return;
+    if (!a || agentsLocked || !confirm(`Restore the original prompt of "${a.title}" in this profile?`)) return;
     delete agentDraft[key];
-    promptsWrite(`/api/v1/prompts/${encodeURIComponent(key)}`, jsonReq('DELETE'), `${a.title}: prompt original restaurado`);
+    promptsWrite(`/api/v1/prompts/${encodeURIComponent(key)}`, jsonReq('DELETE'), `${a.title}: original prompt restored`);
   },
   'profile-new': () => openProfileModal('new'),
   'profile-rename': () => { if (promptsState && promptsState.active_profile) openProfileModal('rename'); },
   'profile-cancel': () => closeProfileModal(),
   'profile-delete': () => {
     if (!promptsState || agentsLocked) return;
-    if (!promptsState.active_profile) return toast('El perfil original no se puede eliminar', 'info');
-    if (!confirm(`¿Eliminar el perfil "${promptsState.active_profile_name}"? Se volverá a los prompts originales.`)) return;
+    if (!promptsState.active_profile) return toast('The original profile cannot be deleted', 'info');
+    if (!confirm(`Delete the profile "${promptsState.active_profile_name}"? It will switch back to the original prompts.`)) return;
     agentDraft = {};
-    promptsWrite(`/api/v1/prompts/profiles/${encodeURIComponent(promptsState.active_profile)}`, jsonReq('DELETE'), 'Perfil eliminado · prompts originales activos');
+    promptsWrite(`/api/v1/prompts/profiles/${encodeURIComponent(promptsState.active_profile)}`, jsonReq('DELETE'), 'Profile deleted · original prompts active');
   },
 };
 
@@ -2071,11 +2084,11 @@ document.addEventListener('keydown', (e) => {
 $('profileSelect').addEventListener('change', (e) => {
   agentDraft = {};
   const slug = e.target.value || null;
-  promptsWrite('/api/v1/prompts/profiles/active', jsonReq('PUT', { profile: slug }), `Perfil activo: ${e.target.selectedOptions[0].textContent.replace(/ · \d+$/, '')}`);
+  promptsWrite('/api/v1/prompts/profiles/active', jsonReq('PUT', { profile: slug }), `Active profile: ${e.target.selectedOptions[0].textContent.replace(/ · \d+$/, '')}`);
 });
 $('flowSelect').addEventListener('change', (e) => {
   const slug = e.target.value || null;
-  flowsWrite('/api/v1/flows/active', jsonReq('PUT', { flow: slug }), `Flujo activo: ${e.target.selectedOptions[0].textContent}`);
+  flowsWrite('/api/v1/flows/active', jsonReq('PUT', { flow: slug }), `Active flow: ${e.target.selectedOptions[0].textContent}`);
 });
 $('profileForm').addEventListener('submit', (e) => { e.preventDefault(); submitProfileModal(); });
 

@@ -37,6 +37,7 @@ from backend.core.config import (
 from backend.core import prompts
 from backend.core.muse_api import chat_json, transcribe_wav
 from backend.core.muse_client import (
+    NOT_MENTIONED,
     SALES_KEYWORDS_BIAS,
     build_video_proxy,
     get_cached_result,
@@ -45,7 +46,7 @@ from backend.core.muse_client import (
 )
 from backend.core.token_tracker import TokenTracker
 
-VERIFIER_PROMPT_VERSION = "verify_v1"
+VERIFIER_PROMPT_VERSION = "verify_v2"
 VISUAL_MATCH_PAD_SEC = 1.5
 LOW_DENSITY_WORDS_PER_SEC = 1.2
 LOW_DENSITY_MIN_TURN_SEC = 2.0
@@ -59,27 +60,27 @@ ANOMALY_PRIORITY = {
     "PRODUCT_WITHOUT_VISUAL": 3,
 }
 
-VERIFIER_SYSTEM_PROMPT = """Eres el verificador de calidad de la Fase 2 de un pipeline que convierte videos de venta en un catálogo.
-Un primer análisis extrajo productos combinando la transcripción automática (ASR) y el video. Un cruce automático encontró anomalías en ciertos tramos.
-Para cada tramo (check) recibes: las anomalías, el texto ASR original, una re-transcripción del tramo hecha con pistas de vocabulario, los productos ya detectados en ese video y un clip del video de ese tramo.
+VERIFIER_SYSTEM_PROMPT = """You are the Phase 2 quality verifier of a pipeline that turns sales videos into a catalog.
+A first pass extracted products by combining the automatic speech transcript (ASR) and the video. An automatic cross-check found anomalies in certain segments. The seller may speak Spanish or English.
+For each segment (check) you receive: the anomalies, the original ASR text, a re-transcription of the segment made with vocabulary hints, the products already detected in that video and a clip of the video for that segment.
 
-Da una o más decisiones por check:
-- ADD_PRODUCT: el vendedor ofrece un objeto que NO está en la lista de productos. Es una oferta si dice un precio o si claramente lo presenta para vender (lo sostiene o señala mientras habla de venta). Si no se oye precio, price = null.
-- UPDATE_PRODUCT: un producto existente tiene el nombre o el precio equivocados según la evidencia; target_product_id indica cuál.
-- NO_CHANGE: lo detectado es correcto y la anomalía es una falsa alarma (por ejemplo, el vendedor habla despacio).
-- DISMISS: el objeto no se ofrece a la venta (pasa por el fondo, es parte del entorno o el vendedor lo usa para otra cosa).
+Give one or more decisions per check:
+- ADD_PRODUCT: the seller offers an object that is NOT in the product list. It is an offer if they say a price or clearly present it for sale (hold it or point at it while talking about selling). If no price is heard, price = null.
+- UPDATE_PRODUCT: an existing product has the wrong name or price according to the evidence; target_product_id says which one.
+- NO_CHANGE: what was detected is correct and the anomaly is a false alarm (for example, the seller speaks slowly).
+- DISMISS: the object is not offered for sale (it passes in the background, is part of the surroundings or the seller uses it for something else).
 
-Reglas:
-- No dupliques productos: un objeto que ya está en la lista con otro nombre es UPDATE_PRODUCT o NO_CHANGE, nunca ADD_PRODUCT.
-- item_name: nombre comercial específico de lo que se ve (tipo, color, marca visible).
-- spoken_quote: lo que se oye sobre ese objeto; cadena vacía si no se dice nada.
-- start_sec / end_sec: segundos del video completo en que se muestra el objeto (el clip empieza en window.start_sec).
-- confidence: entre 0 y 1 según la evidencia que oyes y ves. evidence: explica brevemente qué se oye y qué se ve.
-- target_product_id: cadena vacía salvo en UPDATE_PRODUCT y NO_CHANGE."""
+Rules:
+- Do not duplicate products: an object already in the list under another name is UPDATE_PRODUCT or NO_CHANGE, never ADD_PRODUCT.
+- item_name: specific commercial name in English of what is seen (type, color, visible brand).
+- spoken_quote: what is heard about that object, literal and untranslated; empty string if nothing is said.
+- start_sec / end_sec: seconds of the full video in which the object is shown (the clip starts at window.start_sec).
+- confidence: between 0 and 1 based on the evidence you hear and see. evidence: briefly explain, in English, what is heard and what is seen.
+- target_product_id: empty string except for UPDATE_PRODUCT and NO_CHANGE."""
 prompts.register(
     "p2_verify", VERIFIER_SYSTEM_PROMPT, phase=2, model="Muse Spark", group="advanced",
-    title="Verificador audio ↔ video",
-    description="Revisa los tramos dudosos (objetos mostrados sin precio, voz sin transcribir) y decide si agregar, corregir o dejar productos.",
+    title="Audio ↔ video verifier",
+    description="Reviews doubtful segments (objects shown without a price, untranscribed speech) and decides whether to add, fix or keep products.",
 )
 
 VERIFIER_SCHEMA: Dict[str, Any] = {
@@ -271,7 +272,7 @@ def detect_anomalies(
                     "video_id": prod["video_id"],
                     "start_sec": spoken["start_sec"],
                     "end_sec": spoken["end_sec"],
-                    "detail": f"{prod['product_id']} ('{prod['detected_name']}') no coincide con ningún objeto visto.",
+                    "detail": f"{prod['product_id']} ('{prod['detected_name']}') does not match any object seen.",
                     "related_product_id": prod["product_id"],
                 }
             )
@@ -286,8 +287,8 @@ def detect_anomalies(
                 "start_sec": float(inv["start_sec"]),
                 "end_sec": float(inv["end_sec"]),
                 "detail": (
-                    f"Se muestra '{inv['object_name']}' ({inv.get('showcase_evidence', '')}) "
-                    f"pero no se detectó ninguna oferta hablada para ese objeto."
+                    f"'{inv['object_name']}' is shown ({inv.get('showcase_evidence', '')}) "
+                    f"but no spoken offer was detected for that object."
                 ),
                 "related_product_id": "",
             }
@@ -306,8 +307,8 @@ def detect_anomalies(
                         "start_sec": turn["start_sec"],
                         "end_sec": turn["end_sec"],
                         "detail": (
-                            f"Turno de {duration:.1f}s con solo {words} palabras "
-                            f"({words / max(duration, 0.1):.2f} palabras/s): '{turn['text']}'."
+                            f"{duration:.1f}s turn with only {words} words "
+                            f"({words / max(duration, 0.1):.2f} words/s): '{turn['text']}'."
                         ),
                         "related_product_id": "",
                     }
@@ -321,7 +322,7 @@ def detect_anomalies(
                         "video_id": vid_id,
                         "start_sec": start,
                         "end_sec": end,
-                        "detail": f"Hay voz entre {start}s y {end}s que no quedó en ningún turno transcrito.",
+                        "detail": f"There is speech between {start}s and {end}s that is not in any transcribed turn.",
                         "related_product_id": "",
                     }
                 )
@@ -375,7 +376,7 @@ def _retranscribe_window(
 ) -> str:
     segment = _cut_wav_bytes(wav_path, group["start_sec"], group["end_sec"])
     cache_key = hashlib.md5(
-        segment + f"|{MUSE_VOICE_MODEL}|PUSH_TO_TALK|{','.join(keywords)}".encode("utf-8")
+        segment + f"|{MUSE_VOICE_MODEL}|PUSH_TO_TALK|{','.join(keywords)}|{','.join(MUSE_VOICE_LANGUAGES)}".encode("utf-8")
     ).hexdigest()
     cached = get_cached_result("voice_retranscribe", cache_key)
     window_label = f"{group['video_id']} {group['start_sec']}-{group['end_sec']}s"
@@ -383,7 +384,7 @@ def _retranscribe_window(
         tracker.record_event(
             phase=2,
             model="Muse Voice Transcribe",
-            operation=f"Verificador: caché MD5 HIT de la re-transcripción del tramo {window_label}.",
+            operation=f"Verifier: MD5 cache HIT for the re-transcription of segment {window_label}.",
             status="CACHE_HIT_MD5",
             details={"check_id": group["check_id"]},
         )
@@ -402,8 +403,8 @@ def _retranscribe_window(
         phase=2,
         model="Muse Voice Transcribe",
         operation=(
-            f"Verificador: re-transcripción del tramo {window_label} "
-            f"({group['end_sec'] - group['start_sec']:.1f}s de audio) con {len(keywords)} pistas de vocabulario."
+            f"Verifier: re-transcription of segment {window_label} "
+            f"({group['end_sec'] - group['start_sec']:.1f}s of audio) with {len(keywords)} vocabulary hints."
         ),
         status="API_CALL",
         details={"check_id": group["check_id"], "transcript": transcript},
@@ -454,7 +455,7 @@ def _new_product_from_decision(
         "original_price_mentioned": None,
         "price_corrected_live": False,
         "currency": decision.get("currency", "USD"),
-        "condition": "No mencionado",
+        "condition": NOT_MENTIONED,
         "features": [],
         "spoken_timestamps": {"start_sec": start_s, "end_sec": end_s, "timing_source": "VERIFIER"},
         "expanded_visual_window": {
@@ -487,9 +488,9 @@ def _apply_decisions(
         applied, note = False, ""
 
         if group is None:
-            note = "check_id desconocido"
+            note = "unknown check_id"
         elif confidence < MUSE_PHASE2_VERIFY_MIN_CONFIDENCE and action in ("ADD_PRODUCT", "UPDATE_PRODUCT"):
-            note = f"confianza {confidence:.2f} menor que el mínimo {MUSE_PHASE2_VERIFY_MIN_CONFIDENCE:.2f}: no se aplica"
+            note = f"confidence {confidence:.2f} below the minimum {MUSE_PHASE2_VERIFY_MIN_CONFIDENCE:.2f}: not applied"
         elif action == "ADD_PRODUCT":
             window = (float(decision.get("start_sec", 0)), float(decision.get("end_sec", 0)))
             duplicate = next(
@@ -506,17 +507,17 @@ def _apply_decisions(
                 None,
             )
             if duplicate is not None:
-                note = f"ya existe como {duplicate['product_id']} ('{duplicate['detected_name']}')"
+                note = f"already exists as {duplicate['product_id']} ('{duplicate['detected_name']}')"
             elif decision.get("price") is None and MUSE_MISSING_PRICE_POLICY == "EXCLUDE":
-                note = "sin precio dicho: excluido por MUSE_MISSING_PRICE_POLICY=EXCLUDE"
+                note = "no spoken price: excluded by MUSE_MISSING_PRICE_POLICY=EXCLUDE"
             else:
                 products.append(_new_product_from_decision(decision, videos_by_id.get(group["video_id"], {}), group))
                 applied = True
-                note = "producto agregado" + (" con 'Consultar precio'" if decision.get("price") is None else "")
+                note = "product added" + (" with 'Ask for price'" if decision.get("price") is None else "")
         elif action == "UPDATE_PRODUCT":
             target = by_id.get(decision.get("target_product_id", ""))
             if target is None:
-                note = "target_product_id no existe"
+                note = "target_product_id does not exist"
             else:
                 if decision.get("item_name"):
                     target["name_before_verification"] = target["detected_name"]
@@ -530,9 +531,9 @@ def _apply_decisions(
                 target["verification_evidence"] = decision.get("evidence", "")
                 target["verification_confidence"] = confidence
                 applied = True
-                note = f"{target['product_id']} actualizado"
+                note = f"{target['product_id']} updated"
         else:
-            note = "sin cambios" if action == "NO_CHANGE" else "descartado: no es un producto a la venta"
+            note = "no changes" if action == "NO_CHANGE" else "discarded: not a product for sale"
 
         report.append({**decision, "applied": applied, "note": note})
     return products, report
@@ -575,10 +576,10 @@ def run_phase2_verification(
     if not groups:
         tracker.record_event(
             phase=2,
-            model="Verificador Fase 2",
+            model="Phase 2 verifier",
             operation=(
-                f"Cruce audio/video sin anomalías: {len(products)} productos y "
-                f"{len(visual_inventory)} objetos mostrados coinciden. No hace falta 2da pasada."
+                f"Audio/video cross-check without anomalies: {len(products)} products and "
+                f"{len(visual_inventory)} shown objects match. No second pass needed."
             ),
             status="ZERO_TOKEN_LOCAL",
         )
@@ -586,10 +587,10 @@ def run_phase2_verification(
 
     tracker.record_event(
         phase=2,
-        model="Verificador Fase 2",
+        model="Phase 2 verifier",
         operation=(
-            f"Cruce audio/video: {len(anomalies)} anomalía(s) en {len(groups)} tramo(s) "
-            f"({', '.join(sorted({a['type'] for a in anomalies}))}). Se lanza la 2da pasada dirigida."
+            f"Audio/video cross-check: {len(anomalies)} anomaly(ies) in {len(groups)} segment(s) "
+            f"({', '.join(sorted({a['type'] for a in anomalies}))}). Launching the targeted second pass."
         ),
         status="ZERO_TOKEN_LOCAL",
         details={"anomalies": anomalies},
@@ -643,8 +644,8 @@ def run_phase2_verification(
                 {
                     "type": "text",
                     "text": (
-                        f"Clip de {group['check_id']} ({CLIP_FPS} fps; empieza en el segundo "
-                        f"{group['start_sec']} del video):"
+                        f"Clip for {group['check_id']} ({CLIP_FPS} fps; starts at second "
+                        f"{group['start_sec']} of the video):"
                     ),
                 }
             )
@@ -665,8 +666,8 @@ def run_phase2_verification(
         decisions, usage = cached["decisions"], cached["usage"]
         tracker.record_event(
             phase=2,
-            model="Muse Spark (Verificador)",
-            operation=f"Caché MD5 HIT del verificador ({len(decisions)} decisiones) sin llamar a la API.",
+            model="Muse Spark (Verifier)",
+            operation=f"MD5 cache HIT for the verifier ({len(decisions)} decisions) without calling the API.",
             tokens_saved=usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
             status="CACHE_HIT_MD5",
         )
@@ -685,10 +686,10 @@ def run_phase2_verification(
         set_cached_result("phase2_verifier", cache_key, {"decisions": decisions, "usage": usage})
         tracker.record_event(
             phase=2,
-            model="Muse Spark (Verificador)",
+            model="Muse Spark (Verifier)",
             operation=(
-                f"{MUSE_SPARK_MODEL}: 1 llamada para {len(groups)} tramo(s) con clip de video: "
-                f"{len(decisions)} decisiones (razonamiento 'low': {usage['reasoning_tokens']} tokens)."
+                f"{MUSE_SPARK_MODEL}: 1 call for {len(groups)} segment(s) with video clip: "
+                f"{len(decisions)} decisions (reasoning 'low': {usage['reasoning_tokens']} tokens)."
             ),
             input_tokens=usage["input_tokens"],
             output_tokens=usage["output_tokens"],
@@ -705,11 +706,11 @@ def run_phase2_verification(
     report["status"] = "VERIFIED_WITH_CHANGES" if applied else "VERIFIED_NO_CHANGES"
     tracker.record_event(
         phase=2,
-        model="Verificador Fase 2",
+        model="Phase 2 verifier",
         operation=(
-            f"Decisiones aplicadas automáticamente: {len(applied)} de {len(decision_report)} "
-            f"({', '.join(d['action'] + ': ' + d['item_name'] for d in applied) or 'ninguna'}). "
-            f"Productos finales: {len(updated)}."
+            f"Decisions applied automatically: {len(applied)} of {len(decision_report)} "
+            f"({', '.join(d['action'] + ': ' + d['item_name'] for d in applied) or 'none'}). "
+            f"Final products: {len(updated)}."
         ),
         status="ZERO_TOKEN_LOCAL",
     )

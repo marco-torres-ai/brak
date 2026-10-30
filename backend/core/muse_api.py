@@ -27,7 +27,7 @@ class MuseAPIError(RuntimeError):
 
 def _auth_headers(accept: str = "application/json") -> Dict[str, str]:
     if not META_MUSE_API_KEY:
-        raise MuseAPIError("Falta META_MUSE_API_KEY en el archivo .env")
+        raise MuseAPIError("META_MUSE_API_KEY is missing from the .env file")
     return {"Authorization": f"Bearer {META_MUSE_API_KEY}", "Accept": accept}
 
 
@@ -45,29 +45,29 @@ def _post(
             resp = httpx.post(url, timeout=timeout, **kwargs)
         except httpx.TimeoutException as exc:
             if attempt == attempts:
-                raise MuseAPIError(f"{name}: Meta no respondió tras {attempts} intentos ({exc})") from exc
+                raise MuseAPIError(f"{name}: Meta did not respond after {attempts} attempts ({exc})") from exc
             progress.note_wait(
-                f"{name}: Meta no respondió en {timeout:.0f} s; se reintenta automáticamente "
-                f"(intento {attempt + 1} de {attempts}, esperando hasta {min(max_timeout, timeout * 2):.0f} s)."
+                f"{name}: Meta did not respond within {timeout:.0f} s; retrying automatically "
+                f"(attempt {attempt + 1} of {attempts}, waiting up to {min(max_timeout, timeout * 2):.0f} s)."
             )
             timeout = min(max_timeout, timeout * 2)
             continue
         except httpx.TransportError as exc:
             if attempt == attempts:
-                raise MuseAPIError(f"Error de red llamando {path}: {exc}") from exc
-            progress.note_wait(f"{name}: error de red ({type(exc).__name__}); reintento {attempt + 1} de {attempts} en {delay:.0f} s.")
+                raise MuseAPIError(f"Network error calling {path}: {exc}") from exc
+            progress.note_wait(f"{name}: network error ({type(exc).__name__}); retry {attempt + 1} of {attempts} in {delay:.0f} s.")
             time.sleep(delay)
             delay *= 2
             continue
         if resp.status_code in RETRYABLE_STATUS and attempt < attempts:
-            progress.note_wait(f"{name}: Meta respondió HTTP {resp.status_code}; reintento {attempt + 1} de {attempts} en {delay:.0f} s.")
+            progress.note_wait(f"{name}: Meta returned HTTP {resp.status_code}; retry {attempt + 1} of {attempts} in {delay:.0f} s.")
             time.sleep(delay)
             delay *= 2
             continue
         if resp.status_code >= 400:
-            raise MuseAPIError(f"{path} respondió HTTP {resp.status_code}: {resp.text[:800]}")
+            raise MuseAPIError(f"{path} returned HTTP {resp.status_code}: {resp.text[:800]}")
         return resp
-    raise MuseAPIError(f"{path}: reintentos agotados")
+    raise MuseAPIError(f"{path}: retries exhausted")
 
 
 def normalize_usage(usage: Optional[Dict[str, Any]]) -> Dict[str, int]:
@@ -151,7 +151,7 @@ def chat_json(
         content = data["choices"][0]["message"]["content"]
         parsed = json.loads(content)
     except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
-        raise MuseAPIError(f"Respuesta inesperada de {model}: {json.dumps(data)[:800]}") from exc
+        raise MuseAPIError(f"Unexpected response from {model}: {json.dumps(data)[:800]}") from exc
     return parsed, normalize_usage(data.get("usage")), data
 
 
@@ -214,5 +214,5 @@ def edit_image(
     try:
         image_bytes = base64.b64decode(data["data"][0]["b64_json"])
     except (KeyError, IndexError, TypeError, ValueError) as exc:
-        raise MuseAPIError(f"Respuesta inesperada de {model}: {json.dumps(data)[:800]}") from exc
+        raise MuseAPIError(f"Unexpected response from {model}: {json.dumps(data)[:800]}") from exc
     return image_bytes, data.get("usage") or {}

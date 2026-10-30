@@ -48,7 +48,7 @@ from backend.core.token_tracker import TokenTracker
 from backend.services.phase2_verify import name_similarity
 from backend.services.phase3_verify import verify_and_repair_cutouts
 
-PHASE3_PROMPT_VERSION = "phase3_v2"
+PHASE3_PROMPT_VERSION = "phase3_v3"
 MIN_SAM_CONFIDENCE = 0.3
 SPARK_BATCH_SIZE = 8
 SAMPLE_STEP_SEC = 0.25
@@ -58,21 +58,21 @@ MAX_SAM_TEXT_ATTEMPTS = 3
 COLLAGE_MAX_WIDTH = 1600
 COLLAGE_MAX_PANEL_HEIGHT = 560
 
-VISION_SYSTEM_PROMPT = """Eres el módulo de visión de un pipeline que convierte videos de venta en un catálogo e-commerce.
-Por cada producto recibes: lo que dijo el vendedor (frase, nombre detectado, tipo de mención) y un collage con 3 fotogramas del momento en que lo muestra, numerados 1, 2 y 3 de izquierda a derecha.
-Para cada producto:
-1. Identifica el objeto que se vende. En menciones DEICTIC ("esto", "este de acá") es el que el vendedor sostiene, señala o acerca a la cámara en ese momento; ignora objetos del fondo.
-2. slot_evaluations: por cada fotograma (1, 2, 3) indica si el objeto se ve completo (object_visible), una nota de 0 a 10 para usarlo como foto de catálogo (nitidez, luz, encuadre, oclusión por la mano) y una nota breve.
-3. best_frame_slot: el fotograma con mejor nota en el que el objeto se ve.
-4. resolved_name: nombre comercial en español, específico (tipo, color, marca visible). visual_category: categoría corta de tienda en español (por ejemplo "Juguetes y coleccionables", "Hogar y decoración", "Electrónica", "Accesorios"). visual_description: 1 o 2 frases en español con lo que se ve. disambiguation_note: por qué ese es el objeto ofrecido y qué otros objetos visibles se descartaron.
-5. quality_score (0 a 10) del mejor fotograma para el catálogo; needs_enhancement = true si tiene desenfoque, poca luz, reflejos fuertes u oclusión que convenga restaurar; quality_diagnosis: el problema principal o "Óptimo".
-6. bbox: caja del objeto DENTRO DEL PANEL del mejor fotograma, en coordenadas normalizadas 0 a 1000 sobre la imagen completa del collage que recibes (ymin, xmin, ymax, xmax). Debe abarcar el objeto completo y no la mano que lo sostiene.
-7. sam_prompts: de 2 a 4 frases nominales cortas EN INGLÉS para un segmentador que solo entiende sustantivos comunes, de la más específica a la más genérica (por ejemplo "action figure", "toy"; "sunglasses", "glasses"; "spray bottle", "bottle"). Sin marcas, sin posiciones, sin listas ni verbos.
-Devuelve un elemento por producto con su product_id exacto."""
+VISION_SYSTEM_PROMPT = """You are the vision module of a pipeline that turns sales videos into an e-commerce catalog.
+For each product you receive: what the seller said (phrase, detected name, mention type; the seller may speak Spanish or English) and a collage with 3 frames from the moment they show it, numbered 1, 2 and 3 from left to right.
+For each product:
+1. Identify the object for sale. In DEICTIC mentions ("this", "this one here", "esto", "este de acá") it is the one the seller holds, points at or brings toward the camera at that moment; ignore background objects.
+2. slot_evaluations: for each frame (1, 2, 3) state whether the object is fully visible (object_visible), a 0 to 10 score for using it as a catalog photo (sharpness, light, framing, occlusion by the hand) and a brief note.
+3. best_frame_slot: the best-scoring frame in which the object is visible.
+4. resolved_name: specific commercial name in English (type, color, visible brand). visual_category: short store category in English (for example "Toys & Collectibles", "Home & Decor", "Electronics", "Accessories"). visual_description: 1 or 2 sentences in English describing what is seen. disambiguation_note: why that is the object on offer and which other visible objects were ruled out.
+5. quality_score (0 to 10) of the best frame for the catalog; needs_enhancement = true if it has blur, low light, strong reflections or occlusion worth restoring; quality_diagnosis: the main problem, in English, or "Optimal".
+6. bbox: the object's box INSIDE THE PANEL of the best frame, in coordinates normalized 0 to 1000 over the full collage image you receive (ymin, xmin, ymax, xmax). It must cover the whole object and not the hand holding it.
+7. sam_prompts: 2 to 4 short noun phrases IN ENGLISH for a segmenter that only understands common nouns, from most specific to most generic (for example "action figure", "toy"; "sunglasses", "glasses"; "spray bottle", "bottle"). No brands, no positions, no lists or verbs.
+Return one item per product with its exact product_id."""
 prompts.register(
-    "p3_vision", VISION_SYSTEM_PROMPT, phase=3, model="Muse Spark (Visión)", group="advanced",
-    title="Visión: mejor fotograma y caja",
-    description="Mira los 3 fotogramas candidatos de cada producto, elige el mejor, lo nombra, ubica su caja y propone las palabras para SAM 3.1.",
+    "p3_vision", VISION_SYSTEM_PROMPT, phase=3, model="Muse Spark (Vision)", group="advanced",
+    title="Vision: best frame and box",
+    description="Looks at the 3 candidate frames of each product, picks the best one, names it, locates its box and proposes the words for SAM 3.1.",
 )
 
 VISION_SCHEMA: Dict[str, Any] = {
@@ -301,8 +301,8 @@ def analyze_with_spark_vision(
         usage = cached["usage"]
         tracker.record_event(
             phase=3,
-            model="Muse Spark (Visión)",
-            operation=f"Caché MD5 HIT del análisis visual de {ids}: se reutiliza sin llamar a la API.",
+            model="Muse Spark (Vision)",
+            operation=f"MD5 cache HIT for the visual analysis of {ids}: reused without calling the API.",
             tokens_saved=usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
             status="CACHE_HIT_MD5",
         )
@@ -310,7 +310,7 @@ def analyze_with_spark_vision(
 
     content: List[Dict[str, Any]] = []
     for ctx, (_, collage_path, _) in zip(contexts, batch):
-        content.append({"type": "text", "text": "Producto:\n" + json.dumps(ctx, ensure_ascii=False)})
+        content.append({"type": "text", "text": "Product:\n" + json.dumps(ctx, ensure_ascii=False)})
         b64 = base64.b64encode(collage_path.read_bytes()).decode("ascii")
         content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
 
@@ -325,10 +325,10 @@ def analyze_with_spark_vision(
     set_cached_result("phase3_spark_vision", cache_key, {"products": results, "usage": usage})
     tracker.record_event(
         phase=3,
-        model="Muse Spark (Visión)",
+        model="Muse Spark (Vision)",
         operation=(
-            f"{MUSE_SPARK_MODEL}: 1 llamada con {len(batch)} collage(s) 1x3 ({ids}): mejor frame, nombre, calidad, "
-            f"caja y frases para SAM (razonamiento '{MUSE_SPARK_REASONING_PHASE3}': {usage['reasoning_tokens']} tokens)."
+            f"{MUSE_SPARK_MODEL}: 1 call with {len(batch)} 1x3 collage(s) ({ids}): best frame, name, quality, "
+            f"box and phrases for SAM (reasoning '{MUSE_SPARK_REASONING_PHASE3}': {usage['reasoning_tokens']} tokens)."
         ),
         input_tokens=usage["input_tokens"],
         output_tokens=usage["output_tokens"],
@@ -508,7 +508,7 @@ def segment_product(
         if instances:
             best = max(instances, key=lambda i: i.get("confidence") or 0)
             best["iou"] = round(_iou(best["box"], spark_box_px), 3)
-            return {"mode": "BOX_PROMPT", "prompt": "caja de Spark", "instance": best, "attempts": attempts, "calls_api": calls_api, "calls_cache": calls_cache}
+            return {"mode": "BOX_PROMPT", "prompt": "Spark box", "instance": best, "attempts": attempts, "calls_api": calls_api, "calls_cache": calls_cache}
 
     if best_text is not None:
         return {"mode": "TEXT_PROMPT_UNVERIFIED", "prompt": best_text[0], "instance": best_text[1], "attempts": attempts, "calls_api": calls_api, "calls_cache": calls_cache}
@@ -608,7 +608,7 @@ async def run_phase3_vision_sam(session_id: Optional[str] = None) -> Dict[str, A
     sid = state["session_id"]
     semantic_products = state.get("semantic_products", [])
     if not semantic_products:
-        raise ValueError("No existen productos en la sesión. Ejecuta primero la Fase 2.")
+        raise ValueError("There are no products in the session. Run Phase 2 first.")
 
     videos_by_id = {v["video_id"]: v for v in state.get("videos", [])}
     inventory = (state.get("phase2_verification") or {}).get("visual_inventory", [])
@@ -627,12 +627,12 @@ async def run_phase3_vision_sam(session_id: Optional[str] = None) -> Dict[str, A
         video_path = locate_source_video({**video_meta, "video_id": vid, "session_id": sid})
         duration = float((video_meta.get("quality_assessment") or {}).get("duration_sec") or 0.0)
         if video_path is None:
-            tracker.record_event(phase=3, model="OpenCV", operation=f"{pid}: no se encontró el video {vid}; producto omitido.", status="SKIPPED")
+            tracker.record_event(phase=3, model="OpenCV", operation=f"{pid}: video {vid} not found; product skipped.", status="SKIPPED")
             continue
         start, end, window_source = resolve_showcase_window(prod, inventory, duration)
         candidates = extract_candidate_frames(video_path, start, end, pid, dirs["frames"], sid)
         if not candidates:
-            tracker.record_event(phase=3, model="OpenCV", operation=f"{pid}: no se pudieron leer frames de {vid} entre {start}s y {end}s.", status="SKIPPED")
+            tracker.record_event(phase=3, model="OpenCV", operation=f"{pid}: could not read frames from {vid} between {start}s and {end}s.", status="SKIPPED")
             continue
         collage_name = f"{pid}_collage_1x3.jpg"
         collage_md5, layout = build_collage(candidates, dirs["collages"] / collage_name)
@@ -642,7 +642,7 @@ async def run_phase3_vision_sam(session_id: Optional[str] = None) -> Dict[str, A
     tracker.record_event(
         phase=3,
         model="OpenCV Frame Selector",
-        operation=f"{len(prepared)} producto(s): 3 frames candidatos por producto (el más nítido de cada tercio de su ventana) y 1 collage 1x3 cada uno.",
+        operation=f"{len(prepared)} product(s): 3 candidate frames per product (the sharpest of each third of its window) and one 1x3 collage each.",
         status="ZERO_TOKEN_LOCAL",
     )
 
@@ -670,10 +670,10 @@ async def run_phase3_vision_sam(session_id: Optional[str] = None) -> Dict[str, A
                 "resolved_name": prod.get("detected_name", pid),
                 "visual_category": "General",
                 "visual_description": "",
-                "disambiguation_note": "Spark no devolvió resultado para este producto; se usó el frame más nítido.",
+                "disambiguation_note": "Spark returned no result for this product; the sharpest frame was used.",
                 "quality_score": 5.0,
                 "needs_enhancement": True,
-                "quality_diagnosis": "Sin análisis visual",
+                "quality_diagnosis": "No visual analysis",
                 "bbox": None,
                 "sam_prompts": [],
             }
@@ -709,25 +709,25 @@ async def run_phase3_vision_sam(session_id: Optional[str] = None) -> Dict[str, A
         write_preview(image, mask, cut["bbox_pixels"], spark_box, f"{v['resolved_name']} | Q:{v['quality_score']}/10", dirs["bboxes"] / bbox_name)
 
         mode_text = {
-            "TEXT_PROMPT": f"sam-3.1 con la frase '{seg['prompt']}'"
-            + (f" (coincidencia con la caja de Spark: IoU {inst.get('iou')})" if inst and inst.get("iou") is not None else ""),
-            "BOX_PROMPT": f"sam-3.1 con la caja de Spark como prompt (ninguna frase coincidió; IoU {inst.get('iou') if inst else '-'})",
-            "TEXT_PROMPT_UNVERIFIED": f"sam-3.1 con la frase '{seg['prompt']}' (no coincidió con la caja de Spark y la caja como prompt no dio una máscara confiable; se usa la detección por texto más segura)",
-            "NO_MASK": "Sin máscara confiable: recorte rectangular del objeto",
+            "TEXT_PROMPT": f"sam-3.1 with the phrase '{seg['prompt']}'"
+            + (f" (match with Spark's box: IoU {inst.get('iou')})" if inst and inst.get("iou") is not None else ""),
+            "BOX_PROMPT": f"sam-3.1 with Spark's box as prompt (no phrase matched; IoU {inst.get('iou') if inst else '-'})",
+            "TEXT_PROMPT_UNVERIFIED": f"sam-3.1 with the phrase '{seg['prompt']}' (it did not match Spark's box and the box prompt gave no reliable mask; using the safest text detection)",
+            "NO_MASK": "No reliable mask: rectangular cutout of the object",
         }[seg["mode"]]
         check = r.get("cutout_check") or {}
         tracker.record_event(
             phase=3,
             model="SAM 3.1",
             operation=(
-                f"{pid} '{v['resolved_name']}': {mode_text}. Intentos: "
+                f"{pid} '{v['resolved_name']}': {mode_text}. Attempts: "
                 + "; ".join(f"{a['prompt'][:24]} -> {a['matches']}" for a in seg["attempts"])
-                + f". Recorte {cut['width']}x{cut['height']}px (cobertura {cut['coverage']:.0%})"
-                + (f". Verificación: {check.get('status')}" if check else "")
+                + f". Cutout {cut['width']}x{cut['height']}px (coverage {cut['coverage']:.0%})"
+                + (f". Verification: {check.get('status')}" if check else "")
                 + "."
             ),
             status="API_CALL" if seg["calls_api"] else "CACHE_HIT_MD5",
-            details={"sam_calls_api": seg["calls_api"], "sam_calls_cache": seg["calls_cache"], "billing": "SAM cobra por imagen procesada, no reporta tokens"},
+            details={"sam_calls_api": seg["calls_api"], "sam_calls_cache": seg["calls_cache"], "billing": "SAM bills per processed image and reports no tokens"},
         )
 
         prod["resolved_visual_name"] = v["resolved_name"]
@@ -783,7 +783,7 @@ async def run_phase3_vision_sam(session_id: Optional[str] = None) -> Dict[str, A
                     "bbox_pixels": cut["bbox_pixels"],
                     "quality_score": v["quality_score"],
                     "needs_enhancement": bool(v["needs_enhancement"]) or not cutout_ok,
-                    "quality_diagnosis": v["quality_diagnosis"] if cutout_ok else f"{v['quality_diagnosis']} | Recorte: {check.get('problem') or check.get('status')}",
+                    "quality_diagnosis": v["quality_diagnosis"] if cutout_ok else f"{v['quality_diagnosis']} | Cutout: {check.get('problem') or check.get('status')}",
                 },
                 "sam31_cutout": {
                     "cutout_png_url": f"/storage/{sid}/cutouts/{cutout_name}",

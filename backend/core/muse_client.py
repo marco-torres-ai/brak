@@ -48,33 +48,38 @@ def set_cached_result(namespace: str, key_md5: str, payload: Dict[str, Any]) -> 
 
 
 
-SPARK_PROMPT_VERSION = "phase2_v6"
-SALES_KEYWORDS_BIAS = ["vendo", "vender", "precio", "cuesta", "dólares", "soles"]
-DEICTIC_PLACEHOLDER_NAME = "Objeto por identificar en video (Mención Deíctica)"
+SPARK_PROMPT_VERSION = "phase2_v7"
+SALES_KEYWORDS_BIAS = ["vendo", "vender", "precio", "cuesta", "dólares", "soles", "sell", "price", "dollars"]
+NOT_MENTIONED = "Not mentioned"
+# Valores de sesiones viejas (en español) que significan lo mismo
+NOT_MENTIONED_VALUES = (None, "", NOT_MENTIONED, "No mencionado")
+DEICTIC_PLACEHOLDER_NAME = "Object to identify in the video (deictic mention)"
 
-SPARK_SYSTEM_PROMPT = """Eres Muse Spark dentro de un pipeline que convierte videos de venta en un catálogo e-commerce.
-Recibes transcripciones automáticas (ASR) de 1 a 3 videos, divididas en turnos con su tiempo. En cada video un vendedor recorre un espacio mostrando objetos y diciendo su precio.
-La transcripción tiene errores fonéticos y a veces se come palabras (una palabra que suena parecido en lugar del verbo o del nombre del objeto, o el nombre del objeto omitido antes del precio): interpreta la intención real.
-Si además recibes el video, úsalo para ver qué objeto muestra el vendedor en el momento de cada turno y así corregir o completar los nombres que el ASR entendió mal u omitió. Los tiempos de los turnos del ASR son la referencia temporal.
+SPARK_SYSTEM_PROMPT = """You are Muse Spark inside a pipeline that turns sales videos into an e-commerce catalog.
+You receive automatic speech transcripts (ASR) of 1 to 3 videos, split into timed turns. In each video a seller walks through a space showing objects and saying their price. The seller may speak Spanish or English.
+The transcript has phonetic errors and sometimes drops words (a similar-sounding word instead of the verb or the object's name, or the object's name missing before the price): interpret the real intent.
+If you also receive the video, use it to see which object the seller is showing at the time of each turn, so you can fix or complete the names the ASR misheard or dropped. The ASR turn times are the time reference.
 
-Reglas:
-1. Un producto es cada objeto distinto que el vendedor ofrece con un precio en el audio. No inventes productos que no se ofrezcan en lo hablado, aunque aparezcan otros objetos en el video.
-2. quote: copia LITERAL, carácter por carácter y con los errores del ASR, del fragmento del turno que habla de ese producto: desde la primera palabra que lo introduce ("este", "esto", el nombre del objeto...) hasta el precio final o la última característica. No parafrasees. Los fragmentos de productos distintos no se solapan y van en el orden en que se dicen.
-3. mention_type: EXPLICIT si el vendedor nombra qué es el objeto ("este juguete", "estos auriculares"); DEICTIC si solo lo señala sin nombrarlo ("esto", "esto de acá", "este de acá").
-4. spoken_item_name: el sustantivo que dijo, corregido solo si el ASR lo deformó y el contexto lo deja claro; cadena vacía si es DEICTIC.
-5. price: el precio final con el que se queda el vendedor; interpreta números dichos en palabras. Si corrige el precio en vivo ("a 10... mejor a 8"), original_price es el primero que dijo; si no hay corrección, original_price es null.
-6. currency: según lo dicho (dólares -> USD, soles -> PEN, euros -> EUR, pesos según contexto); si no menciona moneda usa USD.
-7. condition: el estado que mencione ("casi nuevo", "tiene un detalle aquí") o cadena vacía. features: características que diga ("inalámbrico", "talla M"); lista vacía si no dice ninguna. No inventes datos.
-8. interpreted_phrase: la frase del producto corregida y legible, completando las palabras que el ASR omitió si el video lo deja claro.
-9. visual_item_name: nombre comercial específico del objeto que se ve en el video durante ese turno (tipo, color, marca visible; por ejemplo "Taza de cerámica blanca con asa"). Cadena vacía si no recibiste video o no se distingue.
-10. name_source: AUDIO si el nombre sale tal cual del audio; AUDIO_CORRECTED_BY_VIDEO si el video corrigió una palabra mal transcrita; VIDEO_ONLY si en el audio no se nombró (deíctico u omitido) y el nombre sale solo de lo que se ve; UNKNOWN si no se puede saber.
-11. discarded_chatter: muletillas, saludos o comentarios sin intención de venta, con el motivo.
-12. visual_inventory: si recibiste video, lista TODOS los objetos que el vendedor muestra a propósito (lo sostiene en la mano, lo señala, lo acerca o lo enfoca en primer plano), se haya dicho o no algo sobre ellos, con el intervalo aproximado en segundos del video en que se muestra. No incluyas objetos que solo pasan por el fondo. Lista vacía si no recibiste video."""
+Output language: write every free-text field in English (translate if the seller spoke Spanish), except quote, which stays literal.
+
+Rules:
+1. A product is each distinct object the seller offers with a price in the audio. Do not invent products that are not offered in the speech, even if other objects appear in the video.
+2. quote: a LITERAL copy, character by character and with the ASR errors, of the part of the turn about that product: from the first word that introduces it ("this", "este", "esto", the object's name...) to the final price or the last feature. Do not paraphrase or translate. Quotes of different products do not overlap and follow the order in which they are spoken.
+3. mention_type: EXPLICIT if the seller names what the object is ("this toy", "estos auriculares"); DEICTIC if they only point at it without naming it ("this", "this one here", "esto", "esto de acá", "este de acá").
+4. spoken_item_name: the noun the seller said, in English, corrected only if the ASR distorted it and the context makes it clear; empty string if DEICTIC.
+5. price: the final price the seller settles on; interpret numbers said in words. If they correct the price live ("10... no, 8"), original_price is the first one they said; if there is no correction, original_price is null.
+6. currency: based on what is said (dollars/dólares -> USD, soles -> PEN, euros -> EUR, pesos depending on context); if no currency is mentioned, use USD.
+7. condition: the condition they mention ("almost new", "has a small mark here") or empty string. features: features they mention ("wireless", "size M"); empty list if none. Do not invent data.
+8. interpreted_phrase: the product's phrase corrected, readable and in English, filling in the words the ASR dropped if the video makes them clear.
+9. visual_item_name: specific commercial name in English of the object seen in the video during that turn (type, color, visible brand; e.g. "White ceramic mug with handle"). Empty string if you did not receive video or it cannot be told apart.
+10. name_source: AUDIO if the name comes straight from the audio; AUDIO_CORRECTED_BY_VIDEO if the video corrected a mistranscribed word; VIDEO_ONLY if it was not named in the audio (deictic or dropped) and the name comes only from what is seen; UNKNOWN if it cannot be known.
+11. discarded_chatter: filler words, greetings or comments with no sales intent, with the reason.
+12. visual_inventory: if you received video, list ALL the objects the seller shows on purpose (holds in their hand, points at, brings closer or puts in close-up), whether or not anything was said about them, with the approximate interval in seconds of the video in which it is shown. object_name in English. Do not include objects that only pass in the background. Empty list if you did not receive video."""
 prompts.register(
     "p2_extract", SPARK_SYSTEM_PROMPT, phase=2, model="Muse Spark", group="creative",
-    title="Extractor de productos",
-    description="Lee la transcripción y el video y decide qué productos se ofrecen, su nombre, precio, moneda, estado y características.",
-    hint="Ej.: 'Si el vendedor no dice moneda, asume PEN.' o 'Incluye la talla en el nombre cuando la diga.'",
+    title="Product extractor",
+    description="Reads the transcript and the video and decides which products are offered, with their name, price, currency, condition and features.",
+    hint="E.g.: 'If the seller does not say a currency, assume PEN.' or 'Include the size in the name when it is said.'",
 )
 
 SPARK_PRODUCTS_SCHEMA: Dict[str, Any] = {
@@ -243,7 +248,9 @@ class MuseClient:
         duration_sec: float,
     ) -> Dict[str, Any]:
         mode = "ENDPOINTING"
-        cache_key = hashlib.md5(f"{MUSE_VOICE_MODEL}|{mode}|{audio_md5}".encode("utf-8")).hexdigest()
+        cache_key = hashlib.md5(
+            f"{MUSE_VOICE_MODEL}|{mode}|{audio_md5}|{','.join(MUSE_VOICE_LANGUAGES)}|{','.join(SALES_KEYWORDS_BIAS)}".encode("utf-8")
+        ).hexdigest()
         cached = get_cached_result("voice_transcribe_api", cache_key)
 
         if cached is not None:
@@ -251,8 +258,8 @@ class MuseClient:
                 phase=2,
                 model="Muse Voice Transcribe",
                 operation=(
-                    f"Caché MD5 HIT para '{filename}' ({video_id}): se reutiliza la transcripción de "
-                    f"{cached.get('audio_duration_sec', 0):.1f}s de audio sin llamar a la API."
+                    f"MD5 cache HIT for '{filename}' ({video_id}): reusing the transcript of "
+                    f"{cached.get('audio_duration_sec', 0):.1f}s of audio without calling the API."
                 ),
                 status="CACHE_HIT_MD5",
                 details={"video_id": video_id, "audio_md5": audio_md5, "model": MUSE_VOICE_MODEL},
@@ -307,8 +314,8 @@ class MuseClient:
             phase=2,
             model="Muse Voice Transcribe",
             operation=(
-                f"Audio de '{filename}' ({video_id}) transcrito por {MUSE_VOICE_MODEL}: "
-                f"{audio_duration_sec:.1f}s, {len(turns)} turno(s) de voz. La API cobra por audio y no reporta tokens."
+                f"Audio of '{filename}' ({video_id}) transcribed by {MUSE_VOICE_MODEL}: "
+                f"{audio_duration_sec:.1f}s, {len(turns)} speech turn(s). The API bills per audio and reports no tokens."
             ),
             status="API_CALL",
             details={
@@ -363,8 +370,8 @@ class MuseClient:
                 phase=2,
                 model="Muse Spark",
                 operation=(
-                    f"Caché MD5 HIT del análisis semántico ({batch_md5[:10]}...): "
-                    f"{len(cached.get('products', []))} productos sin llamar a la API."
+                    f"MD5 cache HIT for the semantic analysis ({batch_md5[:10]}...): "
+                    f"{len(cached.get('products', []))} products without calling the API."
                 ),
                 tokens_saved=usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
                 status="CACHE_HIT_MD5",
@@ -383,8 +390,8 @@ class MuseClient:
                     {
                         "type": "text",
                         "text": (
-                            f"Video {vid_id} (muestreado a {MUSE_SPARK_PHASE2_VIDEO_FPS:g} fps: la imagen N "
-                            f"corresponde aproximadamente al segundo (N-1)/{MUSE_SPARK_PHASE2_VIDEO_FPS:g} del video):"
+                            f"Video {vid_id} (sampled at {MUSE_SPARK_PHASE2_VIDEO_FPS:g} fps: image N "
+                            f"corresponds roughly to second (N-1)/{MUSE_SPARK_PHASE2_VIDEO_FPS:g} of the video):"
                         ),
                     }
                 )
@@ -394,7 +401,7 @@ class MuseClient:
                         "video_url": {"url": f"data:video/mp4;base64,{encoded}", "fps": MUSE_SPARK_PHASE2_VIDEO_FPS},
                     }
                 )
-            user_content.append({"type": "text", "text": f"Transcripciones ASR por turnos:\n{canonical_payload}"})
+            user_content.append({"type": "text", "text": f"Turn-by-turn ASR transcripts:\n{canonical_payload}"})
 
         parsed, usage, raw = chat_json(
             model=MUSE_SPARK_MODEL,
@@ -432,13 +439,13 @@ class MuseClient:
             phase=2,
             model="Muse Spark",
             operation=(
-                f"{MUSE_SPARK_MODEL}: 1 llamada con salida JSON Schema para {len(transcriptions)} transcripción(es)"
-                f" + {len(video_proxies)} video(s) a {MUSE_SPARK_PHASE2_VIDEO_FPS:g} fps: "
-                f"{len(products)} productos "
+                f"{MUSE_SPARK_MODEL}: 1 call with JSON Schema output for {len(transcriptions)} transcript(s)"
+                f" + {len(video_proxies)} video(s) at {MUSE_SPARK_PHASE2_VIDEO_FPS:g} fps: "
+                f"{len(products)} products "
                 f"({sum(1 for p in products if p['mention_type'] == 'EXPLICIT')} EXPLICIT, "
-                f"{sum(1 for p in products if p['mention_type'] == 'DEICTIC')} DEICTIC) y "
-                f"{len(discarded)} fragmentos de charla descartados "
-                f"(razonamiento '{MUSE_SPARK_REASONING_PHASE2}': {usage['reasoning_tokens']} de los tokens de salida)."
+                f"{sum(1 for p in products if p['mention_type'] == 'DEICTIC')} DEICTIC) and "
+                f"{len(discarded)} chatter fragments discarded "
+                f"(reasoning '{MUSE_SPARK_REASONING_PHASE2}': {usage['reasoning_tokens']} of the output tokens)."
             ),
             input_tokens=usage["input_tokens"],
             output_tokens=usage["output_tokens"],
@@ -554,7 +561,7 @@ class MuseClient:
                     "original_price_mentioned": float(original_price) if price_corrected else None,
                     "price_corrected_live": price_corrected,
                     "currency": item.get("currency", "USD"),
-                    "condition": item.get("condition") or "No mencionado",
+                    "condition": item.get("condition") or NOT_MENTIONED,
                     "features": item.get("features", []),
                     "spoken_timestamps": {
                         "start_sec": start_s,

@@ -86,9 +86,9 @@ Agrega `semantic_products[]`:
 
 ```json
 { "product_id": "prod_2", "video_id": "vid_1", "mention_type": "DEICTIC",
-  "detected_name": "Cactus verde en maceta azul con patrón de olas",
+  "detected_name": "Green cactus in a blue wave-pattern pot",
   "raw_spoken_phrase": "este de acá lo vendo a cinco", "price": 5.0, "currency": "USD",
-  "price_status": "SPOKEN", "condition": "No mencionado",
+  "price_status": "SPOKEN", "condition": "Not mentioned",
   "spoken_timestamps": { "start_sec": 6.57, "end_sec": 9.39, "timing_source": "QUOTE_ALIGNED_IN_TURN" } }
 ```
 
@@ -134,9 +134,9 @@ Agrega `catalog_store` (`name`, `tagline`) y **`catalog_products[]`**, el contra
 ```json
 {
   "id": "prod_1", "video_id": "vid_1",
-  "title": "Figura chibi Iron Man rojo y amarillo",
+  "title": "Red and yellow chibi Iron Man figure",
   "short_description": "...", "description": "...", "highlights": ["..."],
-  "category": "Juguetes y coleccionables", "tags": ["figura", "coleccionable"],
+  "category": "Toys & Collectibles", "tags": ["figure", "collectible"],
   "price": 2.0, "currency": "USD", "condition": "", "seller_phrase": "este juguete lo vendo a dos dólares",
   "real_photo_only": false,
   "views": [
@@ -195,7 +195,7 @@ Los 13 prompts de los agentes se pueden personalizar sin tocar código. Hay dos 
 
 Los cambios se guardan en **perfiles** dentro de `storage/prompts/`, fuera de git.
 
-- **Sin perfil activo** ("Original de Meta Muse"), el pipeline usa exactamente los prompts y las claves de caché de siempre.
+- **Sin perfil activo** ("Default"), el pipeline usa exactamente los prompts y las claves de caché de siempre.
 - **Con un prompt personalizado**, la clave de caché de ese agente cambia. Solo ese agente vuelve a llamar a la API; el resto sigue saliendo de la caché.
 - **Formato de salida:** los JSON Schema estrictos no se editan, así que el formato nunca se rompe.
 - **Trazabilidad:** la sesión guarda `prompt_customizations`, con qué perfil y qué agentes personalizados se usaron en cada fase. Solo aparece si hubo alguno.

@@ -26,7 +26,7 @@ def begin(session_id: Optional[str], phase: int) -> None:
                 "running": True,
                 "started_at": time.time(),
                 "updated_at": time.time(),
-                "message": f"Fase {phase} iniciada",
+                "message": f"Phase {phase} started",
                 "warning": None,
                 "tokens_total": None,
                 "tokens_saved_since_start": 0,

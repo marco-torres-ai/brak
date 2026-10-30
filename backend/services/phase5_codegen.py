@@ -27,32 +27,32 @@ from backend.core.config import (
 )
 from backend.core import prompts
 from backend.core.muse_api import MuseAPIError, chat_json
-from backend.core.muse_client import get_cached_result, set_cached_result
+from backend.core.muse_client import NOT_MENTIONED_VALUES, get_cached_result, set_cached_result
 from backend.core.token_tracker import TokenTracker
 from backend.services.phase2_semantic import run_phase2_semantic
 from backend.services.phase3_vision_sam import run_phase3_vision_sam
 from backend.services.phase4_studio import run_phase4_studio
 
-PHASE5_PROMPT_VERSION = "phase5_v1"
+PHASE5_PROMPT_VERSION = "phase5_v2"
 COPY_BATCH = 20
 CATALOG_HTML = "muse_ecommerce_catalog.html"
 MAX_IMAGE_SIDE = 1024
 
-COPY_SYSTEM_PROMPT = """Eres redactor de un catálogo e-commerce. Recibes productos detectados en videos de un vendedor: el nombre visto en el video, una categoría tentativa, el estado y las características que dijo el vendedor, su frase literal y una descripción de la escena del video.
-Escribe en español neutro, en tono comercial claro y honesto:
-- title: nombre comercial corto y claro (máximo 60 caracteres).
-- short_description: 1 frase (máximo 140 caracteres).
-- description: 2 o 3 frases atractivas basadas SOLO en lo que se ve del producto y lo que dijo el vendedor. La descripción de la escena puede mencionar manos, paredes, mesas o muebles del video: ignóralos, no son parte del producto. No inventes medidas, materiales, marcas, autenticidad ("original", "oficial"), garantías ni funciones que no se deduzcan de los datos.
-- highlights: hasta 4 puntos breves solo con datos dados (tipo, color, estado, características dichas). Lista vacía si no hay.
-- category: categoría de tienda. Usa un conjunto pequeño y coherente para todo el catálogo (agrupa productos parecidos; máximo 6 categorías distintas).
-- tags: hasta 6 palabras clave de búsqueda en minúsculas.
-store: name (nombre corto y atractivo para la tienda, acorde a los productos) y tagline (1 frase).
-Devuelve un elemento por producto con su product_id exacto."""
+COPY_SYSTEM_PROMPT = """You are the copywriter of an e-commerce catalog. You receive products detected in a seller's videos: the name seen in the video, a tentative category, the condition and features the seller mentioned, their literal phrase (it may be in Spanish) and a description of the video scene.
+Write in clear, natural US English, in an honest and clear commercial tone:
+- title: short, clear commercial name (60 characters max).
+- short_description: 1 sentence (140 characters max).
+- description: 2 or 3 appealing sentences based ONLY on what is seen of the product and what the seller said. The scene description may mention hands, walls, tables or furniture from the video: ignore them, they are not part of the product. Do not invent measurements, materials, brands, authenticity ("original", "official"), warranties or functions that cannot be inferred from the data.
+- highlights: up to 4 brief points using only the given data (type, color, condition, features mentioned). Empty list if there are none.
+- category: store category. Use a small, consistent set for the whole catalog (group similar products; 6 distinct categories max).
+- tags: up to 6 lowercase search keywords.
+store: name (short, catchy store name that fits the products) and tagline (1 sentence).
+Return one item per product with its exact product_id."""
 prompts.register(
     "p5_copy", COPY_SYSTEM_PROMPT, phase=5, model="Muse Spark", group="creative",
-    title="Redactor de textos de venta",
-    description="Escribe título, descripción, puntos destacados, categoría y etiquetas de cada producto, y el nombre de la tienda.",
-    hint="Ej.: 'Tono juvenil y cercano, frases cortas.' o 'La tienda se llama Brak.'",
+    title="Sales copywriter",
+    description="Writes the title, description, highlights, category and tags of each product, plus the store name.",
+    hint="E.g.: 'Young, friendly tone with short sentences.' or 'The store is called Brak.'",
 )
 
 COPY_SCHEMA: Dict[str, Any] = {
@@ -88,11 +88,11 @@ COPY_SCHEMA: Dict[str, Any] = {
 
 VIEW_SPECS = [
     # (clave, etiqueta, campo de step_4b/4a, generada por IA sin filmar)
-    ("front", "Frente", "studio_white_url", False),
-    ("left", "Izquierda", "angle_left_url", True),
-    ("right", "Derecha", "angle_right_url", True),
-    ("back", "Atrás", "angle_back_url", True),
-    ("life", "Ambiente", "lifestyle_url", False),
+    ("front", "Front", "studio_white_url", False),
+    ("left", "Left", "angle_left_url", True),
+    ("right", "Right", "angle_right_url", True),
+    ("back", "Back", "angle_back_url", True),
+    ("life", "Lifestyle", "lifestyle_url", False),
 ]
 
 
@@ -137,7 +137,7 @@ def _write_copy(tracker: TokenTracker, products: List[Dict[str, Any]]) -> Dict[s
                 "product_id": p["product_id"],
                 "name_seen_in_video": p.get("resolved_name"),
                 "tentative_category": p.get("visual_category"),
-                "condition_said": p.get("condition") if p.get("condition") not in (None, "", "No mencionado") else "",
+                "condition_said": p.get("condition") if p.get("condition") not in NOT_MENTIONED_VALUES else "",
                 "features_said": p.get("features") or [],
                 "seller_phrase": p.get("raw_spoken_phrase") or "",
                 "video_scene_description": p.get("visual_description") or "",
@@ -151,8 +151,8 @@ def _write_copy(tracker: TokenTracker, products: List[Dict[str, Any]]) -> Dict[s
             parsed, usage = cached["parsed"], cached["usage"]
             tracker.record_event(
                 phase=5,
-                model="Muse Spark (Textos)",
-                operation=f"Caché MD5 HIT: textos de venta de {len(chunk)} producto(s) sin llamar a la API.",
+                model="Muse Spark (Copy)",
+                operation=f"MD5 cache HIT: sales copy for {len(chunk)} product(s) without calling the API.",
                 tokens_saved=usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
                 status="CACHE_HIT_MD5",
             )
@@ -166,15 +166,15 @@ def _write_copy(tracker: TokenTracker, products: List[Dict[str, Any]]) -> Dict[s
                     reasoning_effort="low",
                 )
             except MuseAPIError as exc:
-                tracker.record_event(phase=5, model="Muse Spark (Textos)", operation=f"Falló la redacción ({str(exc)[:160]}); se usan los nombres de las fases anteriores.", status="API_ERROR")
+                tracker.record_event(phase=5, model="Muse Spark (Copy)", operation=f"Copywriting failed ({str(exc)[:160]}); using the names from the previous phases.", status="API_ERROR")
                 continue
             set_cached_result("phase5_copy", key, {"parsed": parsed, "usage": usage})
             tracker.record_event(
                 phase=5,
-                model="Muse Spark (Textos)",
+                model="Muse Spark (Copy)",
                 operation=(
-                    f"{MUSE_SPARK_MODEL}: textos de venta, categorías y etiquetas de {len(chunk)} producto(s) en 1 llamada "
-                    f"(razonamiento 'low': {usage['reasoning_tokens']} tokens)."
+                    f"{MUSE_SPARK_MODEL}: sales copy, categories and tags for {len(chunk)} product(s) in 1 call "
+                    f"(reasoning 'low': {usage['reasoning_tokens']} tokens)."
                 ),
                 input_tokens=usage["input_tokens"],
                 output_tokens=usage["output_tokens"],
@@ -218,7 +218,7 @@ def _catalog_products(studio_products: List[Dict[str, Any]], copy: Dict[str, Dic
             if _export_image(s4b.get(field), images_dir / name):
                 views.append({"key": key, "label": label, "src": f"images/{name}", "ai_inferred": ai, "bg": "dark" if key == "life" else "white"})
         if _export_image(s4a.get("result_cutout_url"), images_dir / f"{pid}_png.png"):
-            views.append({"key": "png", "label": "Sin fondo", "src": f"images/{pid}_png.png", "ai_inferred": False, "bg": "checker"})
+            views.append({"key": "png", "label": "No background", "src": f"images/{pid}_png.png", "ai_inferred": False, "bg": "checker"})
         c = copy.get(pid) or {}
         price = p.get("price")
         out.append(
@@ -233,7 +233,7 @@ def _catalog_products(studio_products: List[Dict[str, Any]], copy: Dict[str, Dic
                 "tags": c.get("tags") or [],
                 "price": float(price) if price not in (None, "") else None,
                 "currency": p.get("currency") or "USD",
-                "condition": p.get("condition") if p.get("condition") not in (None, "", "No mencionado") else "",
+                "condition": p.get("condition") if p.get("condition") not in NOT_MENTIONED_VALUES else "",
                 "seller_phrase": p.get("raw_spoken_phrase") or "",
                 "real_photo_only": bool(s4a.get("low_quality_source")),
                 "views": views,
@@ -247,7 +247,7 @@ def _build_html(store: Dict[str, str], products: List[Dict[str, Any]], usage: Di
         {"store": store, "products": products, "usage": usage, "session_id": session_id},
         ensure_ascii=False,
     ).replace("</", "<\\/")
-    return CATALOG_TEMPLATE.replace("__CATALOG_DATA__", data).replace("__STORE_NAME__", _esc(store.get("name") or "Catálogo"))
+    return CATALOG_TEMPLATE.replace("__CATALOG_DATA__", data).replace("__STORE_NAME__", _esc(store.get("name") or "Catalog"))
 
 
 def _esc(text: str) -> str:
@@ -268,11 +268,11 @@ def build_catalog_zip(session_id: str) -> Path:
 async def run_phase5_codegen(session_id: Optional[str] = None) -> Dict[str, Any]:
     state = load_session_state(session_id)
     if not state or not state.get("session_id"):
-        raise ValueError("No existe una sesión activa. Ejecuta primero las Fases 1 a 4.")
+        raise ValueError("There is no active session. Run Phases 1 to 4 first.")
     sid = state["session_id"]
     studio_products = state.get("studio_products", [])
     if not studio_products:
-        raise ValueError("No hay productos del estudio fotográfico (Fase 4). Ejecuta la Fase 4 antes del catálogo.")
+        raise ValueError("There are no photo-studio products (Phase 4). Run Phase 4 before the catalog.")
 
     tracker = TokenTracker(existing_audit=state.get("token_audit"))
     catalog_dir = STORAGE_DIR / sid / "catalog"
@@ -283,7 +283,7 @@ async def run_phase5_codegen(session_id: Optional[str] = None) -> Dict[str, Any]
 
     written = _write_copy(tracker, studio_products)
     store = {
-        "name": (written["store"].get("name") or "Mi Tienda").strip(),
+        "name": (written["store"].get("name") or "My Store").strip(),
         "tagline": (written["store"].get("tagline") or "").strip(),
     }
     products = _catalog_products(studio_products, written["products"], images_dir)
@@ -300,11 +300,11 @@ async def run_phase5_codegen(session_id: Optional[str] = None) -> Dict[str, Any]
     n_images = sum(len(p["views"]) for p in products)
     tracker.record_event(
         phase=5,
-        model="Catálogo HTML",
+        model="HTML catalog",
         operation=(
-            f"Catálogo '{store['name']}' armado con plantilla local: {len(products)} producto(s), {n_images} imagen(es) optimizadas, "
-            f"{len({p['category'] for p in products})} categoría(s); valor: "
-            + (", ".join(f"{v:,.2f} {k}" for k, v in values.items()) or "sin precios")
+            f"Catalog '{store['name']}' built with the local template: {len(products)} product(s), {n_images} optimized image(s), "
+            f"{len({p['category'] for p in products})} category(ies); value: "
+            + (", ".join(f"{v:,.2f} {k}" for k, v in values.items()) or "no prices")
             + "."
         ),
         status="ZERO_TOKEN_LOCAL",
@@ -344,7 +344,7 @@ async def run_full_pipeline_auto(session_id: Optional[str] = None) -> Dict[str, 
     """Fases 2 -> 3 -> 4 -> 5 encadenadas sobre la sesión activa (con caché MD5 en lo ya calculado)."""
     state = load_session_state(session_id)
     if not state or not state.get("session_id"):
-        raise ValueError("No existe una sesión activa con videos pre-procesados. Sube primero los videos en la Fase 1.")
+        raise ValueError("There is no active session with pre-processed videos. Upload the videos in Phase 1 first.")
     sid = state["session_id"]
     await run_phase2_semantic(session_id=sid)
     await run_phase3_vision_sam(session_id=sid)
@@ -353,7 +353,7 @@ async def run_full_pipeline_auto(session_id: Optional[str] = None) -> Dict[str, 
 
 
 CATALOG_TEMPLATE = r"""<!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="en" class="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -377,7 +377,7 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
       </div>
     </div>
     <button onclick="toggleCart(true)" class="relative px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
-      <span>🛒 Carrito</span><span id="cartCount" class="px-2 py-0.5 rounded-full bg-slate-950 text-emerald-300 font-mono text-[11px]">0</span>
+      <span>🛒 Cart</span><span id="cartCount" class="px-2 py-0.5 rounded-full bg-slate-950 text-emerald-300 font-mono text-[11px]">0</span>
     </button>
   </div>
 </header>
@@ -386,11 +386,11 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div id="categoryBar" class="flex flex-wrap items-center gap-2"></div>
     <div class="flex items-center gap-2 w-full sm:w-auto">
-      <input id="search" type="text" placeholder="Buscar productos..." class="w-full sm:w-64 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400" />
+      <input id="search" type="text" placeholder="Search products..." class="w-full sm:w-64 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-cyan-400" />
       <select id="sort" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200">
-        <option value="default">Destacados</option>
-        <option value="price_asc">Precio: menor a mayor</option>
-        <option value="price_desc">Precio: mayor a menor</option>
+        <option value="default">Featured</option>
+        <option value="price_asc">Price: low to high</option>
+        <option value="price_desc">Price: high to low</option>
       </select>
     </div>
   </div>
@@ -398,12 +398,12 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
 
 <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-5 flex-1">
   <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-  <p id="emptyMsg" class="hidden text-center text-sm text-slate-400 py-16">No hay productos que coincidan con la búsqueda.</p>
+  <p id="emptyMsg" class="hidden text-center text-sm text-slate-400 py-16">No products match your search.</p>
 </main>
 
 <footer class="border-t border-slate-800/80 mt-6">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-2">
-    <span>Catálogo generado desde video con Meta Muse (Voice Transcribe, Spark, SAM 3.1 y Muse Image).</span>
+    <span>Catalog generated from video with Meta Muse (Voice Transcribe, Spark, SAM 3.1 and Muse Image).</span>
     <span id="usageLine" class="font-mono"></span>
   </div>
 </footer>
@@ -415,7 +415,7 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
         <span id="mCategory" class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300"></span>
         <h3 id="mTitle" class="text-lg font-extrabold text-white mt-1"></h3>
       </div>
-      <button onclick="closeModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕ Cerrar</button>
+      <button onclick="closeModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕ Close</button>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="space-y-3">
@@ -424,7 +424,7 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
           <span id="mViewLabel" class="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg bg-slate-950/85 text-xs font-mono text-emerald-300"></span>
         </div>
         <div id="mThumbs" class="grid grid-cols-6 gap-2"></div>
-        <p id="mAiNote" class="hidden text-[11px] text-amber-300/90">Las vistas marcadas "IA" no se filmaron: son una representación generada a partir del producto real.</p>
+        <p id="mAiNote" class="hidden text-[11px] text-amber-300/90">Views marked "AI" were not filmed: they are a representation generated from the real product.</p>
       </div>
       <div class="space-y-4">
         <div class="flex items-baseline justify-between gap-2">
@@ -435,7 +435,7 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
         <ul id="mHighlights" class="space-y-1 text-xs text-slate-300"></ul>
         <div id="mTags" class="flex flex-wrap gap-1.5"></div>
         <div id="mPhraseBox" class="p-3 rounded-2xl bg-slate-950/90 border border-slate-800 text-xs text-slate-400">
-          🎙️ Lo que dijo el vendedor: <i id="mPhrase" class="text-slate-200"></i>
+          🎙️ What the seller said: <i id="mPhrase" class="text-slate-200"></i>
         </div>
         <button id="mAction" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/20 transition"></button>
       </div>
@@ -447,7 +447,7 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
   <div class="glass w-full max-w-md h-full p-6 flex flex-col justify-between border-l border-slate-800">
     <div class="space-y-4 overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-lg font-extrabold text-white">🛒 Tu carrito</h3>
+        <h3 class="text-lg font-extrabold text-white">🛒 Your cart</h3>
         <button onclick="toggleCart(false)" class="px-3 py-1 rounded-lg bg-slate-800 text-xs text-slate-300">✕</button>
       </div>
       <div id="cartItems" class="space-y-3"></div>
@@ -457,7 +457,7 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
         <span class="text-slate-300">Total:</span>
         <span id="cartTotal" class="text-right text-xl font-black text-emerald-400">—</span>
       </div>
-      <button onclick="checkout()" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black text-sm shadow-lg">Confirmar pedido</button>
+      <button onclick="checkout()" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black text-sm shadow-lg">Place order</button>
     </div>
   </div>
 </div>
@@ -466,13 +466,13 @@ CATALOG_TEMPLATE = r"""<!DOCTYPE html>
 const DATA = __CATALOG_DATA__;
 const PRODUCTS = DATA.products;
 const SYMBOL = { USD: '$', PEN: 'S/', EUR: '€', MXN: '$', COP: '$', ARS: '$', CLP: '$', BOB: 'Bs' };
-let activeCategory = 'Todos';
+let activeCategory = 'All';
 const activeView = {};
 let cart = [];
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const money = (v, cur) => `${SYMBOL[cur] || ''}${Number(v).toLocaleString('es', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 })} ${cur}`;
-const priceText = (p) => (p.price == null ? 'Consultar precio' : money(p.price, p.currency));
+const money = (v, cur) => `${SYMBOL[cur] || ''}${Number(v).toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 })} ${cur}`;
+const priceText = (p) => (p.price == null ? 'Ask for price' : money(p.price, p.currency));
 const bgClass = (v) => (v.bg === 'dark' ? 'bg-slate-950' : v.bg === 'checker' ? 'bg-checker' : 'bg-white');
 
 function init() {
@@ -481,19 +481,19 @@ function init() {
   document.getElementById('logo').textContent = (DATA.store.name || 'M').trim().charAt(0).toUpperCase();
   const u = DATA.usage || {};
   document.getElementById('usageLine').textContent =
-    `${(u.api_tokens_used || 0).toLocaleString('es')} tokens de API • ${u.images_generated || 0} imágenes generadas (US$${(u.images_cost_usd || 0).toFixed(2)}) • ${(u.tokens_avoided_by_cache || 0).toLocaleString('es')} tokens evitados por caché`;
+    `${(u.api_tokens_used || 0).toLocaleString('en-US')} API tokens • ${u.images_generated || 0} images generated (US$${(u.images_cost_usd || 0).toFixed(2)}) • ${(u.tokens_avoided_by_cache || 0).toLocaleString('en-US')} tokens avoided by cache`;
   renderCategories();
   render();
 }
 
 function renderCategories() {
-  const cats = ['Todos', ...new Set(PRODUCTS.map((p) => p.category))];
+  const cats = ['All', ...new Set(PRODUCTS.map((p) => p.category))];
   const bar = document.getElementById('categoryBar');
   bar.innerHTML = '';
   cats.forEach((cat) => {
     const b = document.createElement('button');
     b.className = `px-3 py-1.5 rounded-xl text-xs font-semibold transition ${activeCategory === cat ? 'bg-emerald-500 text-slate-950 font-extrabold shadow' : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700'}`;
-    b.textContent = cat === 'Todos' ? `Todos (${PRODUCTS.length})` : `${cat} (${PRODUCTS.filter((p) => p.category === cat).length})`;
+    b.textContent = cat === 'All' ? `All (${PRODUCTS.length})` : `${cat} (${PRODUCTS.filter((p) => p.category === cat).length})`;
     b.onclick = () => { activeCategory = cat; renderCategories(); render(); };
     bar.appendChild(b);
   });
@@ -502,7 +502,7 @@ function renderCategories() {
 function render() {
   const q = document.getElementById('search').value.trim().toLowerCase();
   const sort = document.getElementById('sort').value;
-  let list = PRODUCTS.filter((p) => (activeCategory === 'Todos' || p.category === activeCategory) &&
+  let list = PRODUCTS.filter((p) => (activeCategory === 'All' || p.category === activeCategory) &&
     (!q || `${p.title} ${p.short_description} ${p.category} ${p.tags.join(' ')}`.toLowerCase().includes(q)));
   const pv = (p) => (p.price == null ? Infinity : p.price);
   if (sort === 'price_asc') list.sort((a, b) => pv(a) - pv(b));
@@ -513,15 +513,15 @@ function render() {
   list.forEach((p) => {
     const views = p.views;
     const view = views.find((v) => v.key === activeView[p.id]) || views[0];
-    const pills = views.map((v) => `<button onclick="setView('${p.id}','${v.key}')" class="px-2 py-1 rounded-lg text-[10px] font-semibold transition ${v.key === (view && view.key) ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700/80'}">${esc(v.label)}${v.ai_inferred ? ' · IA' : ''}</button>`).join('');
+    const pills = views.map((v) => `<button onclick="setView('${p.id}','${v.key}')" class="px-2 py-1 rounded-lg text-[10px] font-semibold transition ${v.key === (view && view.key) ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-700/80'}">${esc(v.label)}${v.ai_inferred ? ' · AI' : ''}</button>`).join('');
     const card = document.createElement('div');
     card.className = 'glass rounded-3xl overflow-hidden flex flex-col justify-between border border-slate-800/90 hover:border-emerald-500/40 transition group';
     card.innerHTML = `
       <div>
         <div class="aspect-square ${view ? bgClass(view) : 'bg-slate-900'} relative overflow-hidden flex items-center justify-center cursor-pointer" onclick="openModal('${p.id}')">
           ${view ? `<img src="${view.src}" alt="${esc(p.title)}" loading="lazy" class="w-full h-full object-contain group-hover:scale-105 transition duration-300" />` : ''}
-          ${view && view.ai_inferred ? '<span class="absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950">Vista generada por IA</span>' : ''}
-          ${p.real_photo_only ? '<span class="absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/85 text-slate-200 border border-slate-600">Foto real del video</span>' : ''}
+          ${view && view.ai_inferred ? '<span class="absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950">AI-generated view</span>' : ''}
+          ${p.real_photo_only ? '<span class="absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/85 text-slate-200 border border-slate-600">Real photo from the video</span>' : ''}
         </div>
         ${views.length > 1 ? `<div class="px-4 py-2.5 bg-slate-950/90 border-b border-slate-800/80 flex flex-wrap gap-1">${pills}</div>` : ''}
         <div class="p-5 space-y-2">
@@ -535,10 +535,10 @@ function render() {
         </div>
       </div>
       <div class="p-4 pt-0 flex gap-2">
-        <button onclick="openModal('${p.id}')" class="px-3 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 transition">Ver detalles</button>
+        <button onclick="openModal('${p.id}')" class="px-3 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 transition">View details</button>
         ${p.price == null
-          ? `<button onclick="openModal('${p.id}')" class="flex-1 py-2.5 rounded-xl bg-amber-400/90 hover:bg-amber-300 text-slate-950 font-extrabold text-xs transition">Consultar precio</button>`
-          : `<button onclick="addToCart('${p.id}')" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/15 transition">+ Agregar al carrito</button>`}
+          ? `<button onclick="openModal('${p.id}')" class="flex-1 py-2.5 rounded-xl bg-amber-400/90 hover:bg-amber-300 text-slate-950 font-extrabold text-xs transition">Ask for price</button>`
+          : `<button onclick="addToCart('${p.id}')" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/15 transition">+ Add to cart</button>`}
       </div>`;
     grid.appendChild(card);
   });
@@ -563,16 +563,16 @@ window.openModal = (id) => {
   document.getElementById('mAiNote').classList.toggle('hidden', !p.views.some((v) => v.ai_inferred));
   const action = document.getElementById('mAction');
   if (p.price == null) {
-    action.textContent = 'Consultar precio con el vendedor';
-    action.onclick = () => alert(`Consulta enviada por: ${p.title}`);
+    action.textContent = 'Ask the seller for the price';
+    action.onclick = () => alert(`Inquiry sent for: ${p.title}`);
   } else {
-    action.textContent = `+ Agregar al carrito • ${priceText(p)}`;
+    action.textContent = `+ Add to cart • ${priceText(p)}`;
     action.onclick = () => { addToCart(p.id); closeModal(); };
   }
   const setStage = (v) => {
     document.getElementById('mStage').className = `aspect-square rounded-2xl overflow-hidden ${bgClass(v)} border border-slate-700 flex items-center justify-center relative`;
     document.getElementById('mImg').src = v.src;
-    document.getElementById('mViewLabel').textContent = v.ai_inferred ? `${v.label} · vista generada por IA` : v.label;
+    document.getElementById('mViewLabel').textContent = v.ai_inferred ? `${v.label} · AI-generated view` : v.label;
   };
   if (p.views.length) setStage(p.views.find((v) => v.key === activeView[p.id]) || p.views[0]);
   const thumbs = document.getElementById('mThumbs');
@@ -580,7 +580,7 @@ window.openModal = (id) => {
   p.views.forEach((v) => {
     const b = document.createElement('button');
     b.className = `aspect-square rounded-xl overflow-hidden ${bgClass(v)} border border-slate-700 hover:border-emerald-400 relative`;
-    b.innerHTML = `<img src="${v.src}" alt="" class="w-full h-full object-contain" /><span class="absolute bottom-0.5 inset-x-0.5 bg-slate-950/85 text-[9px] text-slate-200 truncate rounded px-1">${esc(v.label)}${v.ai_inferred ? ' · IA' : ''}</span>`;
+    b.innerHTML = `<img src="${v.src}" alt="" class="w-full h-full object-contain" /><span class="absolute bottom-0.5 inset-x-0.5 bg-slate-950/85 text-[9px] text-slate-200 truncate rounded px-1">${esc(v.label)}${v.ai_inferred ? ' · AI' : ''}</span>`;
     b.onclick = () => setStage(v);
     thumbs.appendChild(b);
   });
@@ -617,7 +617,7 @@ function updateCart() {
   const t = totals();
   document.getElementById('cartTotal').innerHTML = Object.keys(t).length ? Object.entries(t).map(([c, v]) => esc(money(v, c))).join('<br>') : '—';
   const box = document.getElementById('cartItems');
-  if (!cart.length) { box.innerHTML = '<div class="text-xs text-slate-400 py-8 text-center">Tu carrito está vacío.</div>'; return; }
+  if (!cart.length) { box.innerHTML = '<div class="text-xs text-slate-400 py-8 text-center">Your cart is empty.</div>'; return; }
   box.innerHTML = cart.map((i) => {
     const p = PRODUCTS.find((x) => x.id === i.id);
     const thumb = p.views[0] ? `<img src="${p.views[0].src}" alt="" class="w-14 h-14 rounded-xl object-contain bg-white shrink-0" />` : '';
@@ -630,10 +630,10 @@ function updateCart() {
 window.toggleCart = (open) => { const d = document.getElementById('cart'); d.classList.toggle('hidden', !open); d.classList.toggle('flex', open); if (open) updateCart(); };
 
 window.checkout = () => {
-  if (!cart.length) return alert('Agrega al menos un producto al carrito.');
+  if (!cart.length) return alert('Add at least one product to the cart.');
   const lines = cart.map((i) => { const p = PRODUCTS.find((x) => x.id === i.id); return `• ${i.qty} x ${p.title} (${money(p.price * i.qty, p.currency)})`; }).join('\n');
   const total = Object.entries(totals()).map(([c, v]) => money(v, c)).join(' + ');
-  alert(`Pedido listo:\n\n${lines}\n\nTotal: ${total}`);
+  alert(`Order ready:\n\n${lines}\n\nTotal: ${total}`);
 };
 
 document.getElementById('search').addEventListener('input', render);

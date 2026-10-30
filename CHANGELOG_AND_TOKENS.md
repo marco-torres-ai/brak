@@ -425,3 +425,54 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
   - **Arreglo propuesto, pendiente del permiso del usuario:** usar el MD5 del video original más los parámetros de la copia, y conservar la búsqueda por la clave antigua para no perder la caché existente.
 - **Estado:** `TESTED_OK` (2026-10-30).
 
+## v0.3.0 (extra): nueva marca en el encabezado (rama `version-0.3`) (2026-10-30)
+- Se reemplazó la "B" dentro de un cuadrado con degradado y el subtítulo "Second-Hand Marketplace".
+- **Nombre** (aprobado por el usuario desde la primera propuesta): "brak" en Sora 700 más la plaquita "SHOP". Título de la pestaña: "Brak Shop | De tu video a tu vitrina".
+- **Símbolo** (segunda ronda; la placa con degradado violeta se veía "barata"):
+  - una "b" geométrica maciza: el palito es tangente al círculo y el hueco del círculo es un play (de video a tienda);
+  - toda en blanco, sin placa ni resplandor; el play es un hueco real (máscara SVG) por el que se ve el fondo. Al pasar el mouse baja a 80 % de opacidad. Elegida la opción 1, tras comparar con la 4 (play en azul Meta) en la página real.
+- **Ícono de la pestaña:** el mismo símbolo sobre una placa `#0b1120` (el triángulo con el color de la placa), para que se vea en barras claras.
+- Solo frontend. Verificado con capturas del encabezado real y del ícono a 128, 32 y 16 px.
+- **Estado:** `TESTED_OK` (2026-10-30).
+
+## v0.3.0 (extra): interfaz en inglés (requisito del hackathon) (rama `version-0.3`) (2026-10-30)
+- **Alcance elegido por el usuario: interfaz + etiquetas.** Los textos de los productos (títulos, descripciones, categorías) los sigue escribiendo Spark en español: cambiarlos exigiría tocar el prompt de textos y regenerar.
+- **Frontend** (`frontend/index.html`, ~300 textos):
+  - todo en inglés, con `lang="en"` y formato numérico `en-US`; categoría "All";
+  - vistas del catálogo re-etiquetadas por clave (`VIEW_LABELS` + `relabel()`), así los productos ya guardados en el navegador también salen en inglés;
+  - los patrones del grafo y del 409 son **bilingües** (p. ej. `/Fidelidad|Fidelity/`, `/fase en curso|phase is running/`): funcionan con las sesiones nuevas y con los registros viejos en español.
+- **Backend** (13 archivos, 273 líneas cambiadas una por una, solo textos visibles):
+  - mensajes de progreso y eventos, nombres de modelo en los registros (mapa fijo, p. ej. "Muse Spark (Fidelity)"), errores HTTP (409: "A phase is running…"), errores de validación;
+  - títulos y descripciones de agentes y opciones de flujo;
+  - nombres por defecto "Meta Muse Original", "Meta Muse Full", "My profile", "My flow";
+  - etiquetas de vistas de la Fase 5 y la plantilla del catálogo exportado.
+  - **Se dejó en español a propósito** todo lo que llega a un modelo o forma parte de una clave de caché: prompts, mensajes de usuario a Spark, textos de anomalías del verificador, "caja de Spark" (se reutiliza como prompt de SAM) y diagnósticos que la Fase 4 mete en el prompt de imagen.
+- **Regla de oro verificada:** las huellas de `prompts.get()`, las firmas y las 25 constantes de prompt/esquema/versión son **idénticas** entre el commit `e3c1aff` y la versión actual (52/52 líneas). No se hizo ninguna llamada a la API.
+- **Verificación del frontend:** `node --check`; capturas de la tienda, Por revisar, vista de producto, Studio, Flujo y Agentes con 0 errores de JavaScript. Durante la prueba apareció un error mío (una llamada a `relabel` antes de definirla dejaba la página en blanco); se corrigió antes de entregar.
+- **Nota:** los registros de sesiones viejas (`token_audit`) conservan sus textos en español; las sesiones nuevas ya se registran en inglés.
+- **Estado:** `TESTED_OK` (2026-10-30).
+
+## v0.3.2: pipeline en inglés de punta a punta (commit en la rama `version-0.3`) (2026-10-30)
+- **Motivo:** los requisitos del hackathon piden la app en inglés. Con la v0.3.0 la interfaz ya estaba en inglés, pero Spark seguía escribiendo productos en español porque los prompts lo pedían.
+- **Decisiones del usuario:** la voz escucha español e inglés; se borran los productos y las sesiones viejas; la caché se conserva.
+- **Prompts traducidos** (mismas reglas y numeración): `p2_extract`, `p2_verify`, `p3_vision`, `p3_cut_check`, `p3_cut_choice`, `p4_fidelity`, `p5_copy`. Los prompts de imagen de la Fase 4 ya estaban en inglés.
+  - Todos los campos de texto libre se piden en inglés aunque el vendedor hable español; `quote` sigue literal porque se usa para ubicar el fragmento en la transcripción.
+  - Ejemplos bilingües en las reglas de menciones señaladas ("this one here" / "esto de acá") y monedas ("dollars/dólares", "soles").
+- **Mensajes que arma el código** (en inglés): instrucciones extra de perfiles, pie de video y transcripciones de la Fase 2, detalles de anomalías y pie del clip del verificador, prefijos de las Fases 3 y 4, nombre provisional de menciones señaladas.
+- **Centinelas** cambiados en los dos lados, con alias en español para sesiones viejas: `"Optimal"`, `" | Cutout:"`, `"Not mentioned"` (`NOT_MENTIONED_VALUES`), `"No visual analysis"`.
+- **Sin cambios de lógica en SAM:** los marcadores de prompt de caja solo se tradujeron ("Spark box", "expanded box"). Se probó y se descartó un filtro para no mandarlos a SAM como texto en la Fase 4: el beneficio era mínimo y esta rama es solo el cambio de idioma.
+- **Voz:** `MUSE_VOICE_LANGUAGES` por defecto `Spanish,English` (también en `.env.example`); palabras clave bilingües. Las claves de caché de la transcripción y la re-transcripción ahora incluyen los idiomas, así que cada video se re-transcribe una vez.
+- **Caché:** versiones subidas (phase2_v7, verify_v2, phase3_v3, cutcheck_v3, fidelity_v5, phase5_v2). La primera vez que se procese cada video se pagan de nuevo Spark y Muse Image; las siguientes vuelven a ser caché.
+- **Frontend:** palabras vacías bilingües para detectar duplicados; claves de localStorage `brak_*_v2` (la tienda arranca limpia y se borran las `v1`).
+- **Limpieza:** se borraron las 13 sesiones (`storage/sess_*`, ~600 MB) y el `session_state.json` raíz. Antes se comprobó por MD5 que los 7 videos reales tienen copia idéntica en Descargas. Se conservaron `storage/cache` (301 MB), `storage/prompts` y `storage/flows`.
+- **Verificación sin costo:**
+  - el backend importa;
+  - los 13 prompts efectivos (`GET /api/v1/prompts` del servidor en vivo) están en inglés, salvo los ejemplos bilingües a propósito;
+  - `node --check`;
+  - captura de la tienda vacía en inglés con 0 errores de JavaScript.
+- **Perfil por defecto renombrado** de "Meta Muse Original" a **"Default"** (pedido del usuario). Es solo un nombre visible: no entra en prompts ni en claves de caché.
+- **Prueba real del usuario** (videos reales en español, primera ejecución con los prompts nuevos):
+  - `sess_20261030_144229` ("WhatsApp Video 2026-10-29 at 2.37.51 PM"): 4 productos, todos en inglés (p. ej. "Orange Charmander Plush Toy", "Toys & Collectibles"). **34,741 tokens de Spark** (20,889 de entrada y 13,852 de salida), 2 transcripciones, 19 imágenes de Muse Image por API (5 en caché) ≈ **US$0.19 en imágenes**.
+  - `sess_20261030_145146` ("WhatsApp Video 2026-10-29 at 6.50.14 PM"): 7 productos en inglés (p. ej. "White Angel Statue Holding Basket", "Home & Decor"). **48,567 tokens de Spark** (32,803 de entrada y 15,764 de salida), 2 transcripciones, 45 imágenes por API ≈ **US$0.45 en imágenes**.
+  - La condición no dicha llega como "Not mentioned" y el catálogo la muestra vacía; la frase del vendedor queda literal en español, como se planeó.
+- **Estado:** `TESTED_OK` (2026-10-30).

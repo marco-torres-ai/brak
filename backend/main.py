@@ -32,7 +32,7 @@ from backend.services.phase5_codegen import (
 
 app = FastAPI(
     title="Muse Video-to-Catalog AI",
-    description="Pipeline inteligente de conversión de video a catálogo e-commerce con Meta Muse + SAM 3.1 y auditoría estricta de tokens.",
+    description="Smart video-to-e-commerce-catalog pipeline with Meta Muse + SAM 3.1 and strict token auditing.",
     version="1.0.0",
 )
 
@@ -105,7 +105,7 @@ def _run_tracked(session_id: Optional[str], phase: int, make_coro: Any, phases: 
 def _prompt_call(fn: Any, *args: Any) -> Any:
     """Escrituras de prompts y flujos: 409 si hay una fase corriendo, 400 si la entrada es inválida."""
     if progress.snapshot().get("running"):
-        raise HTTPException(status_code=409, detail="Hay una fase en curso: espera a que termine para cambiar los prompts o el flujo.")
+        raise HTTPException(status_code=409, detail="A phase is running: wait for it to finish before changing the prompts or the flow.")
     try:
         return fn(*args)
     except prompts.PromptError as exc:
@@ -225,7 +225,7 @@ async def get_current_session():
 
 @app.post("/api/v1/phase1/preprocess")
 async def api_phase1_preprocess(
-    files: List[UploadFile] = File(..., description="De 1 a 3 archivos de video (máx. 60s cada uno)"),
+    files: List[UploadFile] = File(..., description="1 to 3 video files (max. 60 s each)"),
     blur_threshold: float = Form(LAPLACIAN_BLUR_THRESHOLD),
     sample_fps: float = Form(2.0),
 ):
@@ -241,7 +241,7 @@ async def api_phase1_preprocess(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"Error procesando Fase 1: {str(exc)}",
+            detail=f"Error processing Phase 1: {str(exc)}",
         )
 
 
@@ -258,7 +258,7 @@ async def api_phase2_semantic(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"Error procesando Fase 2: {str(exc)}",
+            detail=f"Error processing Phase 2: {str(exc)}",
         )
 
 
@@ -277,7 +277,7 @@ async def api_phase2_update_products(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"Error actualizando productos de Fase 2: {str(exc)}",
+            detail=f"Error updating Phase 2 products: {str(exc)}",
         )
 
 
@@ -294,7 +294,7 @@ async def api_phase3_vision_sam(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"Error procesando Fase 3 (Muse Glimmer + SAM 3.1): {str(exc)}",
+            detail=f"Error processing Phase 3 (Muse Glimmer + SAM 3.1): {str(exc)}",
         )
 
 
@@ -312,7 +312,7 @@ async def api_phase4_studio(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"Error procesando Fase 4 (Muse Image): {str(exc)}",
+            detail=f"Error processing Phase 4 (Muse Image): {str(exc)}",
         )
 
 
@@ -329,7 +329,7 @@ async def api_phase5_codegen(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"Error procesando Fase 5 (catálogo): {str(exc)}",
+            detail=f"Error processing Phase 5 (catalog): {str(exc)}",
         )
 
 
@@ -347,7 +347,7 @@ async def api_run_full_pipeline_auto(
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail=f"Error ejecutando el Flujo Completo Automático (Fases 2->5): {str(exc)}",
+            detail=f"Error running the full automatic flow (Phases 2->5): {str(exc)}",
         )
 
 
@@ -356,7 +356,7 @@ async def api_phase5_catalog_preview(session_id: Optional[str] = None):
     state = load_session_state(session_id)
     sid = state.get("session_id")
     if not sid or not (STORAGE_DIR / sid / "catalog" / CATALOG_HTML).exists():
-        raise HTTPException(status_code=404, detail="El catálogo aún no ha sido generado. Ejecuta primero la Fase 5.")
+        raise HTTPException(status_code=404, detail="The catalog has not been generated yet. Run Phase 5 first.")
     # Se sirve desde su carpeta para que las rutas relativas de images/ funcionen.
     return RedirectResponse(url=f"/storage/{sid}/catalog/{CATALOG_HTML}")
 
@@ -366,6 +366,6 @@ async def api_phase5_catalog_download(session_id: Optional[str] = None):
     state = load_session_state(session_id)
     sid = state.get("session_id")
     if not sid or not (STORAGE_DIR / sid / "catalog" / CATALOG_HTML).exists():
-        raise HTTPException(status_code=404, detail="El catálogo aún no ha sido generado. Ejecuta primero la Fase 5.")
+        raise HTTPException(status_code=404, detail="The catalog has not been generated yet. Run Phase 5 first.")
     zip_path = await asyncio.to_thread(build_catalog_zip, sid)
     return FileResponse(str(zip_path), media_type="application/zip", filename=zip_path.name)

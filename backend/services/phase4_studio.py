@@ -17,6 +17,7 @@ Llamadas a Spark: como máximo 4 (máster, reintento de máster, vistas, reinten
 import base64
 import hashlib
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -40,7 +41,7 @@ from backend.core.muse_client import CACHE_DIR, get_cached_result, set_cached_re
 from backend.core.token_tracker import TokenTracker
 
 PHASE4_PROMPT_VERSION = "phase4_v4"
-FIDELITY_VERSION = "fidelity_v4"
+FIDELITY_VERSION = "fidelity_v5"
 NEUTRAL_DESC = "the product shown in the input image"
 TILE = 340
 
@@ -92,7 +93,7 @@ RETRY_SUFFIX = " A previous attempt was rejected because: {issues}. Correct that
 VIEW_KINDS = ("front", "left", "right", "back", "lifestyle")
 AI_ANGLE_KINDS = ("left", "right", "back")
 KIND_TO_LABEL = {"master": "MASTER", "front": "FRONT", "left": "LEFT", "right": "RIGHT", "back": "BACK", "lifestyle": "LIFESTYLE"}
-KIND_NAME_ES = {"master": "máster de estudio", "front": "frente", "left": "lado izquierdo", "right": "lado derecho", "back": "atrás", "lifestyle": "ambiente"}
+KIND_NAME_ES = {"master": "studio master", "front": "front", "left": "left side", "right": "right side", "back": "back", "lifestyle": "lifestyle"}
 FILE_NAMES = {
     "master": "{pid}_master_studio.png",
     "front": "{pid}_studio_white.jpg",
@@ -102,27 +103,27 @@ FILE_NAMES = {
     "lifestyle": "{pid}_lifestyle.jpg",
 }
 
-FIDELITY_SYSTEM_PROMPT = """Controlas la calidad y fidelidad de fotos de catálogo generadas por IA. Por cada producto recibes una imagen con paneles rotulados. REFERENCE es el producto real (o su máster ya aprobado); los demás paneles fueron generados a partir de él. FRAME, si aparece, es el fotograma original completo del video: úsalo para distinguir las partes tapadas por la mano o cortadas por el borde del encuadre (que MASTER debe completar) del lugar donde el producto realmente termina (que MASTER no debe extender).
-Para cada panel generado decide faithful = true solo si cumple TODO lo que aplica a su rótulo:
-- Todos: es el mismo producto (misma forma, proporciones, colores, materiales, textos y logos visibles); no agrega accesorios, otra unidad ni objetos como parte del producto aunque el nombre los mencione; no hay manos ni personas; el producto entero se ve dentro del encuadre, sin quedar cortado.
-- MASTER y FRONT: vista frontal sobre fondo blanco liso, nítida y bien iluminada. MASTER debe completar lo que en FRAME está tapado por la mano o cortado por el borde (un hueco con forma de dedo NO es la forma del producto), pero NO debe extender el producto más allá de lo que muestra FRAME (por ejemplo, agregar piernas, una base o secciones a un objeto que termina ahí).
-- LEFT, RIGHT, BACK: vistas deducidas desde otro ángulo. Deben mostrar de verdad ese ángulo (no repetir ni espejar la vista frontal), sobre fondo blanco, y ser coherentes con el producto: mismos colores, materiales y estilo; pueden mostrar caras que no se ven en REFERENCE, pero sin textos, logos ni rasgos nuevos que lo contradigan.
-- LIFESTYLE: el producto en un ambiente realista; los objetos del ambiente no parecen incluidos con el producto.
-issues: qué falla y cómo, EN INGLÉS (se le pasará al generador para corregir); cadena vacía si faithful es true."""
+FIDELITY_SYSTEM_PROMPT = """You check the quality and fidelity of AI-generated catalog photos. For each product you receive an image with labeled panels. REFERENCE is the real product (or its already approved master); the other panels were generated from it. FRAME, if present, is the full original video frame: use it to tell the parts covered by the hand or cut off by the edge of the shot (which MASTER must complete) from the place where the product really ends (which MASTER must not extend).
+For each generated panel decide faithful = true only if it meets EVERYTHING that applies to its label:
+- All: it is the same product (same shape, proportions, colors, materials, visible text and logos); it does not add accessories, another unit or objects as part of the product even if the name mentions them; there are no hands or people; the whole product is inside the frame, not cut off.
+- MASTER and FRONT: front view on a plain white background, sharp and well lit. MASTER must complete what in FRAME is covered by the hand or cut off by the edge (a finger-shaped gap is NOT the product's shape), but must NOT extend the product beyond what FRAME shows (for example, adding legs, a base or sections to an object that ends there).
+- LEFT, RIGHT, BACK: views inferred from another angle. They must truly show that angle (not repeat or mirror the front view), on a white background, and be consistent with the product: same colors, materials and style; they may show sides not visible in REFERENCE, but without new text, logos or features that contradict it.
+- LIFESTYLE: the product in a realistic setting; the objects in the setting do not look included with the product.
+issues: what fails and how, IN ENGLISH (it will be passed to the generator to fix it); empty string if faithful is true."""
 
-IMAGE_HINT = "Escribe en inglés para mejores resultados. Ej.: 'Warm golden-hour light.' o 'Minimalist Scandinavian interior.'"
+IMAGE_HINT = "Write in English for best results. E.g.: 'Warm golden-hour light.' or 'Minimalist Scandinavian interior.'"
 prompts.register(
     "p4_master", MASTER_PROMPT, phase=4, model="Muse Image", group="creative", kind="image",
-    title="Foto máster de estudio",
-    description="Limpia el recorte: completa lo que tapó la mano o cortó el borde y lo deja sobre fondo blanco. Es la base de todas las vistas.",
+    title="Studio master photo",
+    description="Cleans the cutout: fills in what the hand covered or the edge cut off and puts it on a white background. It is the base for every view.",
     required=("problems", "desc"), hint=IMAGE_HINT,
 )
 for _kind, _title, _desc in (
-    ("front", "Vista frontal", "Foto de catálogo de frente, fondo blanco."),
-    ("left", "Vista lado izquierdo", "Rota el producto ~90° para mostrar su lado izquierdo (deducido por IA)."),
-    ("right", "Vista lado derecho", "Rota el producto ~90° para mostrar su lado derecho (deducido por IA)."),
-    ("back", "Vista trasera", "Rota el producto 180° para mostrar la parte de atrás (deducida por IA)."),
-    ("lifestyle", "Foto de ambiente", "Coloca el producto en un ambiente realista acorde a su categoría."),
+    ("front", "Front view", "Front-facing catalog photo on a white background."),
+    ("left", "Left side view", "Rotates the product ~90° to show its left side (inferred by AI)."),
+    ("right", "Right side view", "Rotates the product ~90° to show its right side (inferred by AI)."),
+    ("back", "Back view", "Rotates the product 180° to show its back (inferred by AI)."),
+    ("lifestyle", "Lifestyle photo", "Places the product in a realistic setting that fits its category."),
 ):
     prompts.register(
         f"p4_view_{_kind}", VIEW_PROMPTS[_kind], phase=4, model="Muse Image", group="creative", kind="image",
@@ -130,8 +131,8 @@ for _kind, _title, _desc in (
     )
 prompts.register(
     "p4_fidelity", FIDELITY_SYSTEM_PROMPT, phase=4, model="Muse Spark", group="advanced",
-    title="Control de fidelidad",
-    description="Compara cada imagen generada con el producto real y rechaza las que inventan partes, cambian colores o cortan el producto.",
+    title="Fidelity check",
+    description="Compares every generated image with the real product and rejects those that invent parts, change colors or crop the product.",
 )
 
 FIDELITY_SCHEMA: Dict[str, Any] = {
@@ -247,8 +248,9 @@ def _problems_text(item: Dict[str, Any], edges: List[str]) -> str:
     parts = []
     if edges:
         parts.append(f"the product touches the {', '.join(edges)} edge of the video frame and may be cut off there")
-    diag = (gl.get("quality_diagnosis") or "").split(" | Recorte:")[0]
-    if diag and diag != "Óptimo":
+    # Acepta también los valores en español de sesiones anteriores a la v0.3.2
+    diag = re.split(r" \| (?:Cutout|Recorte):", gl.get("quality_diagnosis") or "")[0]
+    if diag and diag not in ("Optimal", "Óptimo"):
         parts.append(diag)
     parts.append("the seller's hand or fingers may cover part of it")
     return "; ".join(parts)
@@ -300,7 +302,7 @@ def _run_jobs(tracker: TokenTracker, jobs: List[Dict[str, Any]]) -> None:
             res = _generate(job["images"], job["neutral_prompt"], job["out_path"], job["format"])
             res["policy_retry"] = True
             if res.get("error"):
-                res["error"] = f"{first_error[:200]} | sin nombre: {res['error'][:200]}"
+                res["error"] = f"{first_error[:200]} | without name: {res['error'][:200]}"
         return res
 
     with ThreadPoolExecutor(max_workers=max(1, int(flows.get("images.parallel")))) as pool:
@@ -308,14 +310,14 @@ def _run_jobs(tracker: TokenTracker, jobs: List[Dict[str, Any]]) -> None:
     for job, res in zip(jobs, results):
         job["result"] = res
         usage = res.get("usage") or {}
-        name = f"{job['pid']} {KIND_NAME_ES[job['kind']]}{' (reintento)' if job.get('retry') else ''}"
+        name = f"{job['pid']} {KIND_NAME_ES[job['kind']]}{' (retry)' if job.get('retry') else ''}"
         if res.get("error"):
-            tracker.record_event(phase=4, model="Muse Image", operation=f"{name}: falló ({res['error'][:160]}).", status="API_ERROR")
+            tracker.record_event(phase=4, model="Muse Image", operation=f"{name}: failed ({res['error'][:160]}).", status="API_ERROR")
         elif res["from_cache"]:
             tracker.record_event(
                 phase=4,
                 model="Muse Image",
-                operation=f"Caché MD5 HIT: {name} sin llamar a la API (ahorra US${MUSE_IMAGE_COST_USD:.2f}).",
+                operation=f"MD5 cache HIT: {name} without calling the API (saves US${MUSE_IMAGE_COST_USD:.2f}).",
                 status="CACHE_HIT_MD5",
                 details={"cost_usd_saved": MUSE_IMAGE_COST_USD},
             )
@@ -324,9 +326,9 @@ def _run_jobs(tracker: TokenTracker, jobs: List[Dict[str, Any]]) -> None:
                 phase=4,
                 model="Muse Image",
                 operation=(
-                    f"{MUSE_IMAGE_MODEL}: {name}{' (sin nombre: la política de contenido bloqueó el nombre)' if res.get('policy_retry') else ''} "
-                    f"en {res['seconds']}s. Cobra US${MUSE_IMAGE_COST_USD:.2f} por imagen, no por token "
-                    f"(tokens de referencia: in={usage.get('input_tokens', 0)}, out={usage.get('output_tokens', 0)})."
+                    f"{MUSE_IMAGE_MODEL}: {name}{' (without name: the content policy blocked the name)' if res.get('policy_retry') else ''} "
+                    f"in {res['seconds']}s. Billed US${MUSE_IMAGE_COST_USD:.2f} per image, not per token "
+                    f"(reference tokens: in={usage.get('input_tokens', 0)}, out={usage.get('output_tokens', 0)})."
                 ),
                 status="API_CALL",
                 details={"cost_usd": MUSE_IMAGE_COST_USD, "usage_reference_only": usage},
@@ -354,7 +356,7 @@ def _check_fidelity(tracker: TokenTracker, entries: List[Dict[str, Any]], round_
         strip = _jpeg(np.hstack(tiles), 88)
         digests.append([e["pid"], hashlib.md5(strip).hexdigest()])
         panels = ["REFERENCE"] + (["FRAME"] if e.get("frame") is not None else []) + [KIND_TO_LABEL[k] for k in e["generated"]]
-        content.append({"type": "text", "text": f"product_id: {e['pid']}\nProducto: {e['name']}\nPaneles: " + ", ".join(panels)})
+        content.append({"type": "text", "text": f"product_id: {e['pid']}\nProduct: {e['name']}\nPanels: " + ", ".join(panels)})
         content.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(strip).decode("ascii")}})
 
     cache_key = hashlib.md5((json.dumps([MUSE_SPARK_MODEL, FIDELITY_VERSION, digests]) + prompts.signature("p4_fidelity")).encode("utf-8")).hexdigest()
@@ -364,8 +366,8 @@ def _check_fidelity(tracker: TokenTracker, entries: List[Dict[str, Any]], round_
         parsed, usage = cached["parsed"], cached["usage"]
         tracker.record_event(
             phase=4,
-            model="Muse Spark (Fidelidad)",
-            operation=f"Caché MD5 HIT: {round_label} sin llamar a la API.",
+            model="Muse Spark (Fidelity)",
+            operation=f"MD5 cache HIT: {round_label} without calling the API.",
             tokens_saved=usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
             status="CACHE_HIT_MD5",
         )
@@ -380,13 +382,13 @@ def _check_fidelity(tracker: TokenTracker, entries: List[Dict[str, Any]], round_
             )
         except MuseAPIError as exc:
             # Sin control no se pierde lo generado: las imágenes quedan marcadas como "sin verificar".
-            tracker.record_event(phase=4, model="Muse Spark (Fidelidad)", operation=f"{round_label}: falló ({str(exc)[:160]}); las imágenes quedan sin verificar.", status="API_ERROR")
+            tracker.record_event(phase=4, model="Muse Spark (Fidelity)", operation=f"{round_label}: failed ({str(exc)[:160]}); the images stay unverified.", status="API_ERROR")
             return {(e["pid"], k): {"faithful": True, "issues": "", "unverified": True} for e in entries for k in e["generated"]}
         set_cached_result("phase4_fidelity", cache_key, {"parsed": parsed, "usage": usage})
         tracker.record_event(
             phase=4,
-            model="Muse Spark (Fidelidad)",
-            operation=f"{MUSE_SPARK_MODEL}: {round_label} ({n_images} imagen(es) de {len(entries)} producto(s); razonamiento 'low': {usage['reasoning_tokens']} tokens).",
+            model="Muse Spark (Fidelity)",
+            operation=f"{MUSE_SPARK_MODEL}: {round_label} ({n_images} image(s) of {len(entries)} product(s); reasoning 'low': {usage['reasoning_tokens']} tokens).",
             input_tokens=usage["input_tokens"],
             output_tokens=usage["output_tokens"],
             status="API_CALL",
@@ -433,12 +435,12 @@ def _master_png(master_bgr: np.ndarray, item: Dict[str, Any], out_path: Path) ->
 async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
     state = load_session_state(session_id)
     if not state or not state.get("session_id"):
-        raise ValueError("No existe una sesión activa. Ejecuta las Fases 1, 2 y 3 primero.")
+        raise ValueError("There is no active session. Run Phases 1, 2 and 3 first.")
     if int(state.get("current_phase_completed", 0)) < 3:
-        raise ValueError("La Fase 3 debe completarse antes de ejecutar la Fase 4.")
+        raise ValueError("Phase 3 must be completed before running Phase 4.")
     grounded: List[Dict[str, Any]] = state.get("grounded_products", [])
     if not grounded:
-        raise ValueError("No hay productos recortados en la Fase 3 para el estudio.")
+        raise ValueError("There are no Phase 3 cutout products for the studio.")
 
     sid = state["session_id"]
     studio_dir = STORAGE_DIR / sid / "studio"
@@ -451,7 +453,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
         cut_rel = (item.get("sam31_cutout") or {}).get("cutout_rel_path") or f"{sid}/cutouts/{pid}_cutout.png"
         rgba = cv2.imread(str(STORAGE_DIR / cut_rel), cv2.IMREAD_UNCHANGED)
         if rgba is None:
-            tracker.record_event(phase=4, model="Muse Image", operation=f"{pid}: no se encontró su recorte de la Fase 3; se omite.", status="SKIPPED")
+            tracker.record_event(phase=4, model="Muse Image", operation=f"{pid}: its Phase 3 cutout was not found; skipped.", status="SKIPPED")
             continue
         if rgba.shape[2] == 3:
             rgba = cv2.cvtColor(rgba, cv2.COLOR_BGR2BGRA)
@@ -461,8 +463,8 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
             # La Fase 3 ya juzgó que la toma no deja ver el producto: cualquier imagen generada sería inventada.
             tracker.record_event(
                 phase=4,
-                model="Estudio Fase 4",
-                operation=f"{pid}: toma insuficiente según la Fase 3 (recorte rectangular o calidad < 4); no se genera ninguna imagen con IA, se muestra la foto real.",
+                model="Phase 4 studio",
+                operation=f"{pid}: insufficient shot according to Phase 3 (rectangular cutout or quality < 4); no AI image is generated, the real photo is shown.",
                 status="ZERO_TOKEN_LOCAL",
             )
         ctx[pid] = {
@@ -512,7 +514,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
             prev = ctx[pid]["fidelity"].get(kind) or {}
             entry = {**v, "round": round_no}
             if round_no == 2:
-                entry["round1_issues"] = prev.get("issues") or "error de generación"
+                entry["round1_issues"] = prev.get("issues") or "generation error"
             ctx[pid]["fidelity"][kind] = entry
 
     def failed(pid: str, kind: str) -> bool:
@@ -534,7 +536,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
         if not c["low_quality_source"]
     ]
     if fidelity_on:
-        store_verdicts(_check_fidelity(tracker, entries, "control del máster de estudio (ronda 1)"), 1)
+        store_verdicts(_check_fidelity(tracker, entries, "studio master check (round 1)"), 1)
     retry = [make_job(pid, "master", ctx[pid]["fidelity"].get("master", {}).get("issues") or "generation failed") for pid, c in ctx.items() if not c["low_quality_source"] and failed(pid, "master")]
     if retry:
         _run_jobs(tracker, retry)
@@ -545,7 +547,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
             for j in retry
         ]
         if fidelity_on:
-            store_verdicts(_check_fidelity(tracker, entries, "control del máster de estudio (ronda 2, solo reintentos)"), 2)
+            store_verdicts(_check_fidelity(tracker, entries, "studio master check (round 2, retries only)"), 2)
 
     for pid, c in ctx.items():
         if c["low_quality_source"]:
@@ -568,7 +570,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
         for pid in view_pids
     ]
     if fidelity_on:
-        store_verdicts(_check_fidelity(tracker, entries, "control de las vistas (ronda 1)"), 1)
+        store_verdicts(_check_fidelity(tracker, entries, "views check (round 1)"), 1)
     retry = [make_job(pid, k, ctx[pid]["fidelity"].get(k, {}).get("issues") or "generation failed") for pid in view_pids for k in kinds if failed(pid, k)]
     if retry:
         _run_jobs(tracker, retry)
@@ -580,7 +582,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
                 by_pid.setdefault(j["pid"], {})[j["kind"]] = j["out_path"]
         entries = [{"pid": pid, "name": ctx[pid]["item"].get("resolved_name", pid), "reference": ctx[pid]["base"], "generated": gen} for pid, gen in by_pid.items()]
         if fidelity_on:
-            store_verdicts(_check_fidelity(tracker, entries, "control de las vistas (ronda 2, solo reintentos)"), 2)
+            store_verdicts(_check_fidelity(tracker, entries, "views check (round 2, retries only)"), 2)
 
     # 3. Salida (PNG maestros con sam-3.1 en paralelo)
     from backend.services.phase3_vision_sam import run_parallel
@@ -640,7 +642,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
                 "problems_addressed": c["problems"],
                 "cut_by_frame_edges": c["edges"],
                 "low_quality_source": low,
-                "recommendation": "La toma del video no permite ver el producto con claridad: conviene volver a grabarlo." if low else "",
+                "recommendation": "The video shot does not show the product clearly: it is best to record it again." if low else "",
                 "restored_image_url": url(rel(c["paths"]["master"])) if c.get("master_ok") else None,
                 "source_cutout_url": url(c["cut_rel"]),
                 "result_cutout_url": url(master_rel),
@@ -665,12 +667,12 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
     cost = round(images_api * MUSE_IMAGE_COST_USD, 2)
     tracker.record_event(
         phase=4,
-        model="Estudio Fase 4",
+        model="Phase 4 studio",
         operation=(
-            f"{len(studio_products)} producto(s): {counts['masters']} máster(es) de estudio aprobados; frente con IA {counts['front_ai']} "
-            f"(+{counts['front_local']} con el recorte real); {counts['angles']} vistas laterales/trasera aprobadas ({counts['angles_omitted']} omitidas); "
-            f"{counts['lifestyle']} ambiente(s) ({counts['lifestyle_omitted']} omitidos); {counts['low_quality_source']} con toma insuficiente. "
-            f"{images_api} imagen(es) generadas = US${cost:.2f}."
+            f"{len(studio_products)} product(s): {counts['masters']} studio master(s) approved; AI front {counts['front_ai']} "
+            f"(+{counts['front_local']} with the real cutout); {counts['angles']} side/back views approved ({counts['angles_omitted']} omitted); "
+            f"{counts['lifestyle']} lifestyle photo(s) ({counts['lifestyle_omitted']} omitted); {counts['low_quality_source']} with an insufficient shot. "
+            f"{images_api} image(s) generated = US${cost:.2f}."
         ),
         status="ZERO_TOKEN_LOCAL",
         details={"images_generated_api": images_api, "cost_usd": cost, **counts},

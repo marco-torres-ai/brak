@@ -28,8 +28,8 @@ PROFILES_DIR = PROMPTS_DIR / "profiles"
 ACTIVE_FILE = PROMPTS_DIR / "active.json"
 MAX_TEXT_CHARS = 20000
 MAX_EXTRA_CHARS = 4000
-DEFAULT_PROFILE_NAME = "Original de Meta Muse"
-AUTO_PROFILE_NAME = "Mi perfil"
+DEFAULT_PROFILE_NAME = "Default"
+AUTO_PROFILE_NAME = "My profile"
 
 _REGISTRY: Dict[str, Dict[str, Any]] = {}
 _ORDER: List[str] = []
@@ -76,7 +76,7 @@ def register(
 
 def _meta(key: str) -> Dict[str, Any]:
     if key not in _REGISTRY:
-        raise PromptError(f"Agente desconocido: {key}")
+        raise PromptError(f"Unknown agent: {key}")
     return _REGISTRY[key]
 
 
@@ -115,7 +115,7 @@ def _slugify(name: str) -> str:
 
 def _profile_path(slug: str) -> Path:
     if not re.fullmatch(r"[a-z0-9-]{1,48}", slug or ""):
-        raise PromptError("Nombre de perfil inválido.")
+        raise PromptError("Invalid profile name.")
     return PROFILES_DIR / f"{slug}.json"
 
 
@@ -165,7 +165,7 @@ def get(key: str) -> str:
             # Los prompts de imagen pasan por .format(): las llaves del usuario se escapan.
             text = text + " Additional user instructions: " + extra.replace("{", "{{").replace("}", "}}")
         else:
-            text = text + "\n\nInstrucciones adicionales del usuario (respeta siempre el formato de salida exigido): " + extra
+            text = text + "\n\nAdditional user instructions (always keep the required output format): " + extra
     return text
 
 
@@ -183,7 +183,7 @@ def describe_phase(phase: int) -> Optional[str]:
     if not custom:
         return None
     prof = _active_profile() or {}
-    return f"Prompts: perfil '{prof.get('name', '?')}' ({len(custom)} agente(s) personalizado(s) en esta fase: {', '.join(custom)})."
+    return f"Prompts: profile '{prof.get('name', '?')}' ({len(custom)} custom agent(s) in this phase: {', '.join(custom)})."
 
 
 def active_profile_name() -> str:
@@ -197,19 +197,19 @@ def _fields(text: str) -> List[str]:
     try:
         return [f for _, f, _, _ in string.Formatter().parse(text) if f is not None]
     except ValueError as exc:
-        raise PromptError(f"Llaves desbalanceadas en el texto: {exc}. Usa solo los marcadores permitidos.")
+        raise PromptError(f"Unbalanced braces in the text: {exc}. Use only the allowed placeholders.")
 
 
 def validate(key: str, extra: str, full_text: Optional[str]) -> None:
     meta = _meta(key)
     if len(extra or "") > MAX_EXTRA_CHARS:
-        raise PromptError(f"Las instrucciones adicionales superan {MAX_EXTRA_CHARS} caracteres.")
+        raise PromptError(f"Additional instructions exceed {MAX_EXTRA_CHARS} characters.")
     if full_text is None:
         return
     if not full_text.strip():
-        raise PromptError("El texto completo no puede quedar vacío. Usa 'Restaurar original'.")
+        raise PromptError("The full text cannot be empty. Use 'Restore original'.")
     if len(full_text) > MAX_TEXT_CHARS:
-        raise PromptError(f"El texto completo supera {MAX_TEXT_CHARS} caracteres.")
+        raise PromptError(f"The full text exceeds {MAX_TEXT_CHARS} characters.")
     if meta["kind"] != "image":
         return
     fields = _fields(full_text)
@@ -217,12 +217,12 @@ def validate(key: str, extra: str, full_text: Optional[str]) -> None:
     unknown = sorted({f for f in fields if f not in allowed})
     if unknown:
         raise PromptError(
-            "Marcador(es) no permitido(s): " + ", ".join("{" + f + "}" for f in unknown)
-            + ". Permitidos: " + ", ".join("{" + f + "}" for f in sorted(allowed))
+            "Placeholder(s) not allowed: " + ", ".join("{" + f + "}" for f in unknown)
+            + ". Allowed: " + ", ".join("{" + f + "}" for f in sorted(allowed))
         )
     missing = [f for f in meta["required"] if f not in fields]
     if missing:
-        raise PromptError("Falta(n) el/los marcador(es) obligatorio(s): " + ", ".join("{" + f + "}" for f in missing))
+        raise PromptError("Missing required placeholder(s): " + ", ".join("{" + f + "}" for f in missing))
 
 
 # ----------------------------------------------------------------------------- escritura
@@ -257,14 +257,14 @@ def _set_active(slug: Optional[str]) -> None:
 def create_profile(name: str, copy_from: Optional[str] = None, overrides: Optional[Dict[str, Any]] = None, activate: bool = True) -> str:
     name = (name or "").strip()[:60]
     if not name:
-        raise PromptError("El perfil necesita un nombre.")
+        raise PromptError("The profile needs a name.")
     with _LOCK:
         if overrides is None:
             overrides = {}
             if copy_from:
                 src = _read_json(_profile_path(copy_from))
                 if src is None:
-                    raise PromptError("El perfil a duplicar no existe.")
+                    raise PromptError("The profile to copy does not exist.")
                 overrides = json.loads(json.dumps(src.get("overrides") or {}))
         clean: Dict[str, Any] = {}
         for k, v in (overrides or {}).items():
@@ -285,7 +285,7 @@ def create_profile(name: str, copy_from: Optional[str] = None, overrides: Option
 def set_active(slug: Optional[str]) -> None:
     with _LOCK:
         if slug and _read_json(_profile_path(slug)) is None:
-            raise PromptError("Ese perfil no existe.")
+            raise PromptError("That profile does not exist.")
         _set_active(slug or None)
 
 
@@ -293,12 +293,12 @@ def rename_profile(slug: str, name: str) -> None:
     """Cambia solo el nombre visible; el slug (nombre del archivo) y los prompts no cambian."""
     name = (name or "").strip()[:60]
     if not name:
-        raise PromptError("El perfil necesita un nombre.")
+        raise PromptError("The profile needs a name.")
     with _LOCK:
         path = _profile_path(slug)
         data = _read_json(path)
         if data is None:
-            raise PromptError("Ese perfil no existe.")
+            raise PromptError("That profile does not exist.")
         data = json.loads(json.dumps(data))
         data["name"] = name
         _write_json(path, data)
@@ -308,7 +308,7 @@ def delete_profile(slug: str) -> None:
     with _LOCK:
         path = _profile_path(slug)
         if not path.exists():
-            raise PromptError("Ese perfil no existe.")
+            raise PromptError("That profile does not exist.")
         if active_slug() == slug:
             _set_active(None)
         path.unlink()
@@ -318,14 +318,14 @@ def delete_profile(slug: str) -> None:
 def export_profile(slug: str) -> Dict[str, Any]:
     data = _read_json(_profile_path(slug))
     if data is None:
-        raise PromptError("Ese perfil no existe.")
+        raise PromptError("That profile does not exist.")
     return {"brak_prompt_profile": 1, "name": data.get("name"), "overrides": data.get("overrides") or {}}
 
 
 def import_profile(payload: Dict[str, Any]) -> str:
     if not isinstance(payload, dict) or not isinstance(payload.get("overrides"), dict):
-        raise PromptError("El archivo no es un perfil de prompts de Brak Shop.")
-    return create_profile(str(payload.get("name") or "Perfil importado"), overrides=payload["overrides"])
+        raise PromptError("The file is not a Brak Shop prompt profile.")
+    return create_profile(str(payload.get("name") or "Imported profile"), overrides=payload["overrides"])
 
 
 def update_agent(key: str, extra: str, full_text: Optional[str]) -> str:

@@ -31,41 +31,41 @@ from backend.core.prompts import PromptError, _read_json, _slugify, _write_json
 FLOWS_DIR = STORAGE_DIR / "flows"
 FLOW_FILES_DIR = FLOWS_DIR / "flows"
 ACTIVE_FILE = FLOWS_DIR / "active.json"
-DEFAULT_FLOW_NAME = "Completo de Meta Muse"
-AUTO_FLOW_NAME = "Mi flujo"
+DEFAULT_FLOW_NAME = "Meta Muse Full"
+AUTO_FLOW_NAME = "My flow"
 RESERVED_SLUGS = {"active", "options"}  # chocarían con /flows/active y /flows/options
 _LOCK = threading.Lock()
 
 # node = id de la bolita en el frontend. Los valores por defecto salen del .env (comportamiento actual).
 OPTIONS: Dict[str, Dict[str, Any]] = {
     "extract.video": {"node": "extract", "phase": 2, "type": "bool", "default": MUSE_SPARK_PHASE2_VIDEO,
-                      "label": "Spark también mira el video",
-                      "description": "Además de la transcripción, Spark ve el video para corregir nombres mal oídos. Apagado: más rápido y barato, pero menos preciso."},
+                      "label": "Spark also watches the video",
+                      "description": "Besides the transcript, Spark watches the video to fix misheard names. Off: faster and cheaper, but less accurate."},
     "verify2.enabled": {"node": "verify2", "phase": 2, "type": "bool", "default": MUSE_PHASE2_VERIFY,
-                        "label": "Verificar audio ↔ video",
-                        "description": "Revisa tramos dudosos y agrega productos mostrados que no quedaron en la lista."},
+                        "label": "Verify audio ↔ video",
+                        "description": "Reviews doubtful segments and adds products that were shown but missed from the list."},
     "verify3.enabled": {"node": "verify3", "phase": 3, "type": "bool", "default": MUSE_PHASE3_VERIFY_CUTOUTS,
-                        "label": "Verificar recortes",
-                        "description": "Revisa cada recorte de SAM y prueba alternativas si salió mal."},
+                        "label": "Verify cutouts",
+                        "description": "Checks every SAM cutout and tries alternatives if it came out wrong."},
     "images.parallel": {"node": "master", "phase": 4, "type": "int", "default": MUSE_IMAGE_PARALLEL, "min": 1, "max": 8,
-                        "label": "Imágenes en paralelo",
-                        "description": "Cuántas fotos pide Muse Image a la vez. Más = más rápido; si Meta se satura, baja este número."},
-    "view.left": {"node": "v_left", "phase": 4, "type": "bool", "default": True, "label": "Vista izquierda (IA)",
-                  "description": "Genera el lado izquierdo del producto."},
-    "view.right": {"node": "v_right", "phase": 4, "type": "bool", "default": True, "label": "Vista derecha (IA)",
-                   "description": "Genera el lado derecho del producto."},
-    "view.back": {"node": "v_back", "phase": 4, "type": "bool", "default": True, "label": "Vista trasera (IA)",
-                  "description": "Genera la parte de atrás del producto."},
-    "view.lifestyle": {"node": "v_life", "phase": 4, "type": "bool", "default": MUSE_PHASE4_LIFESTYLE, "label": "Foto de ambiente",
-                       "description": "Coloca el producto en un ambiente realista."},
-    "fidelity.enabled": {"node": "fidelity", "phase": 4, "type": "bool", "default": True, "label": "Control de fidelidad",
-                         "description": "Spark compara cada foto con el producto real y repite las infieles. Apagado: más rápido y barato, pero pueden pasar fotos con partes inventadas."},
+                        "label": "Images in parallel",
+                        "description": "How many photos Muse Image requests at once. More = faster; if Meta gets overloaded, lower this number."},
+    "view.left": {"node": "v_left", "phase": 4, "type": "bool", "default": True, "label": "Left view (AI)",
+                  "description": "Generates the left side of the product."},
+    "view.right": {"node": "v_right", "phase": 4, "type": "bool", "default": True, "label": "Right view (AI)",
+                   "description": "Generates the right side of the product."},
+    "view.back": {"node": "v_back", "phase": 4, "type": "bool", "default": True, "label": "Back view (AI)",
+                  "description": "Generates the back of the product."},
+    "view.lifestyle": {"node": "v_life", "phase": 4, "type": "bool", "default": MUSE_PHASE4_LIFESTYLE, "label": "Lifestyle photo",
+                       "description": "Places the product in a realistic setting."},
+    "fidelity.enabled": {"node": "fidelity", "phase": 4, "type": "bool", "default": True, "label": "Fidelity check",
+                         "description": "Spark compares every photo with the real product and redoes unfaithful ones. Off: faster and cheaper, but photos with invented parts may slip through."},
 }
 
 
 def _path(slug: str) -> Path:
     if not re.fullmatch(r"[a-z0-9-]{1,48}", slug or ""):
-        raise PromptError("Nombre de flujo inválido.")
+        raise PromptError("Invalid flow name.")
     return FLOW_FILES_DIR / f"{slug}.json"
 
 
@@ -112,14 +112,14 @@ def _validate(options: Dict[str, Any]) -> Dict[str, Any]:
     clean: Dict[str, Any] = {}
     for key, value in (options or {}).items():
         if key not in OPTIONS:
-            raise PromptError(f"Opción desconocida: {key}")
+            raise PromptError(f"Unknown option: {key}")
         meta = OPTIONS[key]
         if meta["type"] == "bool":
             if not isinstance(value, bool):
-                raise PromptError(f"'{meta['label']}' debe ser verdadero o falso.")
+                raise PromptError(f"'{meta['label']}' must be true or false.")
         else:
             if isinstance(value, bool) or not isinstance(value, int) or not meta["min"] <= value <= meta["max"]:
-                raise PromptError(f"'{meta['label']}' debe ser un número entero entre {meta['min']} y {meta['max']}.")
+                raise PromptError(f"'{meta['label']}' must be a whole number between {meta['min']} and {meta['max']}.")
         clean[key] = value
     return clean
 
@@ -136,13 +136,13 @@ def _unique_slug(name: str) -> str:
 def create_flow(name: str, copy_from: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> str:
     name = (name or "").strip()[:60]
     if not name:
-        raise PromptError("El flujo necesita un nombre.")
+        raise PromptError("The flow needs a name.")
     with _LOCK:
         base: Dict[str, Any] = {}
         if copy_from:
             src = _read_json(_path(copy_from))
             if src is None:
-                raise PromptError("El flujo a copiar no existe.")
+                raise PromptError("The flow to copy does not exist.")
             base = dict(src.get("options") or {})
         base.update(_validate(options or {}))
         slug = _unique_slug(name)
@@ -182,18 +182,18 @@ def reset_options() -> None:
 def set_active(slug: Optional[str]) -> None:
     with _LOCK:
         if slug and _read_json(_path(slug)) is None:
-            raise PromptError("Ese flujo no existe.")
+            raise PromptError("That flow does not exist.")
         _write_json(ACTIVE_FILE, {"flow": slug or None})
 
 
 def rename_flow(slug: str, name: str) -> None:
     name = (name or "").strip()[:60]
     if not name:
-        raise PromptError("El flujo necesita un nombre.")
+        raise PromptError("The flow needs a name.")
     with _LOCK:
         data = _read_json(_path(slug))
         if data is None:
-            raise PromptError("Ese flujo no existe.")
+            raise PromptError("That flow does not exist.")
         data = json.loads(json.dumps(data))
         data["name"] = name
         _write_json(_path(slug), data)
@@ -203,7 +203,7 @@ def delete_flow(slug: str) -> None:
     with _LOCK:
         path = _path(slug)
         if not path.exists():
-            raise PromptError("Ese flujo no existe.")
+            raise PromptError("That flow does not exist.")
         if active_slug() == slug:
             _write_json(ACTIVE_FILE, {"flow": None})
         path.unlink()
