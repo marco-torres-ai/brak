@@ -1,0 +1,14 @@
+# Secretos: la clave de Meta vive solo en .env
+.env
+.env.*
+
+# Datos de sesiones, videos, imágenes generadas y caché de la API
+storage/
+session_state.json
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

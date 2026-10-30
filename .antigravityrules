@@ -1,0 +1,7 @@
+# WORKSPACE RULES FOR ANTIGRAVITY AGENTS
+
+1. READ `AGENT_CONTEXT.md` AND `PLAN.md` FIRST before executing any task.
+2. NEVER execute more than ONE phase at a time. Wait for the user's explicit test confirmation before starting the next phase.
+3. MINIMIZE AGENT TOOL CALLS: Do not run broad file searches (`find`, `grep` across all folders) when the exact file paths are already documented in `AGENT_CONTEXT.md`. Batch file creations in a single turn whenever possible.
+4. PROTECT WORKING CODE: Never overwrite or refactor functions belonging to a phase marked as `TESTED_OK` unless the user explicitly reports a bug in that phase.
+5. ALWAYS update `AGENT_CONTEXT.md` (status section) and `CHANGELOG_AND_TOKENS.md` at the end of every phase implementation.
