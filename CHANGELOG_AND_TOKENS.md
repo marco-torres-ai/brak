@@ -380,3 +380,48 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
 - **Verificación:** sintaxis JS; capturas reales del grafo en reposo y de una simulación a mitad de la Fase 4 (vista grande y Studio). Se corrigió una superposición de etiquetas con una nueva distribución y etiquetas en dos líneas. No se ejecutó el pipeline real, porque el perfil activo del usuario tiene prompts personalizados y habría generado imágenes con costo.
 - **Costo:** 0 tokens.
 - **Estado:** `TESTED_OK` (confirmado por el usuario).
+
+## v0.3.0 (Etapa 2): flujos configurables (rama `version-0.3`) (2026-10-30)
+- **Backend: nuevo registro `backend/core/flows.py`**, con el mismo patrón que los prompts. Hay 9 opciones; los valores por defecto salen del `.env`, así que el flujo "Completo de Meta Muse" es idéntico al de antes:
+  - Spark mira el video;
+  - verificador audio↔video;
+  - verificador de recortes;
+  - imágenes en paralelo (1–8);
+  - vistas izquierda, derecha, atrás y ambiente;
+  - control de fidelidad.
+  - Persistencia en `storage/flows/`; validación de tipos y rangos; slugs reservados `active` y `options`.
+- **Fases conectadas (cambio mínimo):**
+  - Fase 2 (`muse_client`, `phase2_semantic`) y Fase 3 (`phase3_vision_sam`): leen `flows.get(...)` en lugar de la constante del `.env`.
+  - Fase 4: vistas encendidas o apagadas (la frontal siempre); una vista apagada no se genera y se borra la de una ejecución anterior. Control de fidelidad opcional (sin él solo se reintentan los errores de generación). `images.parallel` reemplaza a `MUSE_IMAGE_PARALLEL`.
+- **Endpoints `/api/v1/flows*`** (leer, opciones, crear, activar, renombrar, eliminar). La sesión guarda `flow_customizations`. El 409 por fase corriendo se comparte con los prompts.
+- **Frontend:**
+  - Barra "Flujo activo": selector, Nuevo flujo, Renombrar, Eliminar y **estimación** (imágenes y costo por producto, pasos opcionales encendidos).
+  - **Interruptores** en el panel de cada bolita opcional y parámetros: "Spark mira el video" en Detectar productos y "Imágenes en paralelo" en Foto máster.
+  - Bolitas apagadas: tenues, tachadas y con "Apagada", con **desvíos** (Recortar salta a Foto máster; las vistas pasan directo a Textos).
+  - Si cambias algo estando en el flujo completo, se pide un nombre ("Guardar en un flujo nuevo"); la ventanita sirve para perfiles y flujos.
+  - Chip doble en el Studio: "Perfil: X · Flujo: Y".
+- **Verificación (sesión real `sess_20261030_000404`, prompts y flujos aislados en una carpeta temporal):**
+  - Registro: rechazos de opción desconocida, tipo y rango; nombre reservado.
+  - **Flujo completo: 0 llamadas a la API, 40 caché HIT y catálogo idéntico.**
+  - Flujo "Rápido" (sin ambiente, sin izquierda, sin fidelidad, 3 en paralelo): 0 llamadas; `lifestyle_url`/`angle_left_url` = null, `fidelity_checks` = {} y el catálogo solo con frente, derecha, atrás y la foto sin fondo.
+  - De vuelta al completo: 0 llamadas y catálogo idéntico.
+  - Endpoints probados con curl; capturas del flujo, del Studio y de las ventanitas de flujo y de perfil; flujo completo "cambiar → nombre → crear" en el navegador. Flujos de prueba borrados; el perfil del usuario no se tocó.
+- **Incidente durante la verificación:** el primer script de prueba no tenía `if __name__ == "__main__"`. En Windows, los procesos auxiliares de SAM lo volvieron a ejecutar y el pipeline corrió varias veces en paralelo sobre la misma sesión. Un recorte salió distinto y se generaron **5 imágenes (US$0.05) y ~13,300 tokens de Spark** (fidelidad) que no hacían falta. Caché y sesión verificadas sanas (960 archivos válidos); la ejecución limpia posterior dio 0 llamadas. El script se corrigió.
+- **Estado:** `TESTED_OK` (2026-10-30).
+
+## v0.3.0 (extra): aviso de productos repetidos en "Por revisar" (rama `version-0.3`) (2026-10-30)
+- **Problema:** al volver a subir el mismo video se crea una sesión nueva. La caché evita el costo, pero los productos llegan otra vez a "Por revisar" con otro id y, si se aceptan, quedan **duplicados en la tienda**.
+- **Solución (solo frontend, sin cambios en el backend):**
+  - Cada producto guarda el `video_md5` de su video (ya venía en el estado de la sesión) y su nombre original (`source_title`).
+  - Un producto pendiente se marca como repetido si coincide el **video y el nombre normalizado** con uno ya publicado ("Ya está en tu tienda") o con otro que está antes en "Por revisar" ("Repetido en Por revisar"). Los productos guardados antes de este cambio no traen MD5: para ellos basta el nombre.
+  - La tarjeta muestra la etiqueta y un aviso ámbar, y cambia los botones: "Descartar repetido" pasa a ser el principal y "Publicar de todos modos" queda como secundario.
+  - "Aceptar todos" salta los repetidos y avisa cuántos quedaron en "Por revisar". Al terminar de procesar, el aviso dice cuántos productos ya estaban.
+- **Verificación:** `node --check` del JS; captura con Edge headless usando los productos reales de la última sesión (el peluche publicado, las gafas nuevas y una copia de las gafas). La página temporal se borró. 0 llamadas a la API.
+- **Ajuste tras la prueba del usuario:** al re-subir el mismo video, los productos llegaron con **otro nombre** ("Peluche de Osito…" → "Peluche de Oso…") y no se marcaron.
+  - Ahora, con el mismo video, basta un nombre **parecido**: comparten ≥ 3/4 de las palabras importantes, sin contar "de", "con", etc. Probado con los nombres reales: los 4 productos encuentran a su original; "Peluche de Osito Beige" frente a "Peluche de Conejo Beige" no se marca.
+  - `backfillVideoMd5()`: al abrir la tienda, recupera el MD5 de los productos guardados antes de este cambio leyendo `/storage/<sesión>/session_state.json`.
+- **Hallazgo (error de caché en el backend, sin corregir):** la sesión `sess_20261030_100802` es el mismo video que `sess_20261030_000404` (MD5 `151a84ff`, solo y en la misma posición). Aun así hizo **19 llamadas a la API**: 1 de Spark en la Fase 2, 10 imágenes de Muse Image (~US$0.10), fidelidad, verificadores y textos.
+  - **Causa:** la clave de caché de la Fase 2 incluye el MD5 de la copia liviana del video (`video_proxies/*_480p.mp4`), y ffmpeg/x264 no genera los mismos bytes en cada ejecución (123,681 bytes distintos, mismo tamaño). Por eso la Fase 2 nunca acierta al re-subir un video, Spark renombra y redescribe, y las fases siguientes se regeneran.
+  - **Arreglo propuesto, pendiente del permiso del usuario:** usar el MD5 del video original más los parámetros de la copia, y conservar la búsqueda por la clave antigua para no perder la caché existente.
+- **Estado:** `TESTED_OK` (2026-10-30).
+

@@ -33,7 +33,6 @@ from meta_sam_parser import (
 
 from backend.core.config import (
     MUSE_PHASE3_MIN_IOU,
-    MUSE_PHASE3_VERIFY_CUTOUTS,
     MUSE_SAM_MODEL,
     MUSE_SPARK_MODEL,
     MUSE_SPARK_REASONING_PHASE3,
@@ -42,7 +41,7 @@ from backend.core.config import (
     load_session_state,
     save_session_state,
 )
-from backend.core import prompts
+from backend.core import flows, prompts
 from backend.core.muse_api import chat_json, segment_image_sam
 from backend.core.muse_client import get_cached_result, locate_source_video, set_cached_result
 from backend.core.token_tracker import TokenTracker
@@ -689,7 +688,7 @@ async def run_phase3_vision_sam(session_id: Optional[str] = None) -> Dict[str, A
         r["seg"] = seg
 
     # 5. Verificación automática de los recortes y reparación (Spark + SAM, acotada a 2 llamadas de Spark)
-    if MUSE_PHASE3_VERIFY_CUTOUTS and results:
+    if flows.get("verify3.enabled") and results:
         verify_and_repair_cutouts(tracker, results)
 
     # 6. Archivos y salida

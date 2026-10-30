@@ -82,6 +82,7 @@
   /* Grafo del flujo de agentes */
   .flow-edge { fill: none; stroke: rgba(255,255,255,.10); stroke-width: 2; transition: stroke .4s; }
   .flow-edge.done { stroke: rgba(52,211,153,.45); }
+  .flow-edge.off { stroke: rgba(255,255,255,.07); stroke-dasharray: 3 5; }
   .flow-edge.active { stroke: url(#flowGrad); stroke-dasharray: 6 7; animation: flowDash .7s linear infinite; }
   @keyframes flowDash { to { stroke-dashoffset: -13; } }
   .flow-node { cursor: pointer; }
@@ -251,7 +252,7 @@
         <button id="btnProcess" data-action="process" disabled class="w-full h-11 rounded-full meta-ai-gradient text-white text-[14px] font-semibold shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
           <span data-icon="sparkles"></span>Procesar y extraer productos
         </button>
-        <button id="profileChip" data-action="open-agents" class="w-full -mt-2 h-9 rounded-full bg-white/[0.03] hairline hover:bg-white/[0.06] text-[12px] text-slate-400 transition flex items-center justify-center gap-2"></button>
+        <div id="profileChip" class="-mt-2 grid grid-cols-2 gap-2"></div>
 
         <div id="pipelineBox" class="hidden space-y-4">
           <div class="flex items-center justify-between">
@@ -313,12 +314,24 @@
     </div>
     <div class="flex-1 min-h-0 grid lg:grid-cols-[1fr_380px]">
       <section class="min-h-0 overflow-auto p-6">
+        <div class="mb-4 rounded-3xl surface p-4 flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-3 mr-auto min-w-0">
+            <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Flujo activo</span>
+            <select id="flowSelect" class="h-10 pl-4 pr-9 rounded-full bg-white/[0.05] hairline text-[13px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60 max-w-[240px]"></select>
+          </div>
+          <button data-action="flow-new" class="h-10 px-4 rounded-full meta-ai-gradient text-white text-[13px] font-semibold shadow-lg shadow-indigo-600/25 hover:brightness-110 transition flex items-center gap-2"><span data-icon="plus"></span>Nuevo flujo</button>
+          <button id="btnFlowRename" data-action="flow-rename" class="h-10 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="pencil"></span>Renombrar</button>
+          <button id="btnFlowDelete" data-action="flow-delete" class="h-10 px-4 rounded-full bg-rose-500/10 hairline hover:bg-rose-500/20 text-[13px] text-rose-200 transition flex items-center gap-2 disabled:opacity-35 disabled:cursor-not-allowed"><span data-icon="trash"></span>Eliminar</button>
+          <div id="flowEstimate" class="w-full flex items-center gap-2 pt-3 border-t border-white/5 text-[12px] text-slate-400"></div>
+        </div>
+        <div id="flowLock" class="hidden mb-4 rounded-2xl bg-amber-400/10 hairline p-3 text-[13px] text-amber-200 items-center gap-2"><span data-icon="alert"></span>Hay una fase procesando videos: el flujo queda en solo lectura hasta que termine.</div>
         <div class="rounded-3xl surface p-5 overflow-x-auto"><div id="flowGraphBig" class="min-w-[1100px]"></div></div>
         <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-slate-400">
           <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25"></span>Obligatoria</span>
           <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25 ring-offset-0" style="outline: 2px dashed rgba(255,255,255,.35); outline-offset: 1px"></span>Opcional</span>
           <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full meta-ai-gradient"></span>Trabajando</span>
           <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500/30 ring-2 ring-emerald-400"></span>Terminada</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-ink-900" style="outline: 2px dashed rgba(255,255,255,.18); outline-offset: -2px"></span>Apagada</span>
           <span class="flex items-center gap-2"><span class="text-indigo-300">●</span>Prompt personalizado</span>
         </div>
       </section>
@@ -366,12 +379,12 @@
   <form id="profileForm" class="relative rounded-[28px] bg-ink-800 shadow-2xl shadow-black/60 hairline max-w-md w-full p-7 fade-in">
     <h3 id="profileModalTitle" class="text-[18px] font-semibold text-white"></h3>
     <p id="profileModalText" class="mt-2 text-[13px] text-slate-400 leading-relaxed"></p>
-    <label class="block mt-5 text-[12px] font-medium text-slate-300">Nombre del perfil</label>
+    <label id="profileNameLabel" class="block mt-5 text-[12px] font-medium text-slate-300">Nombre del perfil</label>
     <input id="profileName" maxlength="60" autocomplete="off" class="mt-2 w-full h-11 px-4 rounded-full bg-black/30 hairline text-[14px] text-white focus:outline-none focus:ring-2 focus:ring-meta/60" />
     <div id="profileFromBox" class="mt-5">
       <div class="text-[12px] font-medium text-slate-300">Empezar desde</div>
-      <label class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="original" class="mt-1 accent-indigo-500" checked /><span><span class="block text-[13px] text-white">Original de Meta Muse</span><span class="block text-[12px] text-slate-500">Un perfil limpio, sin cambios.</span></span></label>
-      <label id="profileFromCopy" class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="copy" class="mt-1 accent-indigo-500" /><span><span class="block text-[13px] text-white">Copia del perfil actual</span><span id="profileFromCopyText" class="block text-[12px] text-slate-500"></span></span></label>
+      <label class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="original" class="mt-1 accent-indigo-500" checked /><span><span id="profileFromOrigTitle" class="block text-[13px] text-white">Original de Meta Muse</span><span id="profileFromOrigText" class="block text-[12px] text-slate-500">Un perfil limpio, sin cambios.</span></span></label>
+      <label id="profileFromCopy" class="mt-2 flex items-start gap-3 p-3 rounded-2xl bg-white/[0.03] hairline cursor-pointer"><input type="radio" name="profileFrom" value="copy" class="mt-1 accent-indigo-500" /><span><span id="profileFromCopyTitle" class="block text-[13px] text-white">Copia del perfil actual</span><span id="profileFromCopyText" class="block text-[12px] text-slate-500"></span></span></label>
     </div>
     <div class="mt-7 flex justify-end gap-2">
       <button type="button" data-action="profile-cancel" class="h-10 px-5 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[13px] text-slate-200 transition">Cancelar</button>
@@ -588,6 +601,7 @@ function countUp(el, to) {
 function buildProducts(state) {
   const sid = state.session_id;
   const studio = Object.fromEntries((state.studio_products || state.grounded_products || []).map((p) => [p.product_id, p]));
+  const videoMd5 = Object.fromEntries((state.videos || []).map((v) => [v.video_id, v.video_md5 || '']));
   return (state.catalog_products || []).map((c) => {
     const s = studio[c.id] || {};
     const gl = s.glimmer_selection || {};
@@ -595,8 +609,8 @@ function buildProducts(state) {
     const views = (c.views || []).map((v) => ({ key: v.key, label: v.label, url: `${API}/storage/${sid}/catalog/${v.src}`, ai: !!v.ai_inferred, bg: v.bg }));
     if (gl.best_frame_url) views.push({ key: 'frame', label: 'Frame original', url: API + gl.best_frame_url, ai: false, bg: 'dark' });
     return {
-      uid: `${sid}:${c.id}`, session_id: sid, id: c.id, video_id: c.video_id,
-      title: c.title, short_description: c.short_description, description: c.description,
+      uid: `${sid}:${c.id}`, session_id: sid, id: c.id, video_id: c.video_id, video_md5: videoMd5[c.video_id] || '',
+      title: c.title, source_title: c.title, short_description: c.short_description, description: c.description,
       highlights: c.highlights || [], category: c.category || 'General', tags: c.tags || [],
       price: c.price, currency: c.currency || 'USD', condition: c.condition || '', seller_phrase: c.seller_phrase || '',
       real_photo_only: !!c.real_photo_only, mention_type: s.mention_type || '', quality_score: gl.quality_score ?? null,
@@ -938,13 +952,15 @@ function renderPending() {
     const mention = p.mention_type ? chip(deictic ? 'DEICTIC · “esto de acá”' : 'EXPLICIT · lo nombró', deictic ? 'bg-amber-400/10 text-amber-300' : 'bg-blue-500/10 text-blue-300',
       deictic ? 'El vendedor solo lo señaló: la IA lo identificó mirando el video' : 'El vendedor nombró el producto') : '';
     const quality = p.quality_score != null ? chip(`Calidad ${esc(p.quality_score)}/10`, 'bg-white/[0.05] text-slate-300') : '';
+    const dup = duplicateOf(p);
+    const dupText = dup === 'store' ? 'Ya está en tu tienda' : 'Repetido en Por revisar';
     const thumb = (url, label, studioBg) => url ? `<figure><div class="aspect-square rounded-2xl overflow-hidden ${studioBg ? 'studio' : 'bg-slate-900'} relative">
       <img src="${esc(url)}" alt="${esc(label)}" class="absolute inset-0 w-full h-full ${studioBg ? 'object-contain p-3' : 'object-cover'}" /></div>
       <figcaption class="mt-1.5 text-[11px] text-slate-500 text-center">${esc(label)}</figcaption></figure>` : '';
     return `<article id="card-${esc(p.uid)}" class="rise rounded-3xl overflow-hidden surface" style="animation-delay:${Math.min(i, 8) * 50}ms">
       <div class="px-5 h-14 flex items-center gap-2 border-b border-white/5">
         <span class="text-[11px] font-mono text-slate-500">${esc(p.id)} · ${esc(p.video_id)}</span>
-        <span class="flex-1"></span>${mention}${quality}
+        <span class="flex-1"></span>${dup ? chip(dupText, 'bg-amber-400/15 text-amber-300', 'Mismo video y mismo nombre que otro producto') : ''}${mention}${quality}
         ${p.real_photo_only ? chip('Toma insuficiente', 'bg-rose-500/10 text-rose-300', 'Se muestra la foto real: la toma estaba movida') : ''}
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-[1.1fr_1fr]">
@@ -967,9 +983,15 @@ function renderPending() {
           ${p.seller_phrase ? `<p class="flex gap-2 text-[12px] text-slate-400"><span class="shrink-0 mt-0.5 text-slate-500">${icon('mic', 14)}</span><span>“${esc(p.seller_phrase)}”</span></p>` : ''}
         </div>
       </div>
+      ${dup ? `<div class="px-5 py-3 border-t border-amber-400/15 bg-amber-400/[0.06] flex items-start gap-2.5 text-[12px] text-amber-200">
+        <span class="shrink-0 mt-0.5 text-amber-300">${icon('alert', 15)}</span>
+        <span>${dup === 'store' ? 'Este producto ya está publicado en tu tienda (mismo video y mismo nombre).' : 'Este producto ya está más arriba en Por revisar (mismo video y mismo nombre).'} Descártalo para no duplicarlo; “Aceptar todos” lo salta.</span></div>` : ''}
       <div class="px-5 py-4 border-t border-white/5 flex gap-3">
-        <button data-action="reject" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2">${icon('trash', 15)}Rechazar</button>
-        <button data-action="approve" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('check', 16)}Aceptar y publicar</button>
+        ${dup
+          ? `<button data-action="approve" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-slate-300 hover:bg-white/[0.08] text-[13px] font-medium transition flex items-center gap-2">${icon('check', 15)}Publicar de todos modos</button>
+        <button data-action="reject" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('trash', 16)}Descartar repetido</button>`
+          : `<button data-action="reject" data-uid="${esc(p.uid)}" class="h-10 px-4 rounded-full bg-white/[0.04] hairline text-rose-300 hover:bg-rose-500/10 text-[13px] font-medium transition flex items-center gap-2">${icon('trash', 15)}Rechazar</button>
+        <button data-action="approve" data-uid="${esc(p.uid)}" class="flex-1 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[13px] font-semibold transition flex items-center justify-center gap-2">${icon('check', 16)}Aceptar y publicar</button>`}
       </div>
     </article>`;
   }).join('');
@@ -1281,7 +1303,8 @@ async function runPipeline(fromPhase) {
     $('pipelineResult').classList.remove('hidden');
     run = null;
     renderAll();
-    toast(`${products.length} producto(s) nuevos en Pendientes`);
+    const repeated = products.filter((p) => duplicateOf(pending.find((q) => q.uid === p.uid) || p)).length;
+    toast(`${products.length} producto(s) nuevos en Pendientes${repeated ? ` · ${repeated} ya estaban en tu tienda o en Por revisar` : ''}`, repeated ? 'info' : undefined);
   } catch (err) {
     stopPolling();
     stopStudioPoll();
@@ -1293,6 +1316,47 @@ async function runPipeline(fromPhase) {
     run.running = false;
     $('btnProcess').disabled = false;
   }
+}
+
+/* ---------- Repetidos: mismo video (MD5) y mismo nombre ---------- */
+const normTitle = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const TITLE_STOP = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'con', 'en', 'y', 'para', 'por', 'un', 'una', 'a', 'al']);
+const titleWords = (s) => new Set(normTitle(s).split(' ').filter((w) => w.length > 1 && !TITLE_STOP.has(w)));
+// Spark puede renombrar al re-analizar ("Peluche de Osito…" → "Peluche de Oso…"): basta que compartan 3/4 de las palabras
+function similarTitles(a, b) {
+  const A = titleWords(a), B = titleWords(b);
+  if (!A.size || !B.size) return false;
+  let shared = 0;
+  A.forEach((w) => { if (B.has(w)) shared += 1; });
+  return shared / Math.min(A.size, B.size) >= 0.75;
+}
+function sameProduct(a, b) {
+  if (a.uid === b.uid) return false;
+  const ta = normTitle(a.source_title || a.title), tb = normTitle(b.source_title || b.title);
+  if (!ta || !tb) return false;
+  // Mismo video: nombre igual o parecido. Sin MD5 (no se pudo recuperar): solo nombre igual.
+  if (a.video_md5 && b.video_md5) return a.video_md5 === b.video_md5 && (ta === tb || similarTitles(ta, tb));
+  return ta === tb;
+}
+// Productos guardados antes de esta versión: recupera el MD5 de su video desde el estado de su sesión
+async function backfillVideoMd5() {
+  const missing = [...approved, ...pending].filter((p) => !p.video_md5 && p.session_id && p.video_id);
+  const sids = [...new Set(missing.map((p) => p.session_id))];
+  if (!sids.length) return;
+  const bySid = {};
+  await Promise.all(sids.map(async (sid) => {
+    try { bySid[sid] = Object.fromEntries(((await api(`/storage/${sid}/session_state.json`)).videos || []).map((v) => [v.video_id, v.video_md5 || ''])); }
+    catch { /* sesión borrada: queda solo la comparación por nombre */ }
+  }));
+  missing.forEach((p) => { const md5 = (bySid[p.session_id] || {})[p.video_id]; if (md5) p.video_md5 = md5; });
+  save(LS.approved, approved); save(LS.pending, pending);
+  renderAll();
+}
+// 'store' = ya publicado · 'pending' = repetido de otro que está antes en Por revisar · '' = nuevo
+function duplicateOf(p) {
+  if (approved.some((a) => sameProduct(p, a))) return 'store';
+  const i = pending.indexOf(p);
+  return pending.slice(0, i < 0 ? pending.length : i).some((q) => sameProduct(p, q)) ? 'pending' : '';
 }
 
 /* ---------- Acciones ---------- */
@@ -1353,6 +1417,15 @@ const FLOW_EDGES = [['video', 'prep'], ['prep', 'asr'], ['asr', 'extract'], ['ex
 const FLOW_BANDS = [[1, 108, 212], [2, 222, 550], [3, 560, 885], [4, 895, 1245], [5, 1255, 1347]];
 const FLOW_ORDER = { 1: ['prep'], 2: ['asr', 'extract', 'verify2'], 3: ['vision', 'sam', 'verify3'], 5: ['copy', 'catalog'] };
 const flowNode = (id) => FLOW_NODES.find((n) => n.id === id);
+// Interruptores (bolitas opcionales) y parámetros de cada bolita: claves de GET /api/v1/flows.
+const FLOW_TOGGLES = { verify2: 'verify2.enabled', verify3: 'verify3.enabled', v_left: 'view.left', v_right: 'view.right', v_back: 'view.back', v_life: 'view.lifestyle', fidelity: 'fidelity.enabled' };
+const FLOW_PARAMS = { extract: ['extract.video'], master: ['images.parallel'] };
+// Si una bolita del camino está apagada, el flujo la salta por un desvío.
+const FLOW_BYPASS = { verify2: [['extract', 'vision']], verify3: [['sam', 'master']], fidelity: ['v_front', 'v_left', 'v_right', 'v_back', 'v_life'].map((v) => [v, 'copy']) };
+let flowsState = null;
+const flowOptObj = (key) => (flowsState ? flowsState.options.find((o) => o.key === key) : null);
+const flowOpt = (key) => { const o = flowOptObj(key); return o ? o.value : true; };
+const flowIsOff = (id) => Boolean(FLOW_TOGGLES[id]) && flowOpt(FLOW_TOGGLES[id]) === false;
 let flowLive = { activePhase: null, done: [], error: null, idx: {}, fidelitySeen: false };
 let flowSelected = 'extract';
 
@@ -1390,7 +1463,7 @@ function flowNodeStates() {
     else if (L.done.includes(n.phase) || (n.id === 'catalog' && finished)) s = 'done';
     else if (L.activePhase === n.phase) s = flowPhaseState(n, n.phase);
     else if (L.error === n.phase) { const p = flowPhaseState(n, n.phase); s = p === 'active' ? 'error' : p; }
-    st[n.id] = s;
+    st[n.id] = flowIsOff(n.id) ? 'off' : s;
   });
   return st;
 }
@@ -1402,27 +1475,37 @@ function flowSvg({ compact = false } = {}) {
   const edges = FLOW_EDGES.map(([a, b]) => {
     const A = flowNode(a), B = flowNode(b);
     const x1 = A.x + R(A), x2 = B.x - R(B), mx = (x1 + x2) / 2;
+    const cls = st[a] === 'off' || st[b] === 'off' ? 'off' : st[a] === 'done' && st[b] === 'done' ? 'done' : (st[a] === 'done' || st[a] === 'active') && st[b] === 'active' ? 'active' : '';
+    return `<path class="flow-edge ${cls}" d="M${x1} ${A.y} C${mx} ${A.y}, ${mx} ${B.y}, ${x2} ${B.y}"/>`;
+  }).join('') + Object.entries(FLOW_BYPASS).filter(([id]) => st[id] === 'off').flatMap(([, pairs]) => pairs).filter(([a]) => st[a] !== 'off').map(([a, b]) => {
+    const A = flowNode(a), B = flowNode(b);
     const cls = st[a] === 'done' && st[b] === 'done' ? 'done' : (st[a] === 'done' || st[a] === 'active') && st[b] === 'active' ? 'active' : '';
+    if (A.y === B.y) {
+      const x1 = A.x + R(A) * 0.7, x2 = B.x - R(B) * 0.7, y = A.y - R(A) * 0.7;
+      return `<path class="flow-edge ${cls}" d="M${x1} ${y} C${x1 + 40} ${y - 62}, ${x2 - 40} ${y - 62}, ${x2} ${y}"/>`;
+    }
+    const x1 = A.x + R(A), x2 = B.x - R(B), mx = (x1 + x2) / 2;
     return `<path class="flow-edge ${cls}" d="M${x1} ${A.y} C${mx} ${A.y}, ${mx} ${B.y}, ${x2} ${B.y}"/>`;
   }).join('');
   const bands = FLOW_BANDS.map(([p, x1, x2]) => `<rect x="${x1}" y="22" width="${x2 - x1}" height="${compact ? 300 : 316}" rx="18" fill="rgba(255,255,255,.018)" stroke="rgba(255,255,255,.05)"/>
     <text x="${(x1 + x2) / 2}" y="44" text-anchor="middle" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1.2">FASE ${p}</text>`).join('');
   const nodes = FLOW_NODES.map((n) => {
     const s = st[n.id], r = R(n), sel = !compact && n.id === flowSelected;
-    const fill = s === 'active' ? 'url(#flowGrad)' : s === 'done' ? 'rgba(16,185,129,.18)' : s === 'error' ? 'rgba(244,63,94,.25)' : n.kind === 'io' ? 'rgba(255,255,255,.07)' : '#0f172a';
-    const stroke = s === 'done' ? '#34d399' : s === 'error' ? '#fb7185' : s === 'active' ? 'rgba(165,180,252,.9)' : 'rgba(255,255,255,.28)';
-    const color = s === 'done' ? '#6ee7b7' : s === 'error' ? '#fda4af' : s === 'active' ? '#ffffff' : '#cbd5e1';
+    const off = s === 'off';
+    const fill = off ? '#0b1120' : s === 'active' ? 'url(#flowGrad)' : s === 'done' ? 'rgba(16,185,129,.18)' : s === 'error' ? 'rgba(244,63,94,.25)' : n.kind === 'io' ? 'rgba(255,255,255,.07)' : '#0f172a';
+    const stroke = off ? 'rgba(255,255,255,.16)' : s === 'done' ? '#34d399' : s === 'error' ? '#fb7185' : s === 'active' ? 'rgba(165,180,252,.9)' : 'rgba(255,255,255,.28)';
+    const color = off ? '#475569' : s === 'done' ? '#6ee7b7' : s === 'error' ? '#fda4af' : s === 'active' ? '#ffffff' : '#cbd5e1';
     const isz = n.view ? 14 : 20;
     const custom = (n.prompts || []).some((k) => customKeys.has(k));
     const label = n.view
-      ? `<text x="${n.x + r + 8}" y="${n.y + 4}" fill="${s === 'idle' ? '#cbd5e1' : color}" font-size="11.5" font-weight="500">${esc(n.label)}</text>`
-      : (n.g || [n.label]).map((line, i) => `<text x="${n.x}" y="${n.y + r + 19 + i * 15}" text-anchor="middle" fill="#f1f5f9" font-size="12" font-weight="600">${esc(line)}</text>`).join('')
-        + (compact ? '' : `<text x="${n.x}" y="${n.y + r + 19 + (n.g || [n.label]).length * 15 + 1}" text-anchor="middle" fill="#64748b" font-size="10.5">${esc(n.m || n.model)}</text>`);
+      ? `<text x="${n.x + r + 8}" y="${n.y + 4}" fill="${off ? '#64748b' : s === 'idle' ? '#cbd5e1' : color}" font-size="11.5" font-weight="500" ${off ? 'text-decoration="line-through"' : ''}>${esc(n.label)}</text>`
+      : (n.g || [n.label]).map((line, i) => `<text x="${n.x}" y="${n.y + r + 19 + i * 15}" text-anchor="middle" fill="${off ? '#64748b' : '#f1f5f9'}" font-size="12" font-weight="600">${esc(line)}</text>`).join('')
+        + (compact ? '' : `<text x="${n.x}" y="${n.y + r + 19 + (n.g || [n.label]).length * 15 + 1}" text-anchor="middle" fill="${off ? '#f59e0b' : '#64748b'}" font-size="10.5">${off ? 'Apagada' : esc(n.m || n.model)}</text>`);
     return `<g class="flow-node ${s}" data-action="flow-node" data-key="${n.id}" role="button" aria-label="${esc(n.label)}">
       ${s === 'active' ? `<circle class="ring" cx="${n.x}" cy="${n.y}" r="${r}" fill="none" stroke="#818cf8" stroke-width="2"/>` : ''}
       ${sel ? `<circle cx="${n.x}" cy="${n.y}" r="${r + 7}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>` : ''}
       <g class="body">
-        <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${n.kind === 'opt' && s === 'idle' ? 'stroke-dasharray="4 3"' : ''}/>
+        <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${off ? 'stroke-dasharray="3 4"' : n.kind === 'opt' && s === 'idle' ? 'stroke-dasharray="4 3"' : ''}/>
         <svg x="${n.x - isz / 2}" y="${n.y - isz / 2}" width="${isz}" height="${isz}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${s === 'done' && !n.view ? ICONS.check : ICONS[n.icon] || ''}</svg>
       </g>
       ${custom ? `<circle cx="${n.x + r * 0.72}" cy="${n.y - r * 0.72}" r="4.5" fill="#818cf8" stroke="#0b1120" stroke-width="2"/>` : ''}
@@ -1473,8 +1556,72 @@ function renderFlowPanel() {
       <div class="rounded-xl bg-white/[0.03] hairline p-3"><dt class="text-slate-500">Entrega</dt><dd class="mt-1 text-slate-200">${esc(n.output)}</dd></div>
     </dl>
     ${n.kind === 'req' ? `<p class="mt-4 text-[12px] text-slate-500 flex items-start gap-2">${icon('info', 14, 'shrink-0 mt-0.5')}No se puede quitar: ${esc(n.why || '')}</p>` : ''}
-    ${n.kind === 'opt' ? `<p class="mt-4 text-[12px] text-slate-500 flex items-start gap-2">${icon('info', 14, 'shrink-0 mt-0.5')}Paso opcional: en la próxima etapa podrás apagarlo desde aquí.</p>` : ''}
+    ${[FLOW_TOGGLES[n.id], ...(FLOW_PARAMS[n.id] || [])].filter(Boolean).map(flowControl).join('')}
     ${promptBlock}`;
+}
+
+function flowControl(key) {
+  const o = flowOptObj(key);
+  if (!o) return '';
+  const dis = agentsLocked ? 'disabled' : '';
+  const same = o.value === o.default;
+  const control = o.type === 'bool'
+    ? `<button data-action="flow-toggle" data-key="${o.key}" ${dis} role="switch" aria-checked="${o.value}" aria-label="${esc(o.label)}" class="shrink-0 relative w-11 h-6 rounded-full ${o.value ? 'bg-indigo-500' : 'bg-white/15'} disabled:opacity-40 transition"><span class="absolute top-[3px] ${o.value ? 'left-[23px]' : 'left-[3px]'} w-[18px] h-[18px] rounded-full bg-white shadow transition-all"></span></button>`
+    : `<div class="shrink-0 flex items-center gap-1"><button data-action="flow-step" data-key="${o.key}" data-delta="-1" ${dis} class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white disabled:opacity-40 flex items-center justify-center">${icon('minus', 14)}</button><span class="w-8 text-center text-[15px] font-semibold tabular-nums text-white">${o.value}</span><button data-action="flow-step" data-key="${o.key}" data-delta="1" ${dis} class="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white disabled:opacity-40 flex items-center justify-center">${icon('plus', 14)}</button></div>`;
+  return `<div class="mt-4 rounded-2xl bg-white/[0.03] hairline p-4 flex items-start justify-between gap-4">
+    <div class="min-w-0"><div class="text-[13px] font-medium text-white">${esc(o.label)}</div>
+      <p class="mt-1 text-[12px] text-slate-400 leading-relaxed">${esc(o.description)}</p>
+      <p class="mt-2 text-[11px] ${same ? 'text-slate-500' : 'text-indigo-300'}">${same ? `Igual que "${esc(flowsState.default_flow_name)}"` : `Cambiado en "${esc(flowsState.active_flow_name)}"`}</p></div>
+    ${control}</div>`;
+}
+
+function flowEstimate() {
+  if (!flowsState) return '';
+  const views = ['view.left', 'view.right', 'view.back', 'view.lifestyle'].filter((k) => flowOpt(k)).length;
+  const imgs = 2 + views;
+  const optKeys = Object.values(FLOW_TOGGLES);
+  const on = optKeys.filter((k) => flowOpt(k)).length;
+  return `Por producto: <b class="text-slate-200 font-medium">${imgs} imágenes</b> (~US$${(imgs * 0.01).toFixed(2)}${flowOpt('fidelity.enabled') ? ' + reintentos si la fidelidad rechaza' : ''}) · ${on} de ${optKeys.length} pasos opcionales encendidos`;
+}
+
+function renderFlowBar() {
+  if (!flowsState) return;
+  const sel = $('flowSelect');
+  sel.innerHTML = `<option value="">${esc(flowsState.default_flow_name)}</option>` + flowsState.flows.map((f) => `<option value="${esc(f.slug)}">${esc(f.name)}</option>`).join('');
+  sel.value = flowsState.active_flow || '';
+  sel.disabled = agentsLocked;
+  $('btnFlowRename').disabled = agentsLocked || !flowsState.active_flow;
+  $('btnFlowDelete').disabled = agentsLocked || !flowsState.active_flow;
+  $('flowEstimate').innerHTML = `${icon('info', 14, 'shrink-0 text-blue-300')}<span>${flowEstimate()}</span>`;
+  $('flowLock').classList.toggle('hidden', !agentsLocked);
+  $('flowLock').classList.toggle('flex', agentsLocked);
+}
+
+async function loadFlows() {
+  try { flowsState = await api('/api/v1/flows'); } catch { flowsState = null; }
+  renderProfileChip();
+  renderFlowViews();
+  return flowsState;
+}
+
+async function flowsWrite(path, req, okMsg) {
+  try {
+    flowsState = await api(path, req);
+    renderProfileChip();
+    renderFlowViews();
+    if (okMsg) toast(okMsg);
+    return true;
+  } catch (err) {
+    toast(err.message, 'error');
+    if (/fase en curso/i.test(err.message)) { agentsLocked = true; renderFlowViews(); }
+    return false;
+  }
+}
+
+function applyFlowOptions(options) {
+  if (!flowsState || agentsLocked) return;
+  if (!flowsState.active_flow) return openProfileModal('save', options, 'flows');
+  flowsWrite('/api/v1/flows/options', jsonReq('PUT', { options }), null);
 }
 
 function renderFlowViews() {
@@ -1482,6 +1629,7 @@ function renderFlowViews() {
   if (mini) mini.innerHTML = flowSvg({ compact: true });
   if (!$('flowDrawer').classList.contains('hidden')) {
     $('flowGraphBig').innerHTML = flowSvg();
+    renderFlowBar();
     renderFlowPanel();
     const chip = $('flowProfileChip');
     chip.innerHTML = `${icon('sliders', 13)}<span>Perfil: <b class="text-slate-200 font-medium">${esc(promptsState ? promptsState.active_profile_name : '…')}</b></span>`;
@@ -1492,7 +1640,7 @@ async function openFlow(nodeId) {
   if (nodeId) flowSelected = nodeId;
   openDrawer('flowDrawer');
   renderFlowViews();
-  await loadPrompts(false);
+  await Promise.all([refreshAgentsLock(), loadPrompts(false), loadFlows()]);
   renderFlowViews();
 }
 
@@ -1543,9 +1691,10 @@ async function loadPrompts(resetDrafts = false) {
 function renderProfileChip() {
   const chip = $('profileChip');
   const dot = $('agentsDot');
-  if (!promptsState) { chip.innerHTML = `${icon('sliders', 14)}<span>Prompts de los agentes</span>`; return; }
-  const n = promptsState.agents.filter((a) => a.is_custom).length;
-  chip.innerHTML = `${icon('sliders', 14)}<span>Perfil: <b class="text-slate-200 font-medium">${esc(promptsState.active_profile_name)}</b>${n ? ` · ${n} agente(s) personalizados` : ''}</span>`;
+  const n = promptsState ? promptsState.agents.filter((a) => a.is_custom).length : 0;
+  const btn = 'h-9 px-3 min-w-0 rounded-full bg-white/[0.03] hairline hover:bg-white/[0.06] text-[12px] text-slate-400 transition flex items-center justify-center gap-1.5';
+  chip.innerHTML = `<button data-action="open-agents" class="${btn}" title="${n ? `${n} agente(s) con prompt personalizado` : 'Prompts originales'}">${icon('sliders', 13)}<span class="truncate">Perfil: <b class="text-slate-200 font-medium">${esc(promptsState ? promptsState.active_profile_name : '…')}</b></span></button>
+    <button data-action="open-flow" class="${btn}" title="Qué pasos corren">${icon('workflow', 13)}<span class="truncate">Flujo: <b class="text-slate-200 font-medium">${esc(flowsState ? flowsState.active_flow_name : '…')}</b></span></button>`;
   dot.classList.toggle('hidden', !n);
 }
 
@@ -1676,15 +1825,26 @@ async function promptsWrite(path, req, okMsg) {
 
 // Ventanita de perfiles: mode = 'new' | 'rename' | 'save' (guardar un cambio hecho sobre el original).
 let profileModal = null;
-function openProfileModal(mode, key = null) {
-  if (!promptsState || agentsLocked) return;
-  profileModal = { mode, key };
-  const active = promptsState.active_profile;
+// target = 'prompts' (perfiles) | 'flows' (flujos). En 'save' de flujos, key trae las opciones pendientes.
+function openProfileModal(mode, key = null, target = 'prompts') {
+  const isFlow = target === 'flows';
+  const S = isFlow ? flowsState : promptsState;
+  if (!S || agentsLocked) return;
+  profileModal = { mode, key, target };
+  const active = isFlow ? S.active_flow : S.active_profile;
+  const activeName = isFlow ? S.active_flow_name : S.active_profile_name;
+  const W = isFlow
+    ? { one: 'flujo', def: S.default_flow_name, auto: 'Mi flujo', what: 'Un flujo decide qué pasos opcionales corren y con qué parámetros. Al crearlo queda activo y los próximos videos se procesan con él.', keeps: 'los pasos del flujo', fresh: 'Todos los pasos encendidos, como siempre.' }
+    : { one: 'perfil', def: S.default_profile_name, auto: 'Mi perfil', what: 'Un perfil es un juego de prompts con nombre. Al crearlo queda activo y los próximos videos se procesan con él.', keeps: 'los prompts del perfil', fresh: 'Un perfil limpio, sin cambios.' };
   const copy = {
-    new: ['Nuevo perfil', 'Un perfil es un juego de prompts con nombre. Al crearlo queda activo y los próximos videos se procesan con él.', '', 'Crear y activar'],
-    rename: ['Renombrar perfil', 'Solo cambia el nombre; los prompts del perfil no se tocan.', promptsState.active_profile_name, 'Guardar nombre'],
-    save: ['Guardar en un perfil nuevo', 'El "Original de Meta Muse" nunca se modifica. Para guardar este cambio, crea un perfil: quedará activo con tu cambio y podrás volver al original cuando quieras desde el selector.', 'Mi perfil', 'Crear y guardar'],
+    new: [`Nuevo ${W.one}`, W.what, '', 'Crear y activar'],
+    rename: [`Renombrar ${W.one}`, `Solo cambia el nombre; ${W.keeps} no se tocan.`, activeName, 'Guardar nombre'],
+    save: [`Guardar en un ${W.one} nuevo`, `El "${W.def}" nunca se modifica. Para guardar este cambio, crea un ${W.one}: quedará activo con tu cambio y podrás volver al original cuando quieras desde el selector.`, W.auto, 'Crear y guardar'],
   }[mode];
+  $('profileNameLabel').textContent = `Nombre del ${W.one}`;
+  $('profileFromOrigTitle').textContent = W.def;
+  $('profileFromOrigText').textContent = W.fresh;
+  $('profileFromCopyTitle').textContent = `Copia del ${W.one} actual`;
   $('profileModalTitle').textContent = copy[0];
   $('profileModalText').textContent = copy[1];
   $('profileName').value = copy[2];
@@ -1692,7 +1852,7 @@ function openProfileModal(mode, key = null) {
   $('profileFromBox').classList.toggle('hidden', mode !== 'new');
   $('profileFromCopy').classList.toggle('hidden', !active);
   $('profileFromCopy').classList.toggle('flex', !!active);
-  $('profileFromCopyText').textContent = active ? `Parte de "${promptsState.active_profile_name}" con todos sus cambios.` : '';
+  $('profileFromCopyText').textContent = active ? `Parte de "${activeName}" con todos sus cambios.` : '';
   document.querySelector('input[name=profileFrom][value=original]').checked = true;
   $('profileModal').classList.remove('hidden'); $('profileModal').classList.add('flex');
   setTimeout(() => { $('profileName').focus(); $('profileName').select(); }, 30);
@@ -1702,8 +1862,15 @@ function closeProfileModal() { profileModal = null; $('profileModal').classList.
 async function submitProfileModal() {
   if (!profileModal) return;
   const name = $('profileName').value.trim();
-  if (!name) { $('profileName').focus(); return toast('Escribe un nombre para el perfil', 'info'); }
-  const { mode, key } = profileModal;
+  if (!name) { $('profileName').focus(); return toast('Escribe un nombre', 'info'); }
+  const { mode, key, target } = profileModal;
+  if (target === 'flows') {
+    const activeFlow = flowsState.active_flow;
+    closeProfileModal();
+    if (mode === 'rename') return flowsWrite(`/api/v1/flows/${encodeURIComponent(activeFlow)}`, jsonReq('PUT', { name }), `Flujo renombrado a "${name}"`);
+    const fromCopy = mode === 'new' && document.querySelector('input[name=profileFrom]:checked').value === 'copy';
+    return flowsWrite('/api/v1/flows', jsonReq('POST', { name, copy_from: fromCopy ? activeFlow : null, options: mode === 'save' ? key : null }), mode === 'new' ? `Flujo "${name}" creado y activo` : `Flujo "${name}" creado con tu cambio`);
+  }
   const active = promptsState.active_profile;
   closeProfileModal();
   if (mode === 'rename') return promptsWrite(`/api/v1/prompts/profiles/${encodeURIComponent(active)}`, jsonReq('PUT', { name }), `Perfil renombrado a "${name}"`);
@@ -1746,8 +1913,13 @@ const actions = {
   reject: (uid) => animateOut([uid], () => { pending = pending.filter((p) => p.uid !== uid); save(LS.pending, pending); renderAll(); toast('Producto rechazado', 'info'); }),
   'approve-all': () => {
     if (!pending.length) return toast('No hay pendientes', 'info');
-    const uids = pending.map((p) => p.uid);
-    animateOut(uids, () => { publish(uids); activeTab = 'store'; renderAll(); toast(`${uids.length} producto(s) publicados`); });
+    const uids = pending.filter((p) => !duplicateOf(p)).map((p) => p.uid);
+    const skipped = pending.length - uids.length;
+    if (!uids.length) return toast(`Los ${skipped} pendientes ya están en tu tienda: descártalos o publícalos uno a uno`, 'info');
+    animateOut(uids, () => {
+      publish(uids); if (!skipped) activeTab = 'store'; renderAll();
+      toast(`${uids.length} producto(s) publicados${skipped ? ` · ${skipped} repetido(s) siguen en Por revisar` : ''}`);
+    });
   },
   'reject-all': () => {
     if (!pending.length) return toast('No hay pendientes', 'info');
@@ -1786,7 +1958,7 @@ const actions = {
   },
   'open-tokens': () => { openDrawer('tokenDrawer'); refreshTokens(); },
   'close-tokens': () => closeDrawer('tokenDrawer'),
-  'open-upload': () => { openDrawer('uploadDrawer'); loadPrompts(false); },
+  'open-upload': () => { openDrawer('uploadDrawer'); loadPrompts(false); loadFlows(); },
   'close-upload': () => {
     if (run && run.running && !confirm('El pipeline sigue procesando en el servidor. ¿Cerrar el panel? (seguirá corriendo, pero no verás el progreso)')) return;
     closeDrawer('uploadDrawer');
@@ -1810,6 +1982,20 @@ const actions = {
     flowSelected = key; renderFlowViews();
   },
   'flow-edit-prompt': (_, key) => editPromptFromFlow(key),
+  'flow-toggle': (_, key) => { const o = flowOptObj(key); if (o) applyFlowOptions({ [key]: !o.value }); },
+  'flow-step': (_, key, el) => {
+    const o = flowOptObj(key);
+    if (!o) return;
+    const v = Math.min(o.max, Math.max(o.min, o.value + Number(el.dataset.delta)));
+    if (v !== o.value) applyFlowOptions({ [key]: v });
+  },
+  'flow-new': () => openProfileModal('new', null, 'flows'),
+  'flow-rename': () => { if (flowsState && flowsState.active_flow) openProfileModal('rename', null, 'flows'); },
+  'flow-delete': () => {
+    if (!flowsState || !flowsState.active_flow || agentsLocked) return;
+    if (!confirm(`¿Eliminar el flujo "${flowsState.active_flow_name}"? Se volverá al "${flowsState.default_flow_name}".`)) return;
+    flowsWrite(`/api/v1/flows/${encodeURIComponent(flowsState.active_flow)}`, jsonReq('DELETE'), 'Flujo eliminado · flujo completo activo');
+  },
   'close-agents': () => {
     const dirty = promptsState && promptsState.agents.some((a) => agentDraft[a.key] && agentDirty(a));
     if (dirty && !confirm('Tienes cambios sin guardar en los prompts. ¿Cerrar de todos modos?')) return;
@@ -1887,6 +2073,10 @@ $('profileSelect').addEventListener('change', (e) => {
   const slug = e.target.value || null;
   promptsWrite('/api/v1/prompts/profiles/active', jsonReq('PUT', { profile: slug }), `Perfil activo: ${e.target.selectedOptions[0].textContent.replace(/ · \d+$/, '')}`);
 });
+$('flowSelect').addEventListener('change', (e) => {
+  const slug = e.target.value || null;
+  flowsWrite('/api/v1/flows/active', jsonReq('PUT', { flow: slug }), `Flujo activo: ${e.target.selectedOptions[0].textContent}`);
+});
 $('profileForm').addEventListener('submit', (e) => { e.preventDefault(); submitProfileModal(); });
 
 $('videoInput').addEventListener('change', (e) => setFiles(e.target.files));
@@ -1908,7 +2098,9 @@ renderCanvas();
 renderAll();
 refreshTokens();
 seedIfEmpty();
+backfillVideoMd5();
 loadPrompts(false);
+loadFlows();
 </script>
 </body>
 </html>

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.core import progress, prompts
+from backend.core import flows, progress, prompts
 from backend.core.config import (
     FRONTEND_DIR,
     LAPLACIAN_BLUR_THRESHOLD,
@@ -84,6 +84,7 @@ def _run_tracked(session_id: Optional[str], phase: int, make_coro: Any, phases: 
     """Ejecuta una fase en este hilo (fuera del event loop) y registra su inicio y fin en el progreso en vivo."""
     custom = {str(p): prompts.describe_phase(p) for p in (phases or [phase])}
     custom = {p: d for p, d in custom.items() if d}
+    flow_used = flows.describe()
     progress.begin(session_id, phase)
     try:
         state = asyncio.run(make_coro())
@@ -91,21 +92,66 @@ def _run_tracked(session_id: Optional[str], phase: int, make_coro: Any, phases: 
         progress.end(error=str(exc)[:300])
         raise
     progress.end()
-    if custom and isinstance(state, dict) and state.get("session_id"):
-        # Trazabilidad: qué prompts personalizados se usaron en cada fase (solo si hubo alguno).
-        state.setdefault("prompt_customizations", {}).update(custom)
+    if (custom or flow_used) and isinstance(state, dict) and state.get("session_id"):
+        # Trazabilidad: prompts personalizados y flujo distinto del completo (solo si hubo alguno).
+        if custom:
+            state.setdefault("prompt_customizations", {}).update(custom)
+        if flow_used:
+            state.setdefault("flow_customizations", {}).update({str(p): flow_used for p in (phases or [phase])})
         save_session_state(state)
     return state
 
 
 def _prompt_call(fn: Any, *args: Any) -> Any:
-    """Escrituras del registro de prompts: 409 si hay una fase corriendo, 400 si la entrada es inválida."""
+    """Escrituras de prompts y flujos: 409 si hay una fase corriendo, 400 si la entrada es inválida."""
     if progress.snapshot().get("running"):
-        raise HTTPException(status_code=409, detail="Hay una fase en curso: espera a que termine para cambiar los prompts.")
+        raise HTTPException(status_code=409, detail="Hay una fase en curso: espera a que termine para cambiar los prompts o el flujo.")
     try:
         return fn(*args)
     except prompts.PromptError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.get("/api/v1/flows")
+async def get_flows():
+    """Flujo activo, flujos guardados y opciones (pasos opcionales y parámetros) con su valor efectivo."""
+    return flows.snapshot()
+
+
+@app.put("/api/v1/flows/options")
+async def put_flow_options(payload: Dict[str, Any] = Body(...)):
+    _prompt_call(flows.update_options, payload.get("options") or {})
+    return flows.snapshot()
+
+
+@app.delete("/api/v1/flows/options")
+async def reset_flow_options():
+    _prompt_call(flows.reset_options)
+    return flows.snapshot()
+
+
+@app.post("/api/v1/flows")
+async def create_flow(payload: Dict[str, Any] = Body(...)):
+    _prompt_call(flows.create_flow, str(payload.get("name") or ""), payload.get("copy_from"), payload.get("options"))
+    return flows.snapshot()
+
+
+@app.put("/api/v1/flows/active")
+async def set_flow(payload: Dict[str, Any] = Body(...)):
+    _prompt_call(flows.set_active, payload.get("flow"))
+    return flows.snapshot()
+
+
+@app.put("/api/v1/flows/{slug}")
+async def rename_flow(slug: str, payload: Dict[str, Any] = Body(...)):
+    _prompt_call(flows.rename_flow, slug, str(payload.get("name") or ""))
+    return flows.snapshot()
+
+
+@app.delete("/api/v1/flows/{slug}")
+async def delete_flow(slug: str):
+    _prompt_call(flows.delete_flow, slug)
+    return flows.snapshot()
 
 
 @app.get("/api/v1/prompts")

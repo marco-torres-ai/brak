@@ -28,15 +28,13 @@ import numpy as np
 from backend.core.config import (
     MUSE_IMAGE_COST_USD,
     MUSE_IMAGE_MODEL,
-    MUSE_IMAGE_PARALLEL,
     MUSE_IMAGE_SIZE,
-    MUSE_PHASE4_LIFESTYLE,
     MUSE_SPARK_MODEL,
     STORAGE_DIR,
     load_session_state,
     save_session_state,
 )
-from backend.core import prompts
+from backend.core import flows, prompts
 from backend.core.muse_api import MuseAPIError, chat_json, edit_image
 from backend.core.muse_client import CACHE_DIR, get_cached_result, set_cached_result
 from backend.core.token_tracker import TokenTracker
@@ -305,7 +303,7 @@ def _run_jobs(tracker: TokenTracker, jobs: List[Dict[str, Any]]) -> None:
                 res["error"] = f"{first_error[:200]} | sin nombre: {res['error'][:200]}"
         return res
 
-    with ThreadPoolExecutor(max_workers=max(1, MUSE_IMAGE_PARALLEL)) as pool:
+    with ThreadPoolExecutor(max_workers=max(1, int(flows.get("images.parallel")))) as pool:
         results = list(pool.map(run, jobs))
     for job, res in zip(jobs, results):
         job["result"] = res
@@ -521,6 +519,9 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
         return not ctx[pid]["paths"].get(kind) or ctx[pid]["fidelity"].get(kind, {}).get("faithful") is False
 
     all_jobs: List[Dict[str, Any]] = []
+    # Flujo activo: control de fidelidad opcional y vistas encendidas/apagadas (el frente siempre se genera).
+    fidelity_on = bool(flows.get("fidelity.enabled"))
+    view_options = {"left": "view.left", "right": "view.right", "back": "view.back", "lifestyle": "view.lifestyle"}
 
     # 1. Máster de estudio para todos los productos
     jobs = [make_job(pid, "master") for pid, c in ctx.items() if not c["low_quality_source"]]
@@ -532,7 +533,8 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
         for pid, c in ctx.items()
         if not c["low_quality_source"]
     ]
-    store_verdicts(_check_fidelity(tracker, entries, "control del máster de estudio (ronda 1)"), 1)
+    if fidelity_on:
+        store_verdicts(_check_fidelity(tracker, entries, "control del máster de estudio (ronda 1)"), 1)
     retry = [make_job(pid, "master", ctx[pid]["fidelity"].get("master", {}).get("issues") or "generation failed") for pid, c in ctx.items() if not c["low_quality_source"] and failed(pid, "master")]
     if retry:
         _run_jobs(tracker, retry)
@@ -542,7 +544,8 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
             {"pid": j["pid"], "name": ctx[j["pid"]]["item"].get("resolved_name", j["pid"]), "reference": ctx[j["pid"]]["original"], "frame": ctx[j["pid"]]["frame"], "generated": {"master": j["out_path"]} if not j["result"].get("error") else {}}
             for j in retry
         ]
-        store_verdicts(_check_fidelity(tracker, entries, "control del máster de estudio (ronda 2, solo reintentos)"), 2)
+        if fidelity_on:
+            store_verdicts(_check_fidelity(tracker, entries, "control del máster de estudio (ronda 2, solo reintentos)"), 2)
 
     for pid, c in ctx.items():
         if c["low_quality_source"]:
@@ -554,7 +557,7 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
             c["base"] = c["original"]
 
     # 2. Vistas desde el máster (o desde el recorte real si el máster no pasó)
-    kinds = [k for k in VIEW_KINDS if k != "lifestyle" or MUSE_PHASE4_LIFESTYLE]
+    kinds = [k for k in VIEW_KINDS if k == "front" or flows.get(view_options[k])]
     jobs = [make_job(pid, k) for pid, c in ctx.items() if not c.get("low_quality_source") for k in kinds]
     _run_jobs(tracker, jobs)
     collect(jobs)
@@ -564,7 +567,8 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
         {"pid": pid, "name": ctx[pid]["item"].get("resolved_name", pid), "reference": ctx[pid]["base"], "generated": {k: ctx[pid]["paths"][k] for k in kinds if ctx[pid]["paths"].get(k)}}
         for pid in view_pids
     ]
-    store_verdicts(_check_fidelity(tracker, entries, "control de las vistas (ronda 1)"), 1)
+    if fidelity_on:
+        store_verdicts(_check_fidelity(tracker, entries, "control de las vistas (ronda 1)"), 1)
     retry = [make_job(pid, k, ctx[pid]["fidelity"].get(k, {}).get("issues") or "generation failed") for pid in view_pids for k in kinds if failed(pid, k)]
     if retry:
         _run_jobs(tracker, retry)
@@ -575,7 +579,8 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
             if not j["result"].get("error"):
                 by_pid.setdefault(j["pid"], {})[j["kind"]] = j["out_path"]
         entries = [{"pid": pid, "name": ctx[pid]["item"].get("resolved_name", pid), "reference": ctx[pid]["base"], "generated": gen} for pid, gen in by_pid.items()]
-        store_verdicts(_check_fidelity(tracker, entries, "control de las vistas (ronda 2, solo reintentos)"), 2)
+        if fidelity_on:
+            store_verdicts(_check_fidelity(tracker, entries, "control de las vistas (ronda 2, solo reintentos)"), 2)
 
     # 3. Salida (PNG maestros con sam-3.1 en paralelo)
     from backend.services.phase3_vision_sam import run_parallel
@@ -600,8 +605,15 @@ async def run_phase4_studio(session_id: Optional[str] = None) -> Dict[str, Any]:
 
         views: Dict[str, Optional[str]] = {}
         for kind in VIEW_KINDS:
-            ok = not low and not failed(pid, kind) and bool(c["paths"].get(kind))
             path = path_for(pid, kind)
+            if kind not in kinds:
+                # Vista apagada en el flujo activo: no se genera y se borra la de una ejecución anterior.
+                if path.exists():
+                    path.unlink()
+                views[kind] = None
+                counts["views_disabled"] = counts.get("views_disabled", 0) + 1
+                continue
+            ok = not low and not failed(pid, kind) and bool(c["paths"].get(kind))
             if kind == "front" and not ok:
                 cv2.imwrite(str(path), _local_studio_white(cv2.imread(str(STORAGE_DIR / master_rel), cv2.IMREAD_UNCHANGED)), [int(cv2.IMWRITE_JPEG_QUALITY), 94])
                 counts["front_local"] += 1

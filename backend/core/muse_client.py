@@ -15,14 +15,13 @@ from backend.core.config import (
     ESTIMATED_VISION_TOKENS_PER_FRAME,
     META_MUSE_API_KEY,
     MUSE_SPARK_MODEL,
-    MUSE_SPARK_PHASE2_VIDEO,
     MUSE_SPARK_PHASE2_VIDEO_FPS,
     MUSE_SPARK_REASONING_PHASE2,
     MUSE_VOICE_LANGUAGES,
     MUSE_VOICE_MODEL,
     STORAGE_DIR,
 )
-from backend.core import prompts
+from backend.core import flows, prompts
 from backend.core.muse_api import chat_json, transcribe_wav
 from backend.core.token_tracker import TokenTracker
 
@@ -339,7 +338,7 @@ class MuseClient:
 
         # Videos livianos para que Spark vea los objetos y corrija nombres mal transcritos
         video_proxies: List[Tuple[str, Path]] = []
-        if MUSE_SPARK_PHASE2_VIDEO:
+        if flows.get("extract.video"):
             for t in transcriptions:
                 source = locate_source_video(videos_by_id.get(t["video_id"], {}))
                 proxy = build_video_proxy(source) if source else None

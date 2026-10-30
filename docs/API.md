@@ -233,6 +233,37 @@ Todas las escrituras devuelven el mismo cuerpo que `GET /api/v1/prompts`. Respon
 
 ---
 
+## Flujos (v0.3)
+
+Un flujo decide **qué pasos opcionales corren y con qué parámetros**. El orden de las fases es fijo, porque cada una necesita el resultado de la anterior. Los flujos se guardan en `storage/flows/`, fuera de git.
+
+- **Sin flujo activo** ("Completo de Meta Muse"), cada opción vale lo mismo que su variable del `.env`, así que el pipeline queda idéntico.
+- Cuando un flujo difiere del completo, la sesión guarda `flow_customizations` con el flujo usado y lo que cambió.
+
+| Opción | Bolita | Tipo | Por defecto (`.env`) |
+|---|---|---|---|
+| `extract.video` | Detectar productos | bool | `MUSE_SPARK_PHASE2_VIDEO` |
+| `verify2.enabled` | Verificar audio ↔ video | bool | `MUSE_PHASE2_VERIFY` |
+| `verify3.enabled` | Verificar recortes | bool | `MUSE_PHASE3_VERIFY_CUTOUTS` |
+| `images.parallel` | Foto máster | int 1–8 | `MUSE_IMAGE_PARALLEL` |
+| `view.left` / `view.right` / `view.back` | Vistas IA | bool | `true` |
+| `view.lifestyle` | Ambiente | bool | `MUSE_PHASE4_LIFESTYLE` |
+| `fidelity.enabled` | Control de fidelidad | bool | `true` |
+
+La vista frontal y la máster siempre se generan. Una vista apagada sale como `null` en `step_4b_variations` y no aparece en el catálogo.
+
+- `GET /api/v1/flows` devuelve `active_flow`, `active_flow_name`, `flows[]` y `options[]` (`key`, `node`, `type`, `label`, `description`, `default`, `value`, `min`, `max`).
+- `PUT /api/v1/flows/options` recibe `{"options": {"view.lifestyle": false}}` y guarda en el flujo activo. Si el activo es el completo, crea y activa "Mi flujo". Un tipo o rango inválido responde **400**.
+- `DELETE /api/v1/flows/options` devuelve todas las opciones del flujo activo a su valor por defecto.
+- `POST /api/v1/flows` recibe `{"name": "Rápido", "copy_from": null, "options": {...}}`. Crea el flujo y lo activa.
+- `PUT /api/v1/flows/active` recibe `{"flow": "rapido" | null}`.
+- `PUT /api/v1/flows/{slug}` recibe `{"name": "..."}` y solo cambia el nombre.
+- `DELETE /api/v1/flows/{slug}`
+
+Las escrituras responden **409** si hay una fase corriendo. Los slugs `active` y `options` están reservados.
+
+---
+
 ## Construir las URLs de las imágenes
 
 | Origen | Formato de la ruta | URL completa |

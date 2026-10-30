@@ -114,6 +114,8 @@ muse-catalog-hackathon/
   - Para agregar un prompt nuevo: definir la constante, llamar a `prompts.register(...)` junto a ella, usar `prompts.get(key)` y añadir `prompts.signature(key)` a la clave de caché.
 - **v0.3 (rama `version-0.3`): Flujo de agentes con bolitas.** Etapa 1: `TESTED_OK`.
   - Grafo visual de orden fijo (vista "Flujo" y Studio en vivo), solo frontend.
-  - Etapa 2 pendiente: flujos configurables (`flows.py`, interruptores y parámetros, flujo "Completo" intocable).
+  - Etapa 2 `TESTED_OK`: `backend/core/flows.py` (9 opciones; los valores por defecto salen del `.env`, así que "Completo de Meta Muse" es idéntico), endpoints `/api/v1/flows*`, interruptores en las bolitas, desvíos, estimación y chip Perfil · Flujo. **Al probar con procesos (SAM usa ProcessPool), proteger los scripts con `if __name__ == "__main__"`.**
+  - Extra `TESTED_OK`: aviso de repetidos en "Por revisar" (solo frontend). Coincidencia por `video_md5` + nombre normalizado; "Aceptar todos" salta los repetidos. Con el mismo video basta un nombre parecido (≥ 3/4 de las palabras), y `backfillVideoMd5()` completa los productos antiguos.
+  - **Error conocido (backend, sin corregir):** la clave de caché de la Fase 2 usa el MD5 de `video_proxies/*_480p.mp4`, que ffmpeg no genera igual dos veces. Por eso re-subir el mismo video vuelve a llamar a Spark y regenera imágenes. Arreglo propuesto: usar el MD5 del video original más los parámetros, con la clave antigua como respaldo.
   - Etapa 3 pendiente: estimador de costo, "Regenerar desde esta bolita" y pausa tras la Fase 2.
   - Base: commit `bdc0f9a` de la v0.2 (rama `version-0.2`).

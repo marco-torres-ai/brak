@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from backend.core.config import MUSE_PHASE2_VERIFY, STORAGE_DIR, load_session_state, save_session_state
+from backend.core import flows
+from backend.core.config import STORAGE_DIR, load_session_state, save_session_state
 from backend.core.muse_client import MuseClient
 from backend.core.token_tracker import TokenTracker
 from backend.services.phase2_verify import run_phase2_verification
@@ -64,7 +65,7 @@ async def run_phase2_semantic(session_id: Optional[str] = None) -> Dict[str, Any
     products = spark_batch.get("products", [])
 
     verification_report: Optional[Dict[str, Any]] = None
-    if MUSE_PHASE2_VERIFY:
+    if flows.get("verify2.enabled"):
         products, verification_report = run_phase2_verification(
             tracker=tracker,
             products=products,
