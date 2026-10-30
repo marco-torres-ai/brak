@@ -1,6 +1,7 @@
 # Secretos: la clave de Meta vive solo en .env
 .env
 .env.*
+!.env.example
 
 # Datos de sesiones, videos, imágenes generadas y caché de la API
 storage/

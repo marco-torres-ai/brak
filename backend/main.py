@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from backend.core import progress
 from backend.core.config import (
     FRONTEND_DIR,
     LAPLACIAN_BLUR_THRESHOLD,
@@ -78,6 +79,24 @@ async def health_check():
     }
 
 
+def _run_tracked(session_id: Optional[str], phase: int, make_coro: Any) -> Dict[str, Any]:
+    """Ejecuta una fase en este hilo (fuera del event loop) y registra su inicio y fin en el progreso en vivo."""
+    progress.begin(session_id, phase)
+    try:
+        state = asyncio.run(make_coro())
+    except Exception as exc:
+        progress.end(error=str(exc)[:300])
+        raise
+    progress.end()
+    return state
+
+
+@app.get("/api/v1/progress")
+async def get_progress(session_id: Optional[str] = None):
+    """Qué está haciendo la fase en curso: último evento, avisos de espera de Meta, tokens e imágenes en vivo."""
+    return progress.snapshot(session_id)
+
+
 @app.get("/api/v1/session/current")
 async def get_current_session():
     return load_session_state()
@@ -111,7 +130,7 @@ async def api_phase2_semantic(
 ):
     try:
         session_id = payload.get("session_id") if payload else None
-        state = await asyncio.to_thread(lambda: asyncio.run(run_phase2_semantic(session_id=session_id)))
+        state = await asyncio.to_thread(_run_tracked, session_id, 2, lambda: run_phase2_semantic(session_id=session_id))
         return state
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -147,7 +166,7 @@ async def api_phase3_vision_sam(
 ):
     try:
         session_id = payload.get("session_id") if payload else None
-        state = await asyncio.to_thread(lambda: asyncio.run(run_phase3_vision_sam(session_id=session_id)))
+        state = await asyncio.to_thread(_run_tracked, session_id, 3, lambda: run_phase3_vision_sam(session_id=session_id))
         return state
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -165,7 +184,7 @@ async def api_phase4_studio(
     try:
         session_id = payload.get("session_id") if payload else None
         # La Fase 4 tarda minutos (muse-image): se ejecuta en otro hilo para no congelar el servidor mientras tanto.
-        state = await asyncio.to_thread(lambda: asyncio.run(run_phase4_studio(session_id=session_id)))
+        state = await asyncio.to_thread(_run_tracked, session_id, 4, lambda: run_phase4_studio(session_id=session_id))
         return state
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -182,7 +201,7 @@ async def api_phase5_codegen(
 ):
     try:
         session_id = payload.get("session_id") if payload else None
-        state = await asyncio.to_thread(lambda: asyncio.run(run_phase5_codegen(session_id=session_id)))
+        state = await asyncio.to_thread(_run_tracked, session_id, 5, lambda: run_phase5_codegen(session_id=session_id))
         return state
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -200,7 +219,7 @@ async def api_run_full_pipeline_auto(
     try:
         session_id = payload.get("session_id") if payload else None
         # Fases 2 a 5 seguidas (~10 min con videos nuevos): en otro hilo para no congelar el servidor.
-        state = await asyncio.to_thread(lambda: asyncio.run(run_full_pipeline_auto(session_id=session_id)))
+        state = await asyncio.to_thread(_run_tracked, session_id, 2, lambda: run_full_pipeline_auto(session_id=session_id))
         return state
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))

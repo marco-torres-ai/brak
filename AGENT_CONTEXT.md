@@ -33,6 +33,8 @@ Aplicación web de Hackathon para procesar de **1 a 3 videos cortos (máximo 60s
 - **Modelos disponibles en la API (verificado con `GET /v1/models` el 2026-10-29):** `muse-voice-transcribe-1.0` (`POST /asr/transcribe`), `muse-spark-1.3` / `1.2` / `1.1` (`POST /chat/completions`, acepta imágenes), `muse-image-1.0`, `sam-3.1`, `muse-wonder-1.0`.
 - **NO están en la API:** `Muse Glimmer` (open-weight, solo auto-hospedado) → se reemplaza por `muse-spark-1.3` con imagen. `Muse Code` es un producto de Meta, no un modelo → el código del catálogo lo genera `muse-spark-1.3`.
 - **Modelos configurables en `.env`:** `MUSE_VOICE_MODEL`, `MUSE_SPARK_MODEL`, `MUSE_SAM_MODEL`, `MUSE_VOICE_LANGUAGES` (por defecto `Spanish`), `MUSE_SPARK_REASONING_PHASE2` / `MUSE_SPARK_REASONING_PHASE3` (por defecto `low`), `MUSE_PHASE3_MIN_IOU` (0.3), `MUSE_PHASE3_VERIFY_CUTOUTS` (1), `MUSE_IMAGE_MODEL`, `MUSE_IMAGE_SIZE` (1024x1024), `MUSE_IMAGE_PARALLEL` (4), `MUSE_PHASE4_LIFESTYLE` (1).
+- **Esperas y reintentos (v5.1.0):** límite de espera por llamada según tamaño (Spark: 90 s + 20 s por MB, máx. 300; Muse Image 120; SAM y Voice 60). Si Meta no responde, el reintento espera el doble (hasta el máximo), máx. 4 intentos. Motivo: el 2026-10-29 una llamada de Spark visión quedó colgada en Meta 5 min mientras la API respondía en 1,3 s a otras llamadas.
+- **Progreso en vivo:** `backend/core/progress.py` (en memoria, una sesión a la vez) alimentado por el TokenTracker y por el cliente de la API; `GET /api/v1/progress?session_id=` devuelve fase, último evento, aviso de espera de Meta, tokens e imágenes en curso.
 - **Muse Image en la API:** `POST /images/edits` (JSON, `images[].image_url` con data URL; sin máscara ni transparencia, fondo siempre opaco). Cobra **US$0.01 por imagen**, no por token (`usage` es solo referencial). ~15–25 s por imagen. Nombres de marcas o personajes (Winnie the Pooh, Iron Man, Funko) disparan `content_policy_violation`: se reintenta sin nombrar el producto.
 - **SAM 3.1 en la API:** `POST /responses` con `input_text` (frase nominal corta en inglés, o prompt de caja de `build_object_prompt`) + `input_image` (data URL). La salida son tokens `<0f>id<|box;...|><|mask;...|>`; se decodifican con el parser oficial `meta-sam-parser` (en `requirements.txt`). No reporta tokens (cobra por imagen procesada). Las frases genéricas funcionan mejor ("bottle" sí, "spray bottle" no).
 - **Límites Operativos:** `MAX_VIDEOS=3`, `MAX_DURATION_SEC=60`, `LAPLACIAN_BLUR_THRESHOLD=80.0`
@@ -53,7 +55,8 @@ muse-catalog-hackathon/
 │   ├── requirements.txt
 │   ├── core/
 │   │   ├── config.py           # Carga de .env y constantes
-│   │   ├── muse_api.py         # Cliente HTTP real de la Meta Model API (reintentos, JSON Schema, usage)
+│   │   ├── muse_api.py         # Cliente HTTP real de la Meta Model API (reintentos con espera creciente, JSON Schema, usage)
+│   │   ├── progress.py         # Progreso en vivo de la fase en curso (GET /api/v1/progress)
 │   │   ├── muse_client.py      # Lógica por fase sobre muse_api.py con Caché MD5 y TokenTracker
 │   │   └── token_tracker.py    # Middleware de trazas y cálculo de ahorro de tokens
 │   └── services/
@@ -98,3 +101,8 @@ muse-catalog-hackathon/
   - Tienda: filtros por categoría, buscador, orden por precio, selector de vistas (izquierda/derecha/atrás marcadas "IA"), ficha ampliada, carrito con totales por moneda, "Consultar precio" para productos sin precio, "Foto real del video" para tomas insuficientes.
   - Carpeta `storage/<sesión>/catalog/` con `muse_ecommerce_catalog.html` + `images/` (rutas relativas, máx. 1024 px). `/api/v1/phase5/catalog-preview` redirige a esa carpeta; `/catalog-download` entrega un ZIP que se abre sin el servidor (Tailwind por CDN: necesita internet para los estilos).
   - Resumen con números reales: tokens de la API, tokens evitados por caché (solo `CACHE_HIT_MD5`), imágenes cobradas y costo; desglose por modelo con llamadas API y aciertos de caché.
+- **FRONTEND "Brak Shop" v0.1 (rama git `version-0.1`):** `READY_FOR_USER_TEST`. `frontend/index.html` reescrito (el dashboard técnico anterior queda en la rama `main`). Sin cambios en el backend.
+  - Tienda Activa (aprobados en `localStorage`; semilla = productos de la última sesión real vía `GET /api/v1/session/current`), Pendientes de Aprobación (editar nombre/precio/estado, Aceptar y Publicar, Rechazar, Aceptar Todos), drawer "+ Agregar Productos con Video (Muse AI)" que encadena Fase 1 → 5 con stepper de 7 modelos, reintento desde la fase que falle, monitor de trazas del TokenTracker y carrito por moneda.
+  - Datos: `catalog_products` (Fase 5) + `studio_products` (mejor frame, `quality_score`, `mention_type`, recorte SAM). Imágenes del catálogo = `/storage/<sesión>/catalog/<src>`. Base de la API configurable con `localStorage.brak_api_base` (vacío = mismo origen).
+  - El stepper muestra los modelos que de verdad corren: "Muse Spark · visión" (rol de Glimmer) y "Muse Spark · textos" (rol de Muse Code). Los contadores se actualizan al terminar cada fase (el backend no transmite progreso intermedio).
+

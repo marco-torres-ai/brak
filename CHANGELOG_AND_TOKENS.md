@@ -280,3 +280,25 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
 - **Detalle observado:** un título salió incompleto ("Peluche de Winnie the Pooh con roja"): error de redacción del modelo; queda para revisar en la prueba del usuario.
 - **Estado:** `READY_FOR_USER_TEST`.
 - **Ajuste previo a la prueba completa:** las Fases 2, 3 y el "Flujo Completo Automático" (`/api/v1/pipeline/run-all`) también corren en otro hilo (`asyncio.to_thread`), igual que las Fases 4 y 5: el servidor no se congela mientras trabajan.
+
+## v0.1.0-frontend — Brak Shop (rama `version-0.1`) (2026-10-29)
+- **Git:** se inicializó el repositorio con `.gitignore` (excluye `.env`, `storage/`, `session_state.json`, ZIPs y `__pycache__`); se verificó que la clave no está en ningún archivo versionado. Commit base en `main` y rama `version-0.1`.
+- **Frontend nuevo** (`frontend/index.html`, sin tocar archivos `.py`): estética Meta AI Dark Studio (fondo #020617 con halo azul Meta, glassmorphism, lienzo blanco para fotos, azul #0866FF, gradiente Meta AI, esmeralda para precios, ámbar para pendientes, coral para rechazar).
+  - Tienda Activa con filtros, buscador, orden, selector de vistas (IA marcadas), vista rápida, carrito por moneda y "Consultar precio".
+  - Pendientes de Aprobación (human-in-the-loop) con comparativa mejor frame / recorte SAM / vistas Muse Image, badges EXPLICIT/DEICTIC y calidad, edición rápida y Aceptar/Rechazar/Aceptar Todos (persistencia en `localStorage`).
+  - Drawer de carga (1–3 videos, valida ≤ 60 s en el navegador) que encadena las Fases 1→5 con stepper animado, temporizador, contadores reales de tokens/imágenes tras cada fase y reintento desde la fase fallida.
+  - Monitor de trazas del TokenTracker en un drawer.
+- **Verificación:** sintaxis JS OK; ejecución con DOM simulado contra el backend real: semilla con los 4 productos de `sess_20261029_213301`, imágenes 200, pipeline desde la Fase 5 (caché) → 4 pendientes y 7 pasos completos, aprobar/aceptar todos, carrito ($10 USD), vista rápida y monitor (26,623 tokens, 25 imágenes, 46 trazas).
+- **Estado:** `READY_FOR_USER_TEST`.
+
+## v5.1.0 — Recuperación rápida de peticiones trabadas en Meta + progreso en vivo (2026-10-29)
+- **Incidente:** en la prueba del frontend (`sess_20261029_215517`) la llamada de Spark visión de la Fase 3 quedó sin respuesta 5 min con la conexión abierta, mientras la API respondía en 1,3 s a una llamada de prueba. El reintento automático (a los 300 s) respondió en 13 s. Causa: petición trabada del lado de Meta; impacto: ~5 min de espera, sin errores ni datos perdidos.
+- **Mejora 1 — espera según tamaño y creciente** (`backend/core/muse_api.py`): Spark 90 s + 20 s/MB (máx. 300), Muse Image 120 s, SAM y Voice 60 s; tras un corte por tiempo, el reintento espera el doble (hasta el máximo), 4 intentos. Probado simulando una petición trabada: 90 s → 180 s y responde; petición de 6 MB: 210 → 300 s. El incidente de hoy se habría recuperado en ~1,5 min.
+- **Mejora 2 — progreso en vivo:** nuevo `backend/core/progress.py` + `GET /api/v1/progress`; el TokenTracker reporta cada evento y el cliente de la API cada espera/reintento. `main.py` marca inicio y fin de cada fase. Frontend: sondeo cada 2,5 s durante cada fase → el stepper avanza modelo por modelo dentro de la fase, contadores de tokens/imágenes/caché en vivo, última acción visible y aviso ámbar "Meta no respondió en N s; se reintenta automáticamente" (o "esperando hace N s" si pasan más de 45 s sin novedades).
+- **Prueba en vivo con el servidor real** (Fases 2→5 de `sess_20261029_215517` desde caché): stepper Spark visión → SAM 3.1 → Muse Image → Spark textos según los eventos; 3 productos en Pendientes en 57 s.
+- No cambian prompts, modelos ni resultados de ninguna fase.
+
+## v0.1.1-docs — Documentación del proyecto (2026-10-29)
+- `README.md` reescrito (estaba en UTF-16 por haberse creado con `echo` en PowerShell; ahora UTF-8): qué hace, rol de cada modelo de Meta, diagrama del pipeline, inicio rápido, uso de Brak Shop, consejos para grabar, costos y tiempos medidos, API, estructura, solución de problemas, limitaciones y recursos oficiales.
+- Nuevos: `docs/ARCHITECTURE.md` (fases, verificadores, caché, robustez, lecciones aprendidas con la API real), `docs/API.md` (endpoints, ejemplos curl/JS, contratos JSON, URLs de imágenes), `docs/assets/pipeline_example.jpg` (3 productos reales del recorte SAM a las vistas de Muse Image) y `.env.example` (plantilla sin clave; `.gitignore` la exceptúa).
+- Rama `version-0.1` recreada (había sido renombrada a `main` por `git branch -M main`).

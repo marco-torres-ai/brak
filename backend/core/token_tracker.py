@@ -69,6 +69,9 @@ class TokenTracker:
             "details": details or {},
         }
         self.logs.append(entry)
+        from backend.core import progress  # import diferido: progress no depende del tracker
+
+        progress.note_event(phase, model, operation, status, self.grand_total_tokens, tokens_saved)
         return entry
 
     def to_dict(self) -> Dict[str, Any]:

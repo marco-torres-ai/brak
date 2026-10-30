@@ -1,1304 +1,852 @@
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Muse Video-to-Catalog AI — Hackathon Console</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            muse: {
-              50: '#eef2ff',
-              400: '#818cf8',
-              500: '#6366f1',
-              600: '#4f46e5',
-              900: '#1e1b4b'
-            }
-          }
-        }
-      }
-    };
-  </script>
-  <style>
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.78);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(51, 65, 85, 0.7);
-    }
-    .checkerboard {
-      background-color: #0f172a;
-      background-image:
-        linear-gradient(45deg, #1e293b 25%, transparent 25%),
-        linear-gradient(-45deg, #1e293b 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #1e293b 75%),
-        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Brak Shop | Second-Hand Marketplace</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { meta: { DEFAULT: '#0866FF', dark: '#0064E0' } } } } };
+</script>
+<style>
+  body {
+    background-color: #020617;
+    background-image: radial-gradient(ellipse 80% 45% at 50% -8%, rgba(8, 102, 255, 0.14), transparent 70%);
+    background-attachment: fixed;
+    color: #f8fafc;
+    font-family: "Optimistic Display", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .checker {
+    background-color: #ffffff;
+    background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+    background-size: 14px 14px; background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+  }
+  .meta-ai-gradient { background-image: linear-gradient(90deg, #2563eb, #6366f1, #9333ea); }
+  .meta-ai-text { background-image: linear-gradient(90deg, #60a5fa, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .step-active .step-dot { animation: pulseRing 1.4s ease-in-out infinite; }
+  @keyframes pulseRing { 0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.55); } 50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); } }
+  .shimmer { background: linear-gradient(90deg, rgba(37,99,235,.15), rgba(147,51,234,.35), rgba(37,99,235,.15)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  .leaving { opacity: 0; transform: translateY(8px) scale(0.98); transition: all .35s ease; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 8px; }
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
+<body class="min-h-screen flex flex-col">
 
-  <!-- Top Header -->
-  <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-30 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 font-bold text-lg">
-          M
+<!-- ===================== HEADER ===================== -->
+<header class="sticky top-0 z-30 glass border-b border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center gap-3 justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl meta-ai-gradient flex items-center justify-center font-black text-white text-lg shadow-lg shadow-indigo-500/20">B</div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-extrabold tracking-tight text-white">Brak Shop</h1>
+          <span class="text-slate-500 text-sm hidden sm:inline">|</span>
+          <span class="text-sm text-slate-400 hidden sm:inline">Second-Hand Marketplace</span>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold tracking-tight text-white">Muse Video-to-Catalog AI</h1>
-            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Meta Muse + SAM 3.1
-            </span>
-          </div>
-          <p class="text-xs text-slate-400">Pipeline Determinista Ultra-Eficiente en Tokens • Monitor de Trazas en Vivo</p>
-        </div>
-      </div>
-
-      <!-- Phase Stepper -->
-      <div class="flex items-center gap-1.5 text-xs overflow-x-auto py-1">
-        <div class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          Fase 1: OK
-        </div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          Fase 2: OK
-        </div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          Fase 3: OK
-        </div>
-        <div class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          Fase 4: OK
-        </div>
-        <div class="px-3 py-1.5 rounded-lg bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 font-bold flex items-center gap-1.5 shadow shadow-emerald-500/10">
-          <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
-          Fase 5: Catálogo E-Commerce (Spark)
-        </div>
-        <button id="btnRunAllAuto"
-          class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs shadow transition flex items-center gap-1.5">
-          <span>⚡ Flujo Completo Automático</span>
-        </button>
-      </div>
-
-      <!-- API Status Pill -->
-      <div id="healthBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
-        <span id="healthDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-        <span id="healthText">Verificando API...</span>
+        <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-indigo-500/40 bg-indigo-500/10">
+          <span class="meta-ai-text">✦ Powered by Meta Muse AI</span>
+        </span>
       </div>
     </div>
-  </header>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <nav class="flex items-center gap-1 p-1 rounded-2xl bg-slate-900/80 border border-slate-800" aria-label="Secciones">
+      <button data-action="tab" data-key="store" id="tabStore" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Tienda Activa</button>
+      <button data-action="tab" data-key="pending" id="tabPending" class="px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+        Pendientes de Aprobación <span id="pendingCount" class="min-w-[22px] px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[11px] font-black">0</span>
+      </button>
+    </nav>
 
-    <!-- TokenTracker Live Counters -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="glass-card rounded-2xl p-4 relative overflow-hidden">
-        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Tokens Consumidos (Muse API)</div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="metricTokensUsed" class="text-3xl font-extrabold text-white">0</span>
-          <span class="text-xs text-cyan-400 font-medium">Auditoría activa</span>
-        </div>
-        <div class="mt-2 text-[11px] text-slate-400 flex gap-3">
-          <span>In: <b id="metricInputTok" class="text-slate-200">0</b></span>
-          <span>Img: <b id="metricImageTok" class="text-slate-200">0</b></span>
-          <span>Out: <b id="metricOutputTok" class="text-slate-200">0</b></span>
-        </div>
-      </div>
-
-      <div class="glass-card rounded-2xl p-4 relative overflow-hidden border-emerald-500/30">
-        <div class="text-xs font-medium text-emerald-300 uppercase tracking-wider">Tokens Ahorrados (Collage 1x3 + SAM Puntual)</div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="metricTokensSaved" class="text-3xl font-extrabold text-emerald-400">0</span>
-          <span class="text-xs text-emerald-300/80 font-medium">acumulados</span>
-        </div>
-        <p class="mt-2 text-[11px] text-slate-400">Collage 1x3 (-66% visión) + SAM 3.1 en 1 frame + Caché MD5</p>
-      </div>
-
-      <div class="glass-card rounded-2xl p-4">
-        <div class="text-xs font-medium text-cyan-300 uppercase tracking-wider">Objetos Identificados y Recortados</div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="metricGroundedCount" class="text-3xl font-extrabold text-cyan-400">0</span>
-          <span id="metricEnhanceBreakdown" class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300">0 Óptimos • 0 Mejora 4A</span>
-        </div>
-        <p class="mt-2 text-[11px] text-slate-400">Productos en audio: <b id="metricProductsCount">0</b> (<span id="metricMentionBreakdown">0 EXPLICIT • 0 DEICTIC</span>)</p>
-      </div>
-
-      <div class="glass-card rounded-2xl p-4">
-        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Estado de Sesión</div>
-        <div class="mt-2">
-          <div id="metricSessionId" class="text-sm font-mono font-bold text-amber-300 truncate">Sin iniciar</div>
-          <div id="metricPhaseState" class="text-xs text-slate-400 mt-1">Esperando acción</div>
-        </div>
-        <button id="btnViewJson" class="mt-2 text-[11px] text-indigo-400 hover:text-indigo-300 underline">
-          Inspeccionar session_state.json
-        </button>
-      </div>
-    </section>
-
-    <!-- Error Alert -->
-    <div id="errorAlert" class="hidden p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-xs text-rose-200"></div>
-
-    <!-- PHASE 5 PANEL: Catálogo e-commerce final + auditoría real -->
-    <section class="glass-card rounded-2xl p-6 border-emerald-500/40 space-y-5 shadow-xl shadow-emerald-950/20">
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">FASE 5 • CIERRE DEL PIPELINE</span>
-            <h2 class="text-lg font-bold text-white">Catálogo E-Commerce Final &amp; Auditoría Real de la Sesión</h2>
-          </div>
-          <p class="text-xs text-slate-400 mt-1">
-            <b>muse-spark-1.3</b> escribe los textos de venta (título, descripción, destacados, categorías y etiquetas) en 1 llamada y una plantilla arma la tienda con las fotos de la Fase 4: filtros, buscador, vistas (las deducidas por IA van marcadas), carrito por moneda y "Consultar precio". Se descarga como ZIP que se abre sin el servidor.
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2.5">
-          <button id="btnRunPhase5"
-            class="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition flex items-center gap-2 disabled:opacity-50">
-            <svg id="btnPhase5Spinner" class="w-4 h-4 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg>
-            <span id="btnRunPhase5Text">Ejecutar Fase 5: Generar Catálogo</span>
-          </button>
-
-          <a id="btnOpenStandaloneCatalog" href="/api/v1/phase5/catalog-preview" target="_blank"
-            class="hidden py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition flex items-center gap-1.5">
-            <span>🌐 Abrir Tienda en Pantalla Completa</span>
-          </a>
-
-          <a id="btnDownloadStandaloneCatalog" href="/api/v1/phase5/catalog-download"
-            class="hidden py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 font-bold text-xs transition flex items-center gap-1.5">
-            <span>⬇️ Descargar catálogo (ZIP)</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Phase 5 Final Audit Summary Banner -->
-      <div id="phase5SummaryBanner" class="hidden space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/30">
-            <div class="text-[11px] text-slate-400">Productos Publicados</div>
-            <div id="metricP5Products" class="text-xl font-black text-white mt-0.5">6 productos</div>
-            <div id="metricP5Assets" class="text-[11px] text-emerald-400 font-mono">30 fotografías 1024x1024</div>
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-cyan-500/30">
-            <div class="text-[11px] text-slate-400">Valor Total del Catálogo</div>
-            <div id="metricP5Value" class="text-xl font-black text-emerald-400 mt-0.5">$48.00 USD</div>
-            <div id="metricP5ValueNote" class="text-[11px] text-slate-400 font-mono">Precios dichos en el video</div>
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-indigo-500/30">
-            <div class="text-[11px] text-slate-400">Tokens reales de la API</div>
-            <div id="metricP5SavingsPct" class="text-xl font-black text-cyan-400 mt-0.5">0% ahorro</div>
-            <div id="metricP5CodeSize" class="text-[11px] text-indigo-300 font-mono">HTML Autocontenido</div>
-          </div>
-          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-amber-500/30">
-            <div class="text-[11px] text-slate-400">Imágenes generadas (Muse Image)</div>
-            <div id="metricP5Cost" class="text-xl font-black text-amber-300 mt-0.5">US$0.00</div>
-            <div id="metricP5CostNote" class="text-[11px] text-slate-400 font-mono">US$0.01 por imagen</div>
-          </div>
-        </div>
-
-        <!-- Per-Model Final Token Audit Breakdown -->
-        <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-200 uppercase tracking-wider">📊 Auditoría real por modelo (sesión completa)</span>
-            <span class="text-[11px] font-mono text-emerald-400">Tokens reportados por la API • Caché MD5</span>
-          </div>
-          <div id="modelAuditBreakdownGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5"></div>
-        </div>
-      </div>
-
-      <!-- Interactive Storefront Controls (Search + Categories) -->
-      <div id="p5StoreControls" class="hidden flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div id="p5CategoryPills" class="flex flex-wrap items-center gap-1.5"></div>
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <input id="p5SearchInput" type="text" placeholder="Buscar en el catálogo..."
-            class="w-full sm:w-60 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-400" />
-          <select id="p5SortSelect" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200">
-            <option value="default">Orden del video</option>
-            <option value="price_asc">Precio: Menor a Mayor</option>
-            <option value="price_desc">Precio: Mayor a Menor</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Interactive E-Commerce Products Grid -->
-      <div id="p5CatalogStoreGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div class="col-span-full py-10 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-          Haz clic en <b>"Ejecutar Fase 5: Generar Catálogo"</b> para armar la tienda con los textos de venta y las fotos del estudio.
-        </div>
-      </div>
-    </section>
-
-    <!-- PHASE 4 PANEL: Muse Image (Conditional Enhancement 4A + Catalog Variations 4B) -->
-    <section class="glass-card rounded-2xl p-6 border-fuchsia-500/40 space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40">FASE 4</span>
-            <h2 class="text-lg font-bold text-white">Estudio Fotográfico IA: Mejora Condicional (4A) y Variaciones de Catálogo (4B) — Muse Image</h2>
-          </div>
-          <p class="text-xs text-slate-400 mt-1">
-            <b>Sub-paso 4A (Condicional):</b> Solo restaura los recortes con <code>needs_enhancement == true</code> (<code>quality_score &lt; 7.0</code>); los óptimos saltan directo ahorrando <b>+398 tokens</b> c/u.
-            <b>Sub-paso 4B:</b> Genera variaciones <b>Estudio Blanco Puro</b> y <b>Lifestyle Contextual</b> (800x800px) para el catálogo.
-          </p>
-        </div>
-
-        <button id="btnRunPhase4"
-          class="py-2.5 px-5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-fuchsia-600/25 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-          <svg id="btnPhase4Spinner" class="w-4 h-4 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-          </svg>
-          <span id="btnRunPhase4Text">Ejecutar Fase 4: Restauración Condicional (4A) &rarr; Variaciones E-Commerce (4B)</span>
-        </button>
-      </div>
-
-      <!-- Phase 4 Summary Banner -->
-      <div id="phase4SummaryBanner" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="p-3 rounded-xl bg-slate-900/90 border border-emerald-500/30 flex items-center justify-between">
-          <div>
-            <div class="text-[11px] text-slate-400">Sub-paso 4A Omitidos (Calidad &ge; 7.0)</div>
-            <div id="metric4ASkipped" class="text-base font-bold text-emerald-400">0 productos</div>
-          </div>
-          <span id="metric4ATokensSaved" class="text-xs font-mono px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">+0 tok ahorrados</span>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-900/90 border border-amber-500/30 flex items-center justify-between">
-          <div>
-            <div class="text-[11px] text-slate-400">Sub-paso 4A Ejecutados (Restauración IA)</div>
-            <div id="metric4AExecuted" class="text-base font-bold text-amber-300">0 productos</div>
-          </div>
-          <span class="text-xs font-mono px-2 py-1 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">CLAHE + Unsharp</span>
-        </div>
-        <div class="p-3 rounded-xl bg-slate-900/90 border border-fuchsia-500/30 flex items-center justify-between">
-          <div>
-            <div class="text-[11px] text-slate-400">Sub-paso 4B Variaciones Generadas</div>
-            <div id="metric4BGenerated" class="text-base font-bold text-fuchsia-300">0 imágenes</div>
-          </div>
-          <span class="text-xs font-mono px-2 py-1 rounded bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">800x800px Studio</span>
-        </div>
-      </div>
-
-      <!-- Studio Products Grid -->
-      <div id="studioProductsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div class="col-span-full py-10 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-          Haz clic en <b>"Ejecutar Fase 4: Restauración Condicional (4A) &rarr; Variaciones E-Commerce (4B)"</b> para procesar los recortes con <b>Muse Image</b>.
-        </div>
-      </div>
-    </section>
-
-    <!-- PHASE 3 PANEL: Muse Spark visión (Collage 1x3) + SAM 3.1 Cutouts -->
-    <section class="glass-card rounded-2xl p-6 border-slate-800 space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">FASE 3 • TESTED_OK</span>
-            <h2 class="text-lg font-bold text-white">Detección de Objetos, Mejor Frame y Recorte (Muse Spark visión + SAM 3.1)</h2>
-          </div>
-          <p class="text-xs text-slate-400 mt-1">
-            Crea un <b>Collage 1x3</b> por producto (ahorra ~66% de tokens visuales), identifica qué es <i>"esto"</i> en menciones <b>DEICTIC</b>, elige el <b>Mejor Frame</b>, evalúa <code>quality_score</code> y recorta el objeto sin fondo (PNG transparente) con <b>SAM 3.1</b>.
-          </p>
-        </div>
-
-        <button id="btnRunPhase3"
-          class="py-2.5 px-5 rounded-xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-semibold text-sm shadow-lg shadow-cyan-600/25 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-          <svg id="btnPhase3Spinner" class="w-4 h-4 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-          </svg>
-          <span id="btnRunPhase3Text">Ejecutar Fase 3: Collage 1x3 &rarr; Muse Spark &rarr; SAM 3.1 Cutout</span>
-        </button>
-      </div>
-
-      <!-- Grounded Products Grid -->
-      <div id="groundedProductsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div class="col-span-full py-10 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-          Haz clic en <b>"Ejecutar Fase 3: Collage 1x3 &rarr; Muse Spark &rarr; SAM 3.1 Cutout"</b> para identificar visualmente los objetos, evaluar su calidad y extraer sus recortes PNG sin fondo.
-        </div>
-      </div>
-    </section>
-
-    <!-- PHASE 2 PANEL: Muse Voice Transcribe + Muse Spark -->
-    <section class="glass-card rounded-2xl p-5 border-slate-800 space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">FASE 2 • TESTED_OK</span>
-          <h2 class="text-base font-bold text-white">Identificación de Audio e Intenciones (Muse Voice Transcribe + Muse Spark)</h2>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button id="btnSaveProductEdits" class="hidden px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition">
-            Guardar Ajustes Manuales (0 Tok)
-          </button>
-          <button id="btnRunPhase2"
-            class="py-1.5 px-3.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs transition flex items-center gap-2">
-            <svg id="btnPhase2Spinner" class="w-3.5 h-3.5 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg>
-            <span id="btnRunPhase2Text">Re-ejecutar Fase 2 (Caché MD5)</span>
-          </button>
-        </div>
-      </div>
-
-      <div id="transcriptionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden"></div>
-      <div id="semanticProductsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-    </section>
-
-    <!-- Workspace Grid: Left Upload & Phase 1 | Right Console & Retained Frames -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- Left Panel: Video Selector & Phase 1 Trigger (5 cols) -->
-      <div class="lg:col-span-5 space-y-6">
-        <div class="glass-card rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-base font-bold text-white">Fase 1. Entrada de Videos (1 a 3 videos)</h2>
-              <p class="text-xs text-slate-400">Máximo 60 segundos por video • Evaluación y rescate local CLAHE</p>
-            </div>
-            <span class="text-xs font-mono px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">TESTED_OK</span>
-          </div>
-
-          <label for="videoInput" id="dropZone" class="block border-2 border-dashed border-slate-700 hover:border-indigo-500 transition rounded-xl p-4 text-center cursor-pointer bg-slate-900/50 hover:bg-slate-900">
-            <input id="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo,video/*" multiple class="hidden" />
-            <p class="text-xs font-medium text-slate-200">Seleccionar nuevos videos (opcional)</p>
-          </label>
-
-          <div id="selectedVideosList" class="space-y-2 hidden"></div>
-
-          <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
-            <div>
-              <label class="block text-xs text-slate-400 mb-1" for="blurThresholdInput">Umbral Laplaciano</label>
-              <input id="blurThresholdInput" type="number" step="5" min="10" max="500" value="80.0"
-                class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white" />
-            </div>
-            <div>
-              <label class="block text-xs text-slate-400 mb-1" for="sampleFpsInput">Muestreo (FPS)</label>
-              <input id="sampleFpsInput" type="number" step="0.5" min="0.5" max="5.0" value="2.0"
-                class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white" />
-            </div>
-          </div>
-
-          <button id="btnRunPhase1"
-            class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs transition flex items-center justify-center gap-2">
-            <svg id="btnSpinner" class="w-4 h-4 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg>
-            <span id="btnRunPhase1Text">Re-ejecutar Fase 1 con nuevos videos (0 Tokens)</span>
-          </button>
-        </div>
-
-        <div class="glass-card rounded-2xl p-5 space-y-3">
-          <h3 class="text-sm font-bold text-white">Diagnóstico Técnico por Video (Fase 1)</h3>
-          <div id="videoDiagnosticsContainer" class="space-y-3 text-xs text-slate-400"></div>
-        </div>
-      </div>
-
-      <!-- Right Panel: Live [MUSE-TRACE] Console & Retained Frames Gallery (7 cols) -->
-      <div class="lg:col-span-7 space-y-6">
-        <div class="glass-card rounded-2xl p-5 flex flex-col h-80">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-              <h2 class="text-sm font-bold tracking-wide uppercase text-slate-200">Consola de Trazas en Vivo ([MUSE-TRACE])</h2>
-            </div>
-            <button id="btnClearLogs" class="text-xs text-slate-400 hover:text-slate-200">Limpiar vista</button>
-          </div>
-          <div id="traceConsole" class="flex-1 bg-slate-950/90 border border-slate-800 rounded-xl p-3 font-mono text-xs overflow-y-auto space-y-1.5 text-slate-300"></div>
-        </div>
-
-        <div class="glass-card rounded-2xl p-5 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 class="text-sm font-bold text-white">Galería de Frames Nítidos Retenidos (Fase 1)</h2>
-            </div>
-            <select id="videoFilterSelect" class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200">
-              <option value="ALL">Todos los videos</option>
-            </select>
-          </div>
-          <div id="framesGallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[360px] overflow-y-auto pr-1"></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Modal for Image Zoom / JSON Inspection -->
-  <div id="modalOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-      <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
-        <h3 id="modalTitle" class="text-sm font-bold text-white">Detalle</h3>
-        <button id="btnCloseModal" class="text-slate-400 hover:text-white text-lg font-bold px-2">&times;</button>
-      </div>
-      <div id="modalBody" class="p-5 overflow-y-auto text-xs font-mono text-slate-200"></div>
+    <div class="flex items-center gap-2">
+      <button data-action="open-upload" class="px-4 py-2.5 rounded-xl meta-ai-gradient text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:brightness-110 transition">
+        + Agregar Productos con Video <span class="hidden md:inline">(Muse AI)</span>
+      </button>
+      <button data-action="open-tokens" title="Monitor de trazas de tokens" class="px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-meta text-xs font-semibold text-slate-200 transition flex items-center gap-1.5">
+        📊 <span id="headerTokens" class="font-mono">0</span> <span class="hidden lg:inline text-slate-500">tokens</span>
+      </button>
+      <button data-action="open-cart" class="relative px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-meta text-sm transition" aria-label="Carrito">
+        🛒 <span id="cartCount" class="absolute -top-1.5 -right-1.5 min-w-[20px] px-1 rounded-full bg-meta text-white text-[10px] font-bold">0</span>
+      </button>
     </div>
   </div>
+</header>
 
-  <script>
-    const videoInput = document.getElementById('videoInput');
-    const selectedVideosList = document.getElementById('selectedVideosList');
-    const btnRunPhase1 = document.getElementById('btnRunPhase1');
-    const btnRunPhase1Text = document.getElementById('btnRunPhase1Text');
-    const btnSpinner = document.getElementById('btnSpinner');
-    const btnRunPhase2 = document.getElementById('btnRunPhase2');
-    const btnRunPhase2Text = document.getElementById('btnRunPhase2Text');
-    const btnPhase2Spinner = document.getElementById('btnPhase2Spinner');
-    const btnRunPhase3 = document.getElementById('btnRunPhase3');
-    const btnRunPhase3Text = document.getElementById('btnRunPhase3Text');
-    const btnPhase3Spinner = document.getElementById('btnPhase3Spinner');
-    const btnRunPhase4 = document.getElementById('btnRunPhase4');
-    const btnRunPhase4Text = document.getElementById('btnRunPhase4Text');
-    const btnPhase4Spinner = document.getElementById('btnPhase4Spinner');
-    const btnSaveProductEdits = document.getElementById('btnSaveProductEdits');
-    const errorAlert = document.getElementById('errorAlert');
-    const traceConsole = document.getElementById('traceConsole');
-    const framesGallery = document.getElementById('framesGallery');
-    const videoDiagnosticsContainer = document.getElementById('videoDiagnosticsContainer');
-    const videoFilterSelect = document.getElementById('videoFilterSelect');
-    const transcriptionsContainer = document.getElementById('transcriptionsContainer');
-    const semanticProductsGrid = document.getElementById('semanticProductsGrid');
-    const groundedProductsGrid = document.getElementById('groundedProductsGrid');
-    const studioProductsGrid = document.getElementById('studioProductsGrid');
-    const phase4SummaryBanner = document.getElementById('phase4SummaryBanner');
+<!-- ===================== TIENDA ACTIVA ===================== -->
+<main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
+  <section id="viewStore">
+    <div class="rounded-3xl glass border border-slate-800 p-6 mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div class="max-w-2xl space-y-1">
+        <h2 class="text-2xl sm:text-3xl font-black text-white">Segunda mano, fotos de estudio.</h2>
+        <p class="text-sm text-slate-400">Cada artículo se publicó a partir de un video del vendedor: Meta Muse escuchó el precio, encontró el objeto, lo recortó y le hizo una sesión de fotos.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800"><div class="text-[10px] uppercase text-slate-400">Artículos</div><div id="statProducts" class="text-xl font-black text-white">0</div></div>
+        <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800"><div class="text-[10px] uppercase text-slate-400">Categorías</div><div id="statCategories" class="text-xl font-black text-white">0</div></div>
+        <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800"><div class="text-[10px] uppercase text-slate-400">Pendientes</div><div id="statPending" class="text-xl font-black text-amber-400">0</div></div>
+      </div>
+    </div>
 
-    let currentSessionState = null;
-    let selectedFiles = [];
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div id="categoryBar" class="flex flex-wrap gap-2"></div>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <input id="searchInput" type="search" placeholder="Buscar en Brak Shop..." class="w-full sm:w-64 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-meta" />
+        <select id="sortSelect" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-meta">
+          <option value="recent">Más recientes</option>
+          <option value="price_asc">Precio: menor a mayor</option>
+          <option value="price_desc">Precio: mayor a menor</option>
+        </select>
+      </div>
+    </div>
 
-    function showError(msg) {
-      if (!msg) {
-        errorAlert.classList.add('hidden');
-        errorAlert.textContent = '';
-        return;
-      }
-      errorAlert.textContent = msg;
-      errorAlert.classList.remove('hidden');
-    }
+    <div id="storeGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+    <div id="storeEmpty" class="hidden rounded-3xl border border-dashed border-slate-800 py-16 text-center space-y-3">
+      <div class="text-4xl">🛍️</div>
+      <p class="text-slate-300 font-semibold">Todavía no hay artículos publicados.</p>
+      <p class="text-sm text-slate-500">Sube un video mostrando lo que vendes y aprueba los productos que detecte Meta Muse.</p>
+      <button data-action="open-upload" class="mt-2 px-4 py-2.5 rounded-xl meta-ai-gradient text-white font-bold text-sm">+ Agregar Productos con Video (Muse AI)</button>
+    </div>
+  </section>
 
-    function appendLocalTrace(message, color = 'text-emerald-300') {
-      const div = document.createElement('div');
-      div.className = `${color} break-words`;
-      div.textContent = message;
-      traceConsole.appendChild(div);
-      traceConsole.scrollTop = traceConsole.scrollHeight;
-    }
+  <!-- ===================== PENDIENTES ===================== -->
+  <section id="viewPending" class="hidden">
+    <div class="rounded-3xl glass border border-amber-500/30 p-5 mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-black text-white flex items-center gap-2">Pendientes de Aprobación <span id="pendingCount2" class="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-xs font-black">0</span></h2>
+        <p class="text-sm text-slate-400">Revisa lo que generó la IA: ajusta nombre, precio o estado y decide qué se publica.</p>
+      </div>
+      <div class="flex gap-2">
+        <button data-action="reject-all" class="px-4 py-2.5 rounded-xl bg-slate-900 border border-rose-500/40 text-rose-300 hover:bg-rose-500/10 font-semibold text-sm transition">🗑️ Rechazar todos</button>
+        <button data-action="approve-all" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition">✅ Aceptar Todos</button>
+      </div>
+    </div>
+    <div id="pendingGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5"></div>
+    <div id="pendingEmpty" class="hidden rounded-3xl border border-dashed border-slate-800 py-16 text-center space-y-3">
+      <div class="text-4xl">✨</div>
+      <p class="text-slate-300 font-semibold">No hay productos esperando revisión.</p>
+      <button data-action="open-upload" class="mt-2 px-4 py-2.5 rounded-xl meta-ai-gradient text-white font-bold text-sm">+ Agregar Productos con Video (Muse AI)</button>
+    </div>
+  </section>
+</main>
 
-    async function checkHealth() {
-      try {
-        const res = await fetch('/api/health');
-        const data = await res.json();
-        if (data.status === 'ok') {
-          document.getElementById('healthDot').className = 'w-2 h-2 rounded-full bg-emerald-400';
-          document.getElementById('healthText').textContent = `API Online • Key ${data.meta_muse_api_key_masked}`;
-        }
-        const sessRes = await fetch('/api/v1/session/current');
-        if (sessRes.ok) {
-          const sessData = await sessRes.json();
-          if (sessData && sessData.videos && sessData.videos.length > 0) {
-            currentSessionState = sessData;
-            renderSessionState(sessData);
-          }
-        }
-      } catch (err) {
-        document.getElementById('healthDot').className = 'w-2 h-2 rounded-full bg-rose-500';
-        document.getElementById('healthText').textContent = 'API Desconectada';
-      }
-    }
+<footer class="border-t border-slate-800 py-4 text-center text-[11px] text-slate-500">
+  Brak Shop • Video-to-Catalog con Meta Muse (Voice Transcribe, Spark, SAM 3.1, Muse Image)
+</footer>
 
-    videoInput.addEventListener('change', async (e) => {
-      showError('');
-      const files = Array.from(e.target.files || []);
-      selectedFiles = files.slice(0, 3);
-      selectedVideosList.classList.remove('hidden');
-      selectedVideosList.innerHTML = selectedFiles
-        .map((f, i) => `<div class="text-xs p-2 rounded bg-slate-900 border border-slate-800">${i + 1}. ${f.name}</div>`)
-        .join('');
-    });
+<!-- ===================== DRAWER: AGREGAR CON VIDEO ===================== -->
+<div id="uploadDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-black/70" data-action="close-upload"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-xl glass border-l border-slate-800 flex flex-col">
+    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-extrabold text-white">Agregar productos con video</h3>
+        <p class="text-xs text-slate-400">De 1 a 3 videos de hasta 60 s. Di el precio de cada objeto mientras lo muestras.</p>
+      </div>
+      <button data-action="close-upload" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+    </div>
 
-    btnRunPhase1.addEventListener('click', async () => {
-      showError('');
-      if (selectedFiles.length === 0) {
-        showError('Selecciona de 1 a 3 videos antes de re-ejecutar la Fase 1.');
-        return;
-      }
-      const blurThreshold = parseFloat(document.getElementById('blurThresholdInput').value || '80');
-      const sampleFps = parseFloat(document.getElementById('sampleFpsInput').value || '2.0');
-      const formData = new FormData();
-      selectedFiles.forEach((f) => formData.append('files', f));
-      formData.append('blur_threshold', blurThreshold);
-      formData.append('sample_fps', sampleFps);
+    <div class="flex-1 overflow-y-auto p-5 space-y-5">
+      <label id="dropZone" for="videoInput" class="block rounded-2xl border-2 border-dashed border-slate-700 hover:border-meta bg-slate-900/60 p-6 text-center cursor-pointer transition">
+        <div class="text-3xl mb-2">🎬</div>
+        <div class="text-sm font-semibold text-slate-200">Arrastra tus videos aquí o haz clic para elegirlos</div>
+        <div class="text-xs text-slate-500 mt-1">MP4 o MOV • máximo 3 • hasta 60 segundos cada uno</div>
+        <input id="videoInput" type="file" accept="video/*" multiple class="hidden" />
+      </label>
+      <div id="fileList" class="space-y-2"></div>
 
-      btnRunPhase1.disabled = true;
-      btnSpinner.classList.remove('hidden');
-      try {
-        const res = await fetch('/api/v1/phase1/preprocess', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Error en Fase 1');
-        currentSessionState = data;
-        renderSessionState(data);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        btnRunPhase1.disabled = false;
-        btnSpinner.classList.add('hidden');
-      }
-    });
+      <button id="btnProcess" data-action="process" disabled class="w-full py-3 rounded-xl meta-ai-gradient text-white font-extrabold text-sm shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition">
+        ✦ Procesar y Extraer Productos
+      </button>
 
-    btnRunPhase2.addEventListener('click', async () => {
-      showError('');
-      btnRunPhase2.disabled = true;
-      btnPhase2Spinner.classList.remove('hidden');
-      try {
-        const res = await fetch('/api/v1/phase2/semantic', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ session_id: currentSessionState ? currentSessionState.session_id : null })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Error en Fase 2');
-        currentSessionState = data;
-        renderSessionState(data);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        btnRunPhase2.disabled = false;
-        btnPhase2Spinner.classList.add('hidden');
-      }
-    });
-
-    btnRunPhase3.addEventListener('click', async () => {
-      showError('');
-      btnRunPhase3.disabled = true;
-      btnPhase3Spinner.classList.remove('hidden');
-      btnRunPhase3Text.textContent = 'Ejecutando Collage 1x3 -> Muse Spark -> SAM 3.1 -> verificación...';
-      appendLocalTrace('[MUSE-TRACE] Iniciando Fase 3: Collages 1x3 -> Muse Spark (visión) -> SAM 3.1 -> verificación de recortes...', 'text-cyan-300');
-
-      try {
-        const res = await fetch('/api/v1/phase3/vision-sam', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            session_id: currentSessionState ? currentSessionState.session_id : null
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.detail || 'Error ejecutando la Fase 3');
-        }
-        currentSessionState = data;
-        renderSessionState(data);
-      } catch (err) {
-        showError(err.message);
-        appendLocalTrace(`[MUSE-TRACE] [ERROR-FASE-3] ${err.message}`, 'text-rose-400');
-      } finally {
-        btnRunPhase3.disabled = false;
-        btnPhase3Spinner.classList.add('hidden');
-        btnRunPhase3Text.textContent = 'Ejecutar Fase 3: Collage 1x3 \u2192 Muse Spark \u2192 SAM 3.1 Cutout';
-      }
-    });
-
-    btnRunPhase4.addEventListener('click', async () => {
-      showError('');
-      btnRunPhase4.disabled = true;
-      btnPhase4Spinner.classList.remove('hidden');
-      btnRunPhase4Text.textContent = 'Ejecutando Muse Image (4A Condicional + 4B Variaciones)...';
-      appendLocalTrace('[MUSE-TRACE] Iniciando Fase 4: Sub-paso 4A (Mejora Condicional) -> Sub-paso 4B (Estudio Blanco + Lifestyle)...', 'text-fuchsia-300');
-
-      try {
-        const res = await fetch('/api/v1/phase4/studio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            session_id: currentSessionState ? currentSessionState.session_id : null
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.detail || 'Error ejecutando la Fase 4');
-        }
-        currentSessionState = data;
-        renderSessionState(data);
-      } catch (err) {
-        showError(err.message);
-        appendLocalTrace(`[MUSE-TRACE] [ERROR-FASE-4] ${err.message}`, 'text-rose-400');
-      } finally {
-        btnRunPhase4.disabled = false;
-        btnPhase4Spinner.classList.add('hidden');
-        btnRunPhase4Text.textContent = 'Ejecutar Fase 4: Restauración Condicional (4A) \u2192 Variaciones E-Commerce (4B)';
-      }
-    });
-
-    const btnRunPhase5 = document.getElementById('btnRunPhase5');
-    const btnPhase5Spinner = document.getElementById('btnPhase5Spinner');
-    const btnRunPhase5Text = document.getElementById('btnRunPhase5Text');
-    const btnRunAllAuto = document.getElementById('btnRunAllAuto');
-    let p5ActiveCategory = 'TODOS';
-    let p5Cart = [];
-    const p5ActiveAngleByProduct = {};
-
-    btnRunPhase5.addEventListener('click', async () => {
-      showError('');
-      btnRunPhase5.disabled = true;
-      btnPhase5Spinner.classList.remove('hidden');
-      btnRunPhase5Text.textContent = 'Generando catálogo (textos con Spark + plantilla)...';
-      appendLocalTrace('[MUSE-TRACE] Iniciando Fase 5: textos de venta con muse-spark-1.3 y armado del catálogo...', 'text-emerald-300');
-
-      try {
-        const res = await fetch('/api/v1/phase5/codegen', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            session_id: currentSessionState ? currentSessionState.session_id : null
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.detail || 'Error ejecutando la Fase 5');
-        }
-        currentSessionState = data;
-        renderSessionState(data);
-      } catch (err) {
-        showError(err.message);
-        appendLocalTrace(`[MUSE-TRACE] [ERROR-FASE-5] ${err.message}`, 'text-rose-400');
-      } finally {
-        btnRunPhase5.disabled = false;
-        btnPhase5Spinner.classList.add('hidden');
-        btnRunPhase5Text.textContent = 'Ejecutar Fase 5: Generar Catálogo';
-      }
-    });
-
-    btnRunAllAuto.addEventListener('click', async () => {
-      showError('');
-      btnRunAllAuto.disabled = true;
-      btnRunAllAuto.innerHTML = '<span>⏳ Ejecutando Flujo Completo (2 &rarr; 5)...</span>';
-      appendLocalTrace('[MUSE-TRACE] Ejecutando Flujo Completo Automático (Fases 2 -> 3 -> 4 -> 5) con Caché MD5 activo...', 'text-amber-300 font-bold');
-
-      try {
-        const res = await fetch('/api/v1/pipeline/run-all', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            session_id: currentSessionState ? currentSessionState.session_id : null
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.detail || 'Error en Flujo Completo Automático');
-        }
-        currentSessionState = data;
-        renderSessionState(data);
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        btnRunAllAuto.disabled = false;
-        btnRunAllAuto.innerHTML = '<span>⚡ Flujo Completo Automático</span>';
-      }
-    });
-
-    document.getElementById('p5SearchInput').addEventListener('input', () => {
-      if (currentSessionState) renderPhase5Results(currentSessionState);
-    });
-    document.getElementById('p5SortSelect').addEventListener('change', () => {
-      if (currentSessionState) renderPhase5Results(currentSessionState);
-    });
-
-    btnSaveProductEdits.addEventListener('click', async () => {
-      if (!currentSessionState || !currentSessionState.semantic_products) return;
-      const updated = currentSessionState.semantic_products.map((prod) => {
-        const card = document.querySelector(`[data-product-card="${prod.product_id}"]`);
-        if (!card) return prod;
-        return {
-          ...prod,
-          detected_name: card.querySelector('.input-prod-name').value.trim(),
-          price: card.querySelector('.input-prod-price').value === '' ? null : parseFloat(card.querySelector('.input-prod-price').value),
-          condition: card.querySelector('.input-prod-condition').value.trim(),
-          mention_type: card.querySelector('.input-prod-type').value
-        };
-      });
-      try {
-        const res = await fetch('/api/v1/phase2/products', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ session_id: currentSessionState.session_id, products: updated })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Error guardando ajustes');
-        currentSessionState = data;
-        renderSessionState(data);
-      } catch (err) {
-        showError(err.message);
-      }
-    });
-
-    function renderSessionState(state) {
-      const audit = state.token_audit || {};
-      document.getElementById('metricTokensUsed').textContent = (audit.grand_total_tokens || 0).toLocaleString();
-      document.getElementById('metricInputTok').textContent = (audit.total_input_tokens || 0).toLocaleString();
-      document.getElementById('metricImageTok').textContent = (audit.total_image_tokens || 0).toLocaleString();
-      document.getElementById('metricOutputTok').textContent = (audit.total_output_tokens || 0).toLocaleString();
-      document.getElementById('metricTokensSaved').textContent = `+${(audit.estimated_tokens_saved || 0).toLocaleString()}`;
-
-      document.getElementById('metricSessionId').textContent = state.session_id || 'N/A';
-      const phaseNum = state.current_phase_completed || 0;
-      document.getElementById('metricPhaseState').textContent =
-        phaseNum >= 5
-          ? 'Fase 5 Completada • Catálogo E-Commerce Listo'
-          : phaseNum === 4
-          ? 'Fase 4 OK • Lista para Fase 5 (catálogo)'
-          : phaseNum === 3
-          ? 'Fase 3 OK • Lista para Fase 4'
-          : phaseNum === 2
-          ? 'Fase 2 OK • Lista para Fase 3'
-          : 'Fase 1 OK';
-
-      // Logs
-      traceConsole.innerHTML = '';
-      (audit.logs || []).forEach((log) => {
-        let color = 'text-emerald-300';
-        if (log.status && log.status.startsWith('REJECTED')) color = 'text-rose-400';
-        else if (log.status && log.status.includes('CACHE_HIT')) color = 'text-cyan-300';
-        else if (log.status && log.status.includes('SKIPPED_OPTIMAL')) color = 'text-emerald-400 font-semibold';
-        else if (log.phase === 5) color = 'text-emerald-400 font-bold';
-        else if (log.phase === 4) color = 'text-fuchsia-300';
-        else if (log.phase === 3) color = 'text-amber-300';
-        else if (log.phase === 2) color = 'text-indigo-300';
-        appendLocalTrace(log.trace_line, color);
-      });
-
-      // Video Diagnostics
-      const videos = state.videos || [];
-      videoDiagnosticsContainer.innerHTML = '';
-      videoFilterSelect.innerHTML = '<option value="ALL">Todos los videos</option>';
-      videos.forEach((v) => {
-        const opt = document.createElement('option');
-        opt.value = v.video_id;
-        opt.textContent = `${v.video_id} — ${v.filename}`;
-        videoFilterSelect.appendChild(opt);
-
-        const qa = v.quality_assessment || {};
-        const card = document.createElement('div');
-        card.className = 'p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1.5';
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-white truncate">${v.video_id}: ${v.filename}</span>
-            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">${qa.overall_status}</span>
-          </div>
-          <div class="text-[11px] text-slate-400">
-            Res: <b>${qa.resolution}</b> • Dur: <b>${qa.duration_sec}s</b> • Retenidos: <b class="text-emerald-400">${qa.sharp_frames_retained}</b>
-          </div>
-        `;
-        videoDiagnosticsContainer.appendChild(card);
-      });
-
-      renderPhase2Results(state);
-      renderPhase3Results(state);
-      renderPhase4Results(state);
-      renderPhase5Results(state);
-      renderGallery('ALL');
-    }
-
-    function renderPhase5Results(state) {
-      const p5Summary = state.phase5_summary || null;
-      const catalogBuild = state.catalog_build || null;
-      const byModel = (state.token_audit || {}).by_model || {};
-      const banner = document.getElementById('phase5SummaryBanner');
-      const grid = document.getElementById('p5CatalogStoreGrid');
-      const btnOpen = document.getElementById('btnOpenStandaloneCatalog');
-      const btnDownload = document.getElementById('btnDownloadStandaloneCatalog');
-      document.getElementById('p5StoreControls').classList.add('hidden');
-
-      if (!p5Summary || !catalogBuild) {
-        banner.classList.add('hidden');
-        btnOpen.classList.add('hidden');
-        btnDownload.classList.add('hidden');
-        return;
-      }
-      banner.classList.remove('hidden');
-      btnOpen.classList.remove('hidden');
-      btnDownload.classList.remove('hidden');
-      btnOpen.href = catalogBuild.preview_endpoint;
-      btnDownload.href = catalogBuild.download_endpoint;
-
-      const values = p5Summary.catalog_value_by_currency || {};
-      document.getElementById('metricP5Products').textContent = `${p5Summary.products_published} productos • ${p5Summary.store_name || ''}`;
-      document.getElementById('metricP5Assets').textContent = `${p5Summary.images_published} imágenes (${p5Summary.ai_inferred_views || 0} vistas IA)`;
-      document.getElementById('metricP5Value').textContent = Object.keys(values).length
-        ? Object.entries(values).map(([c, v]) => `${Number(v).toFixed(2)} ${c}`).join(' + ')
-        : 'Sin precios';
-      document.getElementById('metricP5ValueNote').textContent = p5Summary.products_without_price
-        ? `${p5Summary.products_without_price} producto(s) con "Consultar precio"`
-        : 'Precios dichos en el video';
-      document.getElementById('metricP5SavingsPct').textContent = `${(p5Summary.api_tokens_used || 0).toLocaleString()} tokens`;
-      document.getElementById('metricP5CodeSize').textContent = `${(p5Summary.tokens_avoided_by_cache || 0).toLocaleString()} evitados por caché • ${p5Summary.api_calls || 0} llamadas`;
-      document.getElementById('metricP5Cost').textContent = `US$${Number(p5Summary.images_cost_usd || 0).toFixed(2)}`;
-      document.getElementById('metricP5CostNote').textContent = `${p5Summary.images_generated || 0} imágenes • US$0.01 c/u`;
-
-      const modelGrid = document.getElementById('modelAuditBreakdownGrid');
-      modelGrid.innerHTML = '';
-      Object.entries(byModel).forEach(([modelName, stats]) => {
-        const mCard = document.createElement('div');
-        mCard.className = 'p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1 text-xs';
-        mCard.innerHTML = `
-          <div class="font-bold text-white truncate" title="${modelName}">${modelName}</div>
-          <div class="text-[11px] text-slate-400">Tokens: <b class="text-cyan-300 font-mono">${(stats.total_tokens || 0).toLocaleString()}</b></div>
-          <div class="text-[10px] text-slate-500 font-mono">${stats.api_calls || 0} API • ${stats.cache_hits || 0} caché${stats.saved_tokens ? ` (+${stats.saved_tokens.toLocaleString()})` : ''}</div>
-        `;
-        modelGrid.appendChild(mCard);
-      });
-
-      const src = `${catalogBuild.catalog_html_url}?v=${Date.now()}`;
-      grid.innerHTML = `<iframe src="${src}" title="Catálogo generado" class="col-span-full w-full rounded-2xl border border-slate-800 bg-slate-950" style="height: 85vh"></iframe>`;
-    }
-
-    window.switchEmbeddedProductAngle = function (productId, angleKey) {
-      p5ActiveAngleByProduct[productId] = angleKey;
-      if (currentSessionState) renderPhase5Results(currentSessionState);
-    };
-
-    window.addEmbeddedCart = function (productId) {
-      if (!currentSessionState || !currentSessionState.studio_products) return;
-      const prod = currentSessionState.studio_products.find((p) => p.product_id === productId);
-      if (!prod) return;
-      p5Cart.push(prod);
-      const total = p5Cart.reduce((acc, p) => acc + (Number(p.price) || 0), 0);
-      document.getElementById('p5CartBadge').textContent = `${p5Cart.length} ítems`;
-      document.getElementById('p5CartTotal').textContent = `$${total.toFixed(2)} USD`;
-      appendLocalTrace(`[MUSE-STORE] Producto agregado al carrito: ${prod.resolved_name} ($${prod.price} USD) | Carrito=${p5Cart.length} ítems ($${total.toFixed(2)} USD)`, 'text-emerald-300');
-    };
-
-    window.checkoutEmbeddedStore = function () {
-      if (p5Cart.length === 0) {
-        alert('Agrega al menos un producto al carrito usando el botón "+ Agregar al Carrito".');
-        return;
-      }
-      const total = p5Cart.reduce((acc, p) => acc + (Number(p.price) || 0), 0);
-      const lines = p5Cart.map((p, idx) => `${idx + 1}. ${p.resolved_name} — $${p.price} USD`).join('\n');
-      alert(`✅ ¡Pedido Confirmado en Muse AI E-Commerce Store!\n\n${lines}\n\nTotal: $${total.toFixed(2)} USD`);
-    };
-
-    function renderPhase4Results(state) {
-      const studioItems = (state.studio_products || state.grounded_products || []).filter((p) => p.studio_imagen);
-      const summary = state.phase4_summary || null;
-
-      if (summary) {
-        phase4SummaryBanner.classList.remove('hidden');
-        document.getElementById('metric4ASkipped').textContent = `${summary.angle_views ?? 0} vistas laterales/trasera aprobadas`;
-        document.getElementById('metric4ATokensSaved').textContent = `${summary.images_generated_api ?? 0} imágenes nuevas • US$${(summary.cost_usd ?? 0).toFixed(2)}`;
-        document.getElementById('metric4AExecuted').textContent = `${summary.enhanced_in_4a_count} másters de estudio`;
-        document.getElementById('metric4BGenerated').textContent = `${summary.catalog_variations_generated} fotos (frente, 3 ángulos IA, ambiente)`;
-      } else {
-        phase4SummaryBanner.classList.add('hidden');
-      }
-
-      if (studioItems.length === 0) {
-        studioProductsGrid.innerHTML = `
-          <div class="col-span-full py-10 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-            Haz clic en <b>"Ejecutar Fase 4"</b> para restaurar los recortes que lo necesiten y generar las fotos de catálogo (fondo blanco y ambiente) con <b>Muse Image</b>.
-          </div>
-        `;
-        return;
-      }
-
-      studioProductsGrid.innerHTML = '';
-      const cacheBuster = Date.now();
-      const fidelityBadge = (f) => {
-        if (!f) return '';
-        if (f.unverified) return '<span class="ml-1 px-1 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300">sin verificar</span>';
-        const ok = f.faithful;
-        const tip = (f.round1_issues ? `Ronda 1 rechazada: ${f.round1_issues}. ` : '') + (f.issues || '');
-        return `<span title="${tip.replace(/"/g, '&quot;')}" class="ml-1 px-1 rounded text-[9px] font-bold ${ok ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}">${ok ? (f.round === 2 ? 'fiel (2º intento)' : 'fiel') : 'no fiel'}</span>`;
-      };
-      studioItems.forEach((item) => {
-        const st = item.studio_imagen || {};
-        const s4a = st.step_4a_enhancement || {};
-        const s4b = st.step_4b_variations || {};
-        const fid = st.fidelity_checks || {};
-        const u = (x) => (x ? `${x}?v=${cacheBuster}` : '');
-        const views = [
-          { label: 'Máster de estudio', url: u(s4a.restored_image_url), bg: 'bg-white', note: 'Muse Image', f: fid.master },
-          { label: 'Frente', url: u(s4b.studio_white_url), bg: 'bg-white', note: s4b.studio_white_source === 'MUSE_IMAGE' ? 'Muse Image' : 'Recorte real (sin IA)', f: s4b.studio_white_source === 'MUSE_IMAGE' ? fid.front : null },
-          { label: 'Izquierda', url: u(s4b.angle_left_url), bg: 'bg-white', note: 'Vista generada por IA', f: fid.left },
-          { label: 'Derecha', url: u(s4b.angle_right_url), bg: 'bg-white', note: 'Vista generada por IA', f: fid.right },
-          { label: 'Atrás', url: u(s4b.angle_back_url), bg: 'bg-white', note: 'Vista generada por IA', f: fid.back },
-          { label: 'Ambiente', url: u(s4b.lifestyle_url), bg: 'bg-slate-950', note: 'Muse Image', f: fid.lifestyle },
-          { label: 'PNG maestro', url: u(s4a.result_cutout_url), bg: 'checkerboard', note: s4a.executed ? 'Máster + SAM 3.1' : 'Recorte SAM 3.1', f: null },
-        ].filter((v) => v.url);
-
-        let statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded border bg-amber-500/20 text-amber-300 border-amber-500/40">Máster rechazado: vistas desde el recorte real</span>';
-        if (s4a.low_quality_source) {
-          statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded border bg-red-500/20 text-red-300 border-red-500/40">⚠ Toma insuficiente: se muestra la foto real</span>';
-        } else if (s4a.executed) {
-          statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-500/20 text-emerald-300 border-emerald-500/40">Máster de estudio aprobado</span>';
-        }
-
-        const card = document.createElement('div');
-        card.className = 'p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4 flex flex-col justify-between';
-        card.innerHTML = `
-          <div class="space-y-3">
-            <div class="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-fuchsia-300">${item.product_id} (${item.video_id})</span>
-                  ${statusBadge}
-                </div>
-                <h3 class="text-base font-bold text-white mt-1.5">${item.resolved_name}</h3>
-                <p class="text-xs text-slate-400">${item.visual_category} • <b class="text-emerald-400">${item.price == null ? 'Consultar precio' : `$${item.price} ${item.currency}`}</b></p>
-              </div>
-              <span class="px-2 py-1 rounded-lg bg-fuchsia-950/90 border border-fuchsia-500/40 text-fuchsia-300 font-mono text-[11px] shrink-0">
-                ${views.length} imágenes • ${s4b.resolution || '1024x1024'}
-              </span>
-            </div>
-
-            ${s4a.requested || s4a.low_quality_source ? `
-            <div class="text-xs bg-slate-950/80 border border-slate-800/90 rounded-xl p-2.5 text-slate-300 space-y-1">
-              ${s4a.problems_addressed ? `<div><b class="text-amber-300">Qué se corrigió en el máster:</b> ${s4a.problems_addressed}</div>` : ''}
-              ${s4a.rejected_by_fidelity_check ? `<div><b class="text-red-300">Máster rechazado:</b> ${(fid.master && fid.master.issues) || 'no era fiel al producto real'}</div>` : ''}
-              <div class="text-slate-500">Izquierda, derecha y atrás no se filmaron: son vistas deducidas por IA y revisadas por Spark (coherencia con el producto real).</div>
-              ${s4a.recommendation ? `<div><b class="text-red-300">Recomendación:</b> ${s4a.recommendation}</div>` : ''}
-            </div>` : ''}
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-1">
-              ${views.map((v, i) => `
-              <div class="space-y-1">
-                <span class="text-[10px] text-slate-300 font-semibold block truncate">${i + 1}. ${v.label}${fidelityBadge(v.f)}</span>
-                <div class="aspect-square rounded-xl overflow-hidden ${v.bg} border border-slate-700 relative group cursor-pointer flex items-center justify-center"
-                     onclick="openImageZoom('${item.resolved_name.replace(/'/g, "\\'")} — ${v.label}', '${v.url}')">
-                  <img src="${v.url}" class="${v.bg === 'checkerboard' ? 'max-w-full max-h-full object-contain p-2' : 'w-full h-full object-cover'} group-hover:scale-105 transition" />
-                  <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-slate-900/85 text-[9px] font-mono text-slate-200">${v.note}</span>
-                </div>
-              </div>`).join('')}
-            </div>
-          </div>
-        `;
-        studioProductsGrid.appendChild(card);
-      });
-    }
-
-    function renderPhase3Results(state) {
-      const grounded = state.grounded_products || [];
-      document.getElementById('metricGroundedCount').textContent = grounded.length;
-      const needsEnh = grounded.filter((g) => g.glimmer_selection && g.glimmer_selection.needs_enhancement).length;
-      const optimalCount = grounded.length - needsEnh;
-      document.getElementById('metricEnhanceBreakdown').textContent = `${optimalCount} Óptimos • ${needsEnh} Mejora 4A`;
-
-      if (grounded.length === 0) {
-        groundedProductsGrid.innerHTML = `
-          <div class="col-span-full py-10 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-            Haz clic en <b>"Ejecutar Fase 3: Collage 1x3 &rarr; Muse Spark &rarr; SAM 3.1 Cutout"</b> para identificar visualmente los objetos, evaluar su calidad y extraer sus recortes PNG sin fondo.
-          </div>
-        `;
-        return;
-      }
-
-      groundedProductsGrid.innerHTML = '';
-      const cacheBuster = Date.now();
-      grounded.forEach((item) => {
-        const gl = item.glimmer_selection || {};
-        const sam = item.sam31_cutout || {};
-        const col = item.collage_1x3 || {};
-        const colUrl = col.url ? `${col.url}?v=${cacheBuster}` : '';
-        const bboxUrl = gl.bbox_preview_url ? `${gl.bbox_preview_url}?v=${cacheBuster}` : '';
-        const cutoutUrl = sam.cutout_png_url ? `${sam.cutout_png_url}?v=${cacheBuster}` : '';
-        const isDeictic = item.mention_type === 'DEICTIC';
-        const needs4A = gl.needs_enhancement;
-        const ver = sam.verification || {};
-        const verifyLabel = {
-          OK: 'verificado OK',
-          REPAIRED: 'reparado automáticamente',
-          KEPT_BEST_AVAILABLE: 'mejor disponible (pasa a mejora 4A)',
-          RECTANGULAR_FALLBACK: 'rectangular: no hubo máscara confiable',
-        }[ver.status] || 'sin verificar';
-        const verifyClass = ver.status === 'OK' || ver.status === 'REPAIRED'
-          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
-          : ver.status ? 'bg-amber-500/15 text-amber-300 border-amber-500/40' : 'bg-slate-800 text-slate-400 border-slate-700';
-
-        const slotPills = (col.slot_evaluations || [])
-          .map(
-            (s) =>
-              `<span class="px-2 py-0.5 rounded text-[10px] font-mono border ${
-                s.slot === gl.best_frame_slot
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold'
-                  : 'bg-slate-900 text-slate-400 border-slate-800'
-              }">
-                F${s.slot} (${s.timestamp_sec}s): Score ${s.selection_score} ${s.slot === gl.best_frame_slot ? '★ BEST' : ''}
-              </span>`
-          )
-          .join('');
-
-        const card = document.createElement('div');
-        card.className = 'p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4 flex flex-col justify-between';
-        card.innerHTML = `
-          <div class="space-y-3">
-            <!-- Header -->
-            <div class="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-cyan-300">${item.product_id} (${item.video_id})</span>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded ${
-                    isDeictic ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                  }">
-                    ${isDeictic ? 'DEICTIC ("Esto" Resuelto)' : 'EXPLICIT (Confirmado)'}
-                  </span>
-                </div>
-                <h3 class="text-base font-bold text-white mt-1.5">${item.resolved_name}</h3>
-                <p class="text-xs text-slate-400">${item.visual_category} • <b class="text-emerald-400">${item.price == null ? 'Consultar precio' : `$${item.price} ${item.currency}`}</b></p>
-              </div>
-
-              <!-- Quality Score Badge -->
-              <div class="text-right">
-                <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-bold border ${
-                  needs4A
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                }">
-                  Calidad: ${gl.quality_score}/10
-                </span>
-                <div class="text-[10px] mt-1 ${needs4A ? 'text-amber-300' : 'text-emerald-400'}">
-                  ${needs4A ? 'needs_enhancement: TRUE (Pasa a 4A)' : 'needs_enhancement: FALSE (Ahorra 4A)'}
-                </div>
-              </div>
-            </div>
-
-            <!-- Disambiguation note -->
-            <div class="text-xs bg-slate-950/80 border border-slate-800/90 rounded-xl p-2.5 text-slate-300">
-              <b class="text-cyan-300">Muse Spark (visión):</b> ${item.disambiguation_note}
-            </div>
-
-            <!-- 1x3 Collage Preview -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between text-[11px]">
-                <span class="text-slate-400 font-semibold">1. Collage 1x3 enviado a Muse Spark (1 sola imagen por producto):</span>
-                <span class="text-emerald-400 font-mono text-[10px]">Elegido: Frame #${gl.best_frame_slot} (t=${gl.timestamp_sec}s)</span>
-              </div>
-              <img src="${colUrl}" alt="Collage 1x3 ${item.product_id}"
-                onclick="openImageZoom('Collage 1x3 — ${item.resolved_name}', '${colUrl}')"
-                class="w-full h-36 object-cover rounded-xl border border-slate-700 hover:border-cyan-400 cursor-pointer transition" />
-              <div class="flex flex-wrap gap-1.5 pt-0.5">${slotPills}</div>
-            </div>
-
-            <!-- Best Frame BBox vs SAM 3.1 Cutout PNG -->
-            <div class="grid grid-cols-2 gap-3 pt-1">
-              <div class="space-y-1">
-                <span class="text-[11px] text-slate-400 font-semibold block">2. Mejor frame + máscara SAM (verde) y caja Spark (celeste)</span>
-                <div class="aspect-square rounded-xl overflow-hidden bg-slate-950 border border-slate-800 relative group cursor-pointer"
-                     onclick="openImageZoom('Best Frame + BBox — ${item.resolved_name}', '${bboxUrl}')">
-                  <img src="${bboxUrl}" class="w-full h-full object-contain group-hover:scale-105 transition" />
-                  <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-emerald-300">
-                    BBox: [${(gl.bbox_normalized || []).join(', ')}]
-                  </span>
-                </div>
-              </div>
-
-              <div class="space-y-1">
-                <span class="text-[11px] text-cyan-300 font-semibold block">3. Recorte SAM 3.1 (PNG Transparente)</span>
-                <div class="aspect-square rounded-xl overflow-hidden checkerboard border border-cyan-500/30 relative group cursor-pointer flex items-center justify-center p-2"
-                     onclick="openImageZoom('Recorte PNG Transparente SAM 3.1 — ${item.resolved_name}', '${cutoutUrl}')">
-                  <img src="${cutoutUrl}" class="max-w-full max-h-full object-contain drop-shadow-2xl group-hover:scale-105 transition" />
-                  <span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/85 text-[10px] font-mono text-cyan-300">
-                    ${sam.width}x${sam.height}px RGBA
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1.5">
-            <div class="flex flex-wrap items-center gap-1.5">
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${verifyClass}" title="${(ver.problem || '').replace(/"/g, '&quot;')}">
-                🔎 Recorte: ${verifyLabel}
-              </span>
-              <span class="font-mono text-[10px] text-slate-500">SAM ${sam.sam_mode || '-'}${sam.sam_prompt_used ? ` "${sam.sam_prompt_used}"` : ''}${sam.sam_confidence != null ? ` · conf ${sam.sam_confidence}` : ''}${sam.merged_parts > 1 ? ` · ${sam.merged_parts} piezas unidas` : ''}</span>
-            </div>
-            ${ver.verdict && ver.verdict !== 'OK' ? `<div class="text-[10px] text-slate-400">${ver.problem || ''}${ver.repaired_with ? ` → <b class="text-emerald-300">${ver.repaired_with}</b>` : ''}</div>` : ''}
-            <div>Diagnóstico: <b class="text-slate-200">${gl.quality_diagnosis}</b></div>
-          </div>
-        `;
-        groundedProductsGrid.appendChild(card);
-      });
-    }
-
-    function renderPhase2Results(state) {
-      const videos = state.videos || [];
-      const products = state.semantic_products || [];
-      const explicitCount = products.filter((p) => p.mention_type === 'EXPLICIT').length;
-      const deicticCount = products.filter((p) => p.mention_type === 'DEICTIC').length;
-      document.getElementById('metricProductsCount').textContent = products.length;
-      document.getElementById('metricMentionBreakdown').textContent = `${explicitCount} EXPLICIT • ${deicticCount} DEICTIC`;
-
-      const transcribedVideos = videos.filter((v) => v.transcription);
-      if (transcribedVideos.length > 0) {
-        transcriptionsContainer.classList.remove('hidden');
-        transcriptionsContainer.innerHTML = '';
-        transcribedVideos.forEach((v) => {
-          const tr = v.transcription;
-          const box = document.createElement('div');
-          box.className = 'p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 text-xs';
-          const segBadges = (tr.segments || [])
-            .map(
-              (s) =>
-                `<div class="flex items-center justify-between gap-2 bg-slate-950/80 px-2.5 py-1 rounded border border-slate-800/80">
-                  <span class="text-slate-200">"${s.text}"</span>
-                  <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 shrink-0">[${s.start_sec}s - ${s.end_sec}s]</span>
-                </div>`
-            )
-            .join('');
-          box.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-indigo-300">${v.video_id} — ${tr.model || 'Muse Voice Transcribe'}</span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono ${tr.cache_hit ? 'bg-cyan-500/20 text-cyan-300' : 'bg-emerald-500/20 text-emerald-300'}">${tr.cache_hit ? 'CACHÉ MD5' : 'API'}</span>
-            </div>
-            <div class="text-[11px] text-slate-400 italic">"${tr.raw_asr_transcript || ''}"</div>
-            <div class="space-y-1">${segBadges}</div>
-          `;
-          transcriptionsContainer.appendChild(box);
-        });
-      }
-
-      renderPhase2Verification(state.phase2_verification);
-
-      if (products.length === 0) return;
-      btnSaveProductEdits.classList.remove('hidden');
-      semanticProductsGrid.innerHTML = '';
-      products.forEach((prod) => {
-        const isDeictic = prod.mention_type === 'DEICTIC';
-        const card = document.createElement('div');
-        card.setAttribute('data-product-card', prod.product_id);
-        card.className = 'p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2 text-xs';
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-mono font-bold text-slate-300">${prod.product_id} (${prod.video_id})</span>
-            ${prod.added_by === 'VERIFIER' ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300" title="${(prod.verification_evidence || '').replace(/"/g, '&quot;')}">➕ agregado por verificador (${Math.round((prod.verification_confidence || 0) * 100)}%)</span>` : ''}
-            <select class="input-prod-type text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950 border border-slate-700 text-indigo-300">
-              <option value="EXPLICIT" ${prod.mention_type === 'EXPLICIT' ? 'selected' : ''}>EXPLICIT</option>
-              <option value="DEICTIC" ${isDeictic ? 'selected' : ''}>DEICTIC</option>
-              <option value="VISUAL_ONLY" ${prod.mention_type === 'VISUAL_ONLY' ? 'selected' : ''}>VISUAL_ONLY</option>
-            </select>
-          </div>
-          <div class="text-[11px] text-slate-400">🎙️ <i>"${prod.raw_spoken_phrase || ''}"</i>
-            <span class="font-mono text-indigo-300">[${prod.spoken_timestamps?.start_sec ?? '?'}s - ${prod.spoken_timestamps?.end_sec ?? '?'}s]</span>
-            <span class="font-mono text-slate-500">${prod.currency || ''}</span>
-            ${prod.name_source && prod.name_source !== 'AUDIO' ? `<span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-fuchsia-500/20 text-fuchsia-300">${prod.name_source === 'VIDEO_ONLY' ? '👁️ nombre visto en video' : prod.name_source === 'AUDIO_CORRECTED_BY_VIDEO' ? '👁️ corregido con video' : 'nombre incierto'}</span>` : ''}</div>
-          <input type="text" value="${prod.resolved_visual_name || prod.detected_name}" class="input-prod-name w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-xs text-white" />
-          <div class="grid grid-cols-2 gap-2">
-            <input type="number" step="0.5" value="${prod.price ?? ''}" placeholder="Consultar precio" class="input-prod-price w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-xs font-bold text-emerald-400" />
-            <input type="text" value="${prod.condition}" class="input-prod-condition w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-xs text-slate-300" />
-          </div>
-        `;
-        semanticProductsGrid.appendChild(card);
-      });
-    }
-
-    function renderPhase2Verification(report) {
-      let box = document.getElementById('phase2VerificationBox');
-      if (!box) {
-        box = document.createElement('div');
-        box.id = 'phase2VerificationBox';
-        semanticProductsGrid.parentNode.insertBefore(box, semanticProductsGrid);
-      }
-      if (!report) {
-        box.innerHTML = '';
-        return;
-      }
-      const statusLabel = {
-        NO_ANOMALIES: ['✅ Audio y video coinciden: sin anomalías', 'text-emerald-300'],
-        VERIFIED_NO_CHANGES: ['✅ Verificado: las anomalías eran falsas alarmas', 'text-emerald-300'],
-        VERIFIED_WITH_CHANGES: ['⚠️ Verificado: se corrigieron o agregaron productos automáticamente', 'text-amber-300'],
-      }[report.status] || [report.status, 'text-slate-300'];
-      const actionLabel = { ADD_PRODUCT: '➕ Agregar', UPDATE_PRODUCT: '✏️ Corregir', NO_CHANGE: '✔️ Sin cambios', DISMISS: '🚫 Descartar' };
-      const inventory = (report.visual_inventory || [])
-        .map((inv) => `<span class="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800">${inv.video_id} ${inv.start_sec}-${inv.end_sec}s · ${inv.object_name}</span>`)
-        .join(' ');
-      const decisions = (report.decisions || [])
-        .map(
-          (d) => `<div class="bg-slate-950/80 px-2.5 py-1.5 rounded border border-slate-800">
-              <div class="flex justify-between gap-2"><b class="text-slate-200">${actionLabel[d.action] || d.action}: ${d.item_name}</b>
-              <span class="font-mono text-[10px] ${d.applied ? 'text-amber-300' : 'text-slate-500'}">${Math.round((d.confidence || 0) * 100)}% · ${d.applied ? 'aplicado' : 'no aplicado'}</span></div>
-              <div class="text-slate-400">${d.evidence}</div>
-              <div class="text-[10px] text-slate-500">${d.note}</div>
-            </div>`
-        )
-        .join('');
-      box.className = 'mb-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 text-xs';
-      box.innerHTML = `
+      <div id="pipelineBox" class="hidden space-y-4">
         <div class="flex items-center justify-between">
-          <span class="font-bold text-fuchsia-300">🔎 Verificación automática (audio ↔ video)</span>
-          <span class="${statusLabel[1]} font-semibold">${statusLabel[0]}</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pipeline Meta Muse</span>
+          <span id="pipelineTimer" class="text-xs font-mono text-slate-400">00:00</span>
         </div>
-        <div class="text-slate-400">Objetos mostrados en video (${(report.visual_inventory || []).length}): <div class="mt-1 flex flex-wrap gap-1 text-[10px]">${inventory || '—'}</div></div>
-        <div class="text-slate-400">Anomalías detectadas: <b class="text-slate-200">${(report.anomalies || []).length}</b>
-          ${(report.anomalies || []).map((a) => `<div class="text-[10px] text-slate-500">• ${a.type}: ${a.detail}</div>`).join('')}</div>
-        ${decisions ? `<div class="space-y-1">${decisions}</div>` : ''}
-      `;
-    }
-
-    videoFilterSelect.addEventListener('change', (e) => renderGallery(e.target.value));
-
-    function renderGallery(filterVideoId) {
-      if (!currentSessionState || !currentSessionState.videos) return;
-      const videos = currentSessionState.videos.filter((v) => filterVideoId === 'ALL' || v.video_id === filterVideoId);
-      const allFrames = [];
-      videos.forEach((v) => {
-        (v.retained_frames || []).forEach((f) => allFrames.push({ ...f, video_filename: v.filename }));
-      });
-      framesGallery.innerHTML = '';
-      allFrames.forEach((frame) => {
-        const card = document.createElement('div');
-        card.className = 'rounded-xl overflow-hidden bg-slate-900 border border-slate-800 cursor-pointer';
-        card.innerHTML = `
-          <div class="aspect-video bg-slate-950 relative">
-            <img src="${frame.url}" class="w-full h-full object-cover" />
-            <span class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/75 text-[10px] font-mono text-white">${frame.timestamp_sec}s</span>
-          </div>
-        `;
-        card.addEventListener('click', () => openImageZoom(`Frame ${frame.frame_id} (${frame.timestamp_sec}s)`, frame.url));
-        framesGallery.appendChild(card);
-      });
-    }
-
-    window.openImageZoom = function (title, url) {
-      document.getElementById('modalTitle').textContent = title;
-      document.getElementById('modalBody').innerHTML = `
-        <div class="flex flex-col items-center justify-center p-2 checkerboard rounded-xl">
-          <img src="${url}" class="max-h-[72vh] rounded-lg shadow-2xl" />
+        <ol id="stepper" class="space-y-2"></ol>
+        <div id="liveWarning" class="hidden rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-xs text-amber-200"></div>
+        <div id="liveEvent" class="hidden rounded-xl border border-slate-800 bg-slate-950/70 p-2.5 text-[11px] font-mono text-slate-400"></div>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Tokens API</div><div id="liveTokens" class="text-sm font-black font-mono text-white">0</div></div>
+          <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Evitados por caché</div><div id="liveSaved" class="text-sm font-black font-mono text-emerald-400">0</div></div>
+          <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Imágenes (US$)</div><div id="liveImages" class="text-sm font-black font-mono text-amber-300">0</div></div>
         </div>
-      `;
-      const overlay = document.getElementById('modalOverlay');
-      overlay.classList.remove('hidden');
-      overlay.classList.add('flex');
+        <div id="pipelineMessage" class="text-xs text-slate-400"></div>
+        <div id="pipelineResult" class="hidden rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3">
+          <div id="pipelineResultText" class="text-sm text-emerald-200 font-semibold"></div>
+          <button data-action="go-pending" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-sm transition">Revisar en Pendientes →</button>
+        </div>
+        <div id="pipelineError" class="hidden rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 space-y-3">
+          <div id="pipelineErrorText" class="text-sm text-rose-200"></div>
+          <button data-action="retry" class="w-full py-2.5 rounded-xl bg-meta hover:bg-meta-dark text-white font-bold text-sm transition">Reintentar desde este paso</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ===================== DRAWER: MONITOR DE TOKENS ===================== -->
+<div id="tokenDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-black/60" data-action="close-tokens"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-lg glass border-l border-slate-800 flex flex-col">
+    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-extrabold text-white">📊 Monitor de trazas (TokenTracker)</h3>
+        <p id="tokenSession" class="text-xs text-slate-400 font-mono"></p>
+      </div>
+      <button data-action="close-tokens" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+    </div>
+    <div class="p-5 space-y-4 overflow-y-auto flex-1">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Tokens de la API</div><div id="tkTotal" class="text-lg font-black font-mono">0</div></div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Evitados por caché MD5</div><div id="tkSaved" class="text-lg font-black font-mono text-emerald-400">0</div></div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Imágenes Muse Image</div><div id="tkImages" class="text-lg font-black font-mono text-amber-300">0</div></div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800"><div class="text-[10px] text-slate-400">Llamadas API / caché</div><div id="tkCalls" class="text-lg font-black font-mono">0</div></div>
+      </div>
+      <div>
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Por modelo</div>
+        <div id="tkModels" class="space-y-1.5"></div>
+      </div>
+      <div>
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Trazas recientes</div>
+        <div id="tkLogs" class="space-y-1 font-mono text-[10.5px] leading-snug"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ===================== DRAWER: CARRITO ===================== -->
+<div id="cartDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-black/60" data-action="close-cart"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-md glass border-l border-slate-800 flex flex-col">
+    <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+      <h3 class="text-lg font-extrabold text-white">🛒 Tu carrito</h3>
+      <button data-action="close-cart" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+    </div>
+    <div id="cartItems" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
+    <div class="p-5 border-t border-slate-800 space-y-3">
+      <div class="flex items-start justify-between font-bold"><span class="text-slate-300">Total</span><span id="cartTotal" class="text-right text-xl font-black text-emerald-400">—</span></div>
+      <button data-action="checkout" class="w-full py-3 rounded-xl bg-meta hover:bg-meta-dark text-white font-extrabold text-sm transition">Confirmar pedido</button>
+    </div>
+  </aside>
+</div>
+
+<!-- ===================== MODAL: VISTA RÁPIDA ===================== -->
+<div id="quickView" class="fixed inset-0 z-50 hidden items-center justify-center p-4" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-black/80" data-action="close-quick"></div>
+  <div class="relative glass border border-slate-700 rounded-3xl max-w-5xl w-full max-h-[92vh] overflow-y-auto p-6">
+    <button data-action="close-quick" class="absolute top-4 right-4 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">✕</button>
+    <div id="quickBody"></div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] hidden px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white shadow-2xl"></div>
+
+<script>
+/* ============================================================
+   Brak Shop — frontend sobre los endpoints existentes de backend/main.py
+   Fase 1  POST /api/v1/phase1/preprocess   (multipart: files)
+   Fase 2  POST /api/v1/phase2/semantic     {session_id}
+   Fase 3  POST /api/v1/phase3/vision-sam   {session_id}
+   Fase 4  POST /api/v1/phase4/studio       {session_id}
+   Fase 5  POST /api/v1/phase5/codegen      {session_id}
+   Estado  GET  /api/v1/session/current     (última sesión procesada)
+   Imágenes: /storage/<sesión>/... (las del catálogo son relativas a /storage/<sesión>/catalog/)
+   ============================================================ */
+const API = (localStorage.getItem('brak_api_base') || '').replace(/\/$/, '');
+const LS = { approved: 'brak_approved_v1', pending: 'brak_pending_v1', cart: 'brak_cart_v1', seeded: 'brak_seeded_v1' };
+const SYMBOL = { USD: '$', PEN: 'S/', EUR: '€', MXN: '$', COP: '$', ARS: '$', CLP: '$', BOB: 'Bs' };
+
+const STEPS = [
+  { model: 'OpenCV + FFmpeg', what: 'Valida los videos, descarta frames borrosos y extrae el audio 16 kHz', phase: 1 },
+  { model: 'Muse Voice Transcribe', what: 'Transcribe la voz del vendedor con sus tiempos', phase: 2 },
+  { model: 'Muse Spark', what: 'Detecta productos, precios y estado; verifica audio ↔ video', phase: 2 },
+  { model: 'Muse Spark · visión', what: 'Elige el mejor frame y ubica el objeto (cumple el rol de Glimmer)', phase: 3 },
+  { model: 'SAM 3.1', what: 'Recorta el producto sin fondo y verifica el recorte', phase: 3 },
+  { model: 'Muse Image', what: 'Máster de estudio, frente, 3 vistas IA y ambiente', phase: 4 },
+  { model: 'Muse Spark · textos', what: 'Escribe los textos de venta y arma el catálogo (cumple el rol de Muse Code)', phase: 5 },
+];
+const PHASES = {
+  2: { url: '/api/v1/phase2/semantic', hint: 'suele tardar ~1 min' },
+  3: { url: '/api/v1/phase3/vision-sam', hint: 'suele tardar 1–3 min' },
+  4: { url: '/api/v1/phase4/studio', hint: 'la más larga: ~30 s por producto' },
+  5: { url: '/api/v1/phase5/codegen', hint: 'suele tardar ~20 s' },
+};
+
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+let approved = load(LS.approved, []);
+let pending = load(LS.pending, []);
+let cart = load(LS.cart, []);
+let activeTab = 'store';
+let activeCategory = 'Todas';
+const activeView = {};
+let selectedFiles = [];
+let run = null; // { sid, nextPhase, running }
+let pollHandle = null;
+// El progreso informa la última acción TERMINADA; el paso activo es el que viene después.
+const STEP_BY_MODEL = [
+  [/Voice Transcribe/i, 2], [/OpenCV Frame/i, 3], [/Visi[oó]n|SAM 3\.1|Verificador de recortes/i, 4],
+  [/Muse Image|Fidelidad|Estudio Fase 4/i, 5], [/Textos|Cat[aá]logo HTML/i, 6],
+];
+let timerHandle = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (v, cur) => `${SYMBOL[cur] || ''}${Number(v).toLocaleString('es', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 })} ${cur}`;
+const priceText = (p) => (p.price == null || p.price === '' ? 'Consultar precio' : money(p.price, p.currency));
+const bgClass = (v) => (v.bg === 'dark' ? 'bg-slate-950' : v.bg === 'checker' ? 'checker' : 'bg-white');
+const fmtNum = (n) => Number(n || 0).toLocaleString('es');
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.add('hidden'), 2600);
+}
+
+/* ---------- Datos: del estado del backend a productos de Brak Shop ---------- */
+function buildProducts(state) {
+  const sid = state.session_id;
+  const studio = Object.fromEntries((state.studio_products || state.grounded_products || []).map((p) => [p.product_id, p]));
+  return (state.catalog_products || []).map((c) => {
+    const s = studio[c.id] || {};
+    const gl = s.glimmer_selection || {};
+    const sam = s.sam31_cutout || {};
+    const views = (c.views || []).map((v) => ({ key: v.key, label: v.label, url: `${API}/storage/${sid}/catalog/${v.src}`, ai: !!v.ai_inferred, bg: v.bg }));
+    if (gl.best_frame_url) views.push({ key: 'frame', label: 'Frame original', url: API + gl.best_frame_url, ai: false, bg: 'dark' });
+    return {
+      uid: `${sid}:${c.id}`, session_id: sid, id: c.id, video_id: c.video_id,
+      title: c.title, short_description: c.short_description, description: c.description,
+      highlights: c.highlights || [], category: c.category || 'General', tags: c.tags || [],
+      price: c.price, currency: c.currency || 'USD', condition: c.condition || '', seller_phrase: c.seller_phrase || '',
+      real_photo_only: !!c.real_photo_only, mention_type: s.mention_type || '', quality_score: gl.quality_score ?? null,
+      best_frame_url: gl.best_frame_url ? API + gl.best_frame_url : null,
+      sam_cutout_url: sam.cutout_png_url ? API + sam.cutout_png_url : null,
+      sam_status: (sam.verification || {}).status || '',
+      views, created_at: Date.now(),
     };
+  });
+}
 
-    document.getElementById('btnViewJson').addEventListener('click', () => {
-      document.getElementById('modalTitle').textContent = 'Estado Persistido (session_state.json)';
-      document.getElementById('modalBody').innerHTML = `<pre class="whitespace-pre-wrap text-emerald-300">${JSON.stringify(currentSessionState || {}, null, 2)}</pre>`;
-      const overlay = document.getElementById('modalOverlay');
-      overlay.classList.remove('hidden');
-      overlay.classList.add('flex');
-    });
+async function api(path, options = {}) {
+  const res = await fetch(API + path, options);
+  let data = null;
+  try { data = await res.json(); } catch { /* sin cuerpo JSON */ }
+  if (!res.ok) throw new Error((data && data.detail) || `HTTP ${res.status} en ${path}`);
+  return data;
+}
 
-    document.getElementById('btnCloseModal').addEventListener('click', () => {
-      const overlay = document.getElementById('modalOverlay');
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex');
-    });
+/* ---------- Productos semilla: la última sesión real procesada ---------- */
+async function seedIfEmpty() {
+  if (approved.length || localStorage.getItem(LS.seeded)) return;
+  localStorage.setItem(LS.seeded, '1');
+  try {
+    const state = await api('/api/v1/session/current');
+    const seeds = buildProducts(state);
+    if (seeds.length) {
+      approved = seeds; save(LS.approved, approved);
+      toast(`Se cargaron ${seeds.length} artículos de la última sesión procesada`);
+      renderAll();
+    }
+  } catch { /* sin sesión previa: la tienda arranca vacía */ }
+}
 
-    document.getElementById('btnClearLogs').addEventListener('click', () => {
-      traceConsole.innerHTML = '<div class="text-slate-500">[MUSE-TRACE] Vista de consola limpiada.</div>';
-    });
+/* ---------- Render: navegación ---------- */
+function renderTabs() {
+  const on = 'bg-meta text-white shadow', off = 'text-slate-300 hover:text-white';
+  $('tabStore').className = `px-4 py-2 rounded-xl text-sm font-semibold transition ${activeTab === 'store' ? on : off}`;
+  $('tabPending').className = `px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${activeTab === 'pending' ? on : off}`;
+  $('viewStore').classList.toggle('hidden', activeTab !== 'store');
+  $('viewPending').classList.toggle('hidden', activeTab !== 'pending');
+  $('pendingCount').textContent = pending.length;
+  $('pendingCount2').textContent = pending.length;
+  $('statPending').textContent = pending.length;
+  $('cartCount').textContent = cart.reduce((a, i) => a + i.qty, 0);
+}
 
-    checkHealth();
-  </script>
+function viewPills(p, current) {
+  return p.views.map((v) => `<button data-action="view" data-uid="${esc(p.uid)}" data-key="${v.key}"
+    class="px-2 py-1 rounded-lg text-[10px] font-semibold transition ${v.key === current.key ? 'bg-meta text-white' : 'bg-slate-900 text-slate-300 border border-slate-700 hover:border-meta'}">
+    ${esc(v.label)}${v.ai ? ' · IA' : ''}</button>`).join('');
+}
+
+function stage(p, v, extraClass = '') {
+  if (!v) return `<div class="aspect-square bg-slate-900 ${extraClass}"></div>`;
+  return `<div class="aspect-square ${bgClass(v)} relative overflow-hidden flex items-center justify-center ${extraClass}">
+      <img src="${esc(v.url)}" alt="${esc(p.title)}" loading="lazy" class="w-full h-full object-contain transition duration-300 group-hover:scale-105" />
+      ${v.ai ? '<span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold meta-ai-gradient text-white">✦ Vista generada por IA</span>' : ''}
+      ${p.real_photo_only ? '<span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/85 text-slate-200 border border-slate-600">Foto real del video</span>' : ''}
+    </div>`;
+}
+
+/* ---------- Render: tienda ---------- */
+function renderStore() {
+  const cats = ['Todas', ...new Set(approved.map((p) => p.category))];
+  if (!cats.includes(activeCategory)) activeCategory = 'Todas';
+  $('categoryBar').innerHTML = cats.map((c) => `<button data-action="category" data-key="${esc(c)}"
+    class="px-3 py-1.5 rounded-xl text-xs font-semibold transition ${c === activeCategory ? 'bg-meta text-white shadow' : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-meta'}">
+    ${esc(c)} <span class="opacity-70">${c === 'Todas' ? approved.length : approved.filter((p) => p.category === c).length}</span></button>`).join('');
+  $('statProducts').textContent = approved.length;
+  $('statCategories').textContent = cats.length - 1;
+
+  const q = $('searchInput').value.trim().toLowerCase();
+  const sort = $('sortSelect').value;
+  let list = approved.filter((p) => (activeCategory === 'Todas' || p.category === activeCategory) &&
+    (!q || `${p.title} ${p.short_description} ${p.category} ${(p.tags || []).join(' ')}`.toLowerCase().includes(q)));
+  if (sort === 'recent') list = [...list].sort((a, b) => (b.published_at || 0) - (a.published_at || 0));
+  if (sort === 'price_asc') list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+  if (sort === 'price_desc') list.sort((a, b) => (b.price ?? -1) - (a.price ?? -1));
+
+  $('storeEmpty').classList.toggle('hidden', approved.length > 0);
+  $('storeGrid').innerHTML = list.map((p) => {
+    const v = p.views.find((x) => x.key === activeView[p.uid]) || p.views[0];
+    return `<article class="group rounded-2xl glass border border-slate-800 hover:border-meta overflow-hidden flex flex-col transition">
+      <div class="cursor-pointer" data-action="quick" data-uid="${esc(p.uid)}">${stage(p, v)}</div>
+      ${p.views.length > 1 ? `<div class="px-3 py-2 bg-slate-950/80 border-y border-slate-800 flex flex-wrap gap-1">${viewPills(p, v)}</div>` : ''}
+      <div class="p-4 flex-1 flex flex-col gap-2">
+        <div class="flex items-center justify-between gap-2 text-[11px]">
+          <span class="text-slate-400">${esc(p.category)}</span>
+          ${p.condition ? `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700">${esc(p.condition)}</span>` : ''}
+        </div>
+        <h3 class="font-bold text-white leading-snug">${esc(p.title)}</h3>
+        <p class="text-xs text-slate-400 line-clamp-2">${esc(p.short_description)}</p>
+        <div class="mt-auto pt-2 ${p.price == null ? 'text-base text-amber-400' : 'text-2xl text-emerald-400'} font-black">${esc(priceText(p))}</div>
+      </div>
+      <div class="p-4 pt-0 flex gap-2">
+        <button data-action="quick" data-uid="${esc(p.uid)}" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition">Vista rápida</button>
+        ${p.price == null
+          ? `<button data-action="quick" data-uid="${esc(p.uid)}" class="flex-1 py-2 rounded-xl border border-amber-500/50 text-amber-300 hover:bg-amber-500/10 text-xs font-bold transition">Consultar precio</button>`
+          : `<button data-action="add-cart" data-uid="${esc(p.uid)}" class="flex-1 py-2 rounded-xl bg-meta hover:bg-meta-dark text-white text-xs font-bold transition">Agregar al carrito</button>`}
+      </div>
+    </article>`;
+  }).join('');
+}
+
+/* ---------- Render: pendientes ---------- */
+function renderPending() {
+  $('pendingEmpty').classList.toggle('hidden', pending.length > 0);
+  $('pendingGrid').innerHTML = pending.map((p) => {
+    const v = p.views.find((x) => x.key === activeView[p.uid]) || p.views[0];
+    const deictic = p.mention_type === 'DEICTIC';
+    const mention = p.mention_type ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${deictic ? 'bg-amber-500/15 text-amber-300 border border-amber-500/40' : 'bg-meta/15 text-blue-300 border border-meta/40'}"
+        title="${deictic ? 'El vendedor dijo “esto de acá”: la IA identificó el objeto con el video' : 'El vendedor nombró el producto'}">${deictic ? 'DEICTIC · “esto de acá”' : 'EXPLICIT · lo nombró'}</span>` : '';
+    const quality = p.quality_score != null ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-200 border border-slate-700">Calidad del frame ${esc(p.quality_score)}/10</span>` : '';
+    const thumb = (url, label, cls) => url ? `<figure class="space-y-1"><div class="aspect-square rounded-xl overflow-hidden border border-slate-700 ${cls} flex items-center justify-center"><img src="${esc(url)}" alt="${esc(label)}" class="w-full h-full object-contain" /></div><figcaption class="text-[10px] text-slate-400 text-center">${esc(label)}</figcaption></figure>` : '';
+    return `<article id="card-${esc(p.uid)}" class="rounded-2xl glass border border-slate-800 hover:border-amber-500/40 overflow-hidden transition">
+      <div class="p-4 border-b border-slate-800 flex flex-wrap items-center gap-2">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-900 text-slate-400 border border-slate-800">${esc(p.id)} · ${esc(p.video_id)}</span>
+        ${mention}${quality}
+        ${p.real_photo_only ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/40">Toma insuficiente: foto real</span>' : ''}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2">
+        <div class="group">
+          ${stage(p, v)}
+          ${p.views.length > 1 ? `<div class="px-3 py-2 bg-slate-950/80 border-t border-slate-800 flex flex-wrap gap-1">${viewPills(p, v)}</div>` : ''}
+        </div>
+        <div class="p-4 space-y-3">
+          <div class="grid grid-cols-2 gap-2">
+            ${thumb(p.best_frame_url, 'Mejor frame (Spark visión)', 'bg-slate-950')}
+            ${thumb(p.sam_cutout_url, 'Recorte SAM 3.1', 'checker')}
+          </div>
+          <label class="block space-y-1"><span class="text-[11px] text-slate-400">Nombre</span>
+            <input data-field="title" data-uid="${esc(p.uid)}" value="${esc(p.title)}" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:border-meta" /></label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="block space-y-1"><span class="text-[11px] text-slate-400">Precio (${esc(p.currency)})</span>
+              <input data-field="price" data-uid="${esc(p.uid)}" type="number" min="0" step="0.5" value="${p.price ?? ''}" placeholder="Consultar" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-emerald-400 font-bold focus:outline-none focus:border-meta" /></label>
+            <label class="block space-y-1"><span class="text-[11px] text-slate-400">Estado</span>
+              <input data-field="condition" data-uid="${esc(p.uid)}" value="${esc(p.condition)}" placeholder="Ej. Como nuevo" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:border-meta" /></label>
+          </div>
+          <p class="text-xs text-slate-400 line-clamp-2">${esc(p.short_description)}</p>
+          ${p.seller_phrase ? `<p class="text-[11px] text-slate-500">🎙️ “${esc(p.seller_phrase)}”</p>` : ''}
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-800 flex gap-2">
+        <button data-action="reject" data-uid="${esc(p.uid)}" class="px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/50 text-rose-300 hover:bg-rose-500/20 text-sm font-bold transition">🗑️ Rechazar</button>
+        <button data-action="approve" data-uid="${esc(p.uid)}" class="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-extrabold transition">✅ Aceptar y Publicar</button>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function renderAll() { renderTabs(); renderStore(); renderPending(); }
+
+/* ---------- Vista rápida ---------- */
+function openQuick(uid) {
+  const p = approved.find((x) => x.uid === uid) || pending.find((x) => x.uid === uid);
+  if (!p) return;
+  const inStore = approved.some((x) => x.uid === uid);
+  const v = p.views.find((x) => x.key === activeView[uid]) || p.views[0];
+  $('quickBody').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="space-y-3">
+      <div class="rounded-2xl overflow-hidden border border-slate-700">${stage(p, v)}</div>
+      <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">${p.views.map((x) => `<button data-action="quick-view" data-uid="${esc(uid)}" data-key="${x.key}"
+        class="aspect-square rounded-lg overflow-hidden border ${x.key === v.key ? 'border-meta' : 'border-slate-700'} ${bgClass(x)}" title="${esc(x.label)}"><img src="${esc(x.url)}" alt="" class="w-full h-full object-contain" /></button>`).join('')}</div>
+      ${p.views.some((x) => x.ai) ? '<p class="text-[11px] text-indigo-300">✦ Las vistas marcadas “IA” no se filmaron: Muse Image las generó a partir del producto real.</p>' : ''}
+    </div>
+    <div class="space-y-4">
+      <div class="text-xs text-slate-400">${esc(p.category)}</div>
+      <h3 class="text-2xl font-black text-white">${esc(p.title)}</h3>
+      <div class="flex items-center gap-3"><span class="${p.price == null ? 'text-xl text-amber-400' : 'text-3xl text-emerald-400'} font-black">${esc(priceText(p))}</span>
+        ${p.condition ? `<span class="px-2.5 py-1 rounded-full text-xs bg-slate-800 text-slate-200">${esc(p.condition)}</span>` : ''}</div>
+      <p class="text-sm text-slate-300 leading-relaxed">${esc(p.description || p.short_description)}</p>
+      ${p.highlights.length ? `<ul class="space-y-1 text-sm text-slate-300">${p.highlights.map((h) => `<li>✔ ${esc(h)}</li>`).join('')}</ul>` : ''}
+      ${p.tags.length ? `<div class="flex flex-wrap gap-1.5">${p.tags.map((t) => `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-[11px] text-slate-300">#${esc(t)}</span>`).join('')}</div>` : ''}
+      ${p.seller_phrase ? `<div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400">🎙️ Lo que dijo el vendedor: <i class="text-slate-200">“${esc(p.seller_phrase)}”</i></div>` : ''}
+      ${inStore ? (p.price == null
+        ? `<button data-action="contact" data-uid="${esc(uid)}" class="w-full py-3 rounded-xl border border-amber-500/60 text-amber-300 hover:bg-amber-500/10 font-bold text-sm">Consultar precio al vendedor</button>`
+        : `<button data-action="add-cart" data-uid="${esc(uid)}" class="w-full py-3 rounded-xl bg-meta hover:bg-meta-dark text-white font-extrabold text-sm">Agregar al carrito • ${esc(priceText(p))}</button>`) : ''}
+      ${inStore ? `<button data-action="unpublish" data-uid="${esc(uid)}" class="w-full py-2 rounded-xl text-xs text-slate-500 hover:text-rose-300">Retirar de la tienda</button>` : ''}
+    </div>
+  </div>`;
+  $('quickView').classList.remove('hidden'); $('quickView').classList.add('flex');
+}
+function closeQuick() { $('quickView').classList.add('hidden'); $('quickView').classList.remove('flex'); }
+
+/* ---------- Carrito ---------- */
+function renderCart() {
+  const totals = {};
+  $('cartItems').innerHTML = cart.length ? cart.map((i) => {
+    const p = approved.find((x) => x.uid === i.uid);
+    if (!p) return '';
+    totals[p.currency] = (totals[p.currency] || 0) + p.price * i.qty;
+    const v = p.views[0];
+    return `<div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-3">
+      ${v ? `<img src="${esc(v.url)}" alt="" class="w-14 h-14 rounded-xl object-contain bg-white shrink-0" />` : ''}
+      <div class="flex-1 min-w-0"><div class="text-sm font-bold text-white truncate">${esc(p.title)}</div><div class="text-xs text-emerald-400 font-bold">${esc(money(p.price, p.currency))}</div></div>
+      <div class="flex items-center gap-1">
+        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="-1" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-200">−</button>
+        <span class="w-6 text-center text-sm">${i.qty}</span>
+        <button data-action="qty" data-uid="${esc(p.uid)}" data-key="1" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-200">+</button>
+      </div></div>`;
+  }).join('') : '<p class="text-sm text-slate-500 text-center py-10">Tu carrito está vacío.</p>';
+  $('cartTotal').innerHTML = Object.keys(totals).length ? Object.entries(totals).map(([c, v]) => esc(money(v, c))).join('<br>') : '—';
+}
+
+/* ---------- Monitor de tokens ---------- */
+function auditNumbers(state) {
+  const logs = (state && state.token_audit && state.token_audit.logs) || [];
+  return {
+    total: logs.reduce((a, l) => a + (l.step_total_tokens || 0), 0),
+    saved: logs.filter((l) => l.status === 'CACHE_HIT_MD5').reduce((a, l) => a + (l.tokens_saved || 0), 0),
+    images: logs.filter((l) => l.model === 'Muse Image' && l.status === 'API_CALL').length,
+    apiCalls: logs.filter((l) => l.status === 'API_CALL').length,
+    cacheHits: logs.filter((l) => l.status === 'CACHE_HIT_MD5').length,
+    logs,
+  };
+}
+
+function renderTokens(state) {
+  if (!state) return;
+  const n = auditNumbers(state);
+  $('headerTokens').textContent = fmtNum(n.total);
+  $('tokenSession').textContent = state.session_id ? `Sesión ${state.session_id}` : 'Sin sesión';
+  $('tkTotal').textContent = fmtNum(n.total);
+  $('tkSaved').textContent = fmtNum(n.saved);
+  $('tkImages').textContent = `${n.images} · US$${(n.images * 0.01).toFixed(2)}`;
+  $('tkCalls').textContent = `${n.apiCalls} / ${n.cacheHits}`;
+  const byModel = {};
+  n.logs.forEach((l) => {
+    const m = byModel[l.model] || (byModel[l.model] = { tokens: 0, api: 0, cache: 0 });
+    m.tokens += l.step_total_tokens || 0; m.api += l.status === 'API_CALL' ? 1 : 0; m.cache += l.status === 'CACHE_HIT_MD5' ? 1 : 0;
+  });
+  $('tkModels').innerHTML = Object.entries(byModel).map(([m, s]) => `<div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+    <span class="text-slate-200 truncate">${esc(m)}</span><span class="font-mono text-slate-400 shrink-0">${fmtNum(s.tokens)} tok • ${s.api} API • ${s.cache} caché</span></div>`).join('') || '<p class="text-xs text-slate-500">Sin datos.</p>';
+  const color = { API_CALL: 'text-blue-300', CACHE_HIT_MD5: 'text-emerald-300', API_ERROR: 'text-rose-300', ZERO_TOKEN_LOCAL: 'text-slate-400' };
+  $('tkLogs').innerHTML = n.logs.slice(-150).reverse().map((l) => `<div class="p-1.5 rounded bg-slate-950/70 ${color[l.status] || 'text-slate-300'}">${esc((l.trace_line || '').replace('[MUSE-TRACE] ', ''))}</div>`).join('');
+}
+
+async function refreshTokens() {
+  try { renderTokens(await api('/api/v1/session/current')); } catch { /* backend apagado */ }
+}
+
+/* ---------- Agregar con video ---------- */
+function videoDuration(file) {
+  return new Promise((resolve) => {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
+    v.onerror = () => resolve(NaN);
+    v.src = URL.createObjectURL(file);
+  });
+}
+
+async function setFiles(fileList) {
+  const files = Array.from(fileList).filter((f) => f.type.startsWith('video/') || /\.(mp4|mov|m4v|webm)$/i.test(f.name));
+  selectedFiles = [];
+  for (const f of files.slice(0, 3)) selectedFiles.push({ file: f, duration: await videoDuration(f) });
+  const tooMany = files.length > 3;
+  $('fileList').innerHTML = selectedFiles.map((s) => {
+    const long = s.duration > 60.8;
+    return `<div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-900 border ${long ? 'border-rose-500/50' : 'border-slate-800'}">
+      <span class="text-sm text-slate-200 truncate">🎞️ ${esc(s.file.name)}</span>
+      <span class="text-xs font-mono ${long ? 'text-rose-300' : 'text-slate-400'} shrink-0">${isNaN(s.duration) ? '—' : `${s.duration.toFixed(1)} s`}${long ? ' · supera 60 s' : ''}</span></div>`;
+  }).join('') + (tooMany ? '<p class="text-xs text-amber-300">Solo se usarán los 3 primeros videos.</p>' : '');
+  const valid = selectedFiles.length > 0 && selectedFiles.every((s) => !(s.duration > 60.8));
+  $('btnProcess').disabled = !valid || Boolean(run && run.running);
+}
+
+function renderStepper(activePhase, donePhases, errorPhase, activeStep = null) {
+  // Dentro de la fase en curso, el progreso en vivo indica qué modelo está trabajando (activeStep).
+  const firstOfPhase = STEPS.findIndex((s) => s.phase === activePhase);
+  const current = activeStep != null && STEPS[activeStep] && STEPS[activeStep].phase === activePhase ? activeStep : firstOfPhase;
+  $('stepper').innerHTML = STEPS.map((s, i) => {
+    const samePhase = s.phase === activePhase;
+    const done = donePhases.includes(s.phase) || (samePhase && i < current);
+    const active = samePhase && i === current, error = s.phase === errorPhase;
+    const dot = error ? 'bg-rose-500' : done ? 'bg-emerald-500' : active ? 'meta-ai-gradient' : 'bg-slate-800';
+    const icon = error ? '!' : done ? '✓' : i + 1;
+    return `<li class="${active ? 'step-active' : ''} flex items-start gap-3 p-3 rounded-xl border ${active ? 'border-indigo-500/60 shimmer' : done ? 'border-emerald-500/30 bg-emerald-500/5' : error ? 'border-rose-500/50 bg-rose-500/5' : 'border-slate-800 bg-slate-900/60'} transition">
+      <span class="step-dot w-7 h-7 shrink-0 rounded-full ${dot} flex items-center justify-center text-xs font-black text-white">${icon}</span>
+      <div class="min-w-0">
+        <div class="text-sm font-bold ${active ? 'meta-ai-text' : done ? 'text-emerald-300' : 'text-slate-300'}">${esc(s.model)} <span class="text-[10px] font-mono text-slate-500">· Fase ${s.phase}</span></div>
+        <div class="text-[11px] text-slate-400">${esc(s.what)}</div>
+      </div></li>`;
+  }).join('');
+}
+
+function startTimer() {
+  const t0 = Date.now();
+  clearInterval(timerHandle);
+  timerHandle = setInterval(() => {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    $('pipelineTimer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  }, 1000);
+}
+
+function updateLive(state) {
+  const n = auditNumbers(state);
+  $('liveTokens').textContent = fmtNum(n.total);
+  $('liveSaved').textContent = fmtNum(n.saved);
+  $('liveImages').textContent = `${n.images} · $${(n.images * 0.01).toFixed(2)}`;
+  renderTokens(state);
+}
+
+function startPolling(phase, baseline, done) {
+  stopPolling();
+  let step = null;
+  const tick = async () => {
+    try {
+      const pr = await api(`/api/v1/progress?session_id=${encodeURIComponent(run.sid)}`);
+      if (!pr || !pr.running) return;
+      const model = (pr.message || '').split(':')[0];
+      const hit = STEP_BY_MODEL.find(([re]) => re.test(model));
+      if (hit && STEPS[hit[1]].phase === phase && hit[1] !== step) { step = hit[1]; renderStepper(phase, done, null, step); }
+      if (pr.tokens_total != null) $('liveTokens').textContent = fmtNum(pr.tokens_total);
+      $('liveSaved').textContent = fmtNum(baseline.saved + (pr.tokens_saved_since_start || 0));
+      const imgs = baseline.images + (pr.images_since_start || 0);
+      $('liveImages').textContent = `${imgs} · $${(imgs * 0.01).toFixed(2)}`;
+      const ev = $('liveEvent');
+      ev.textContent = `▸ ${pr.message || ''}`.slice(0, 220);
+      ev.classList.remove('hidden');
+      const warn = $('liveWarning');
+      if (pr.warning) {
+        warn.textContent = `⏳ ${pr.warning}`;
+        warn.classList.remove('hidden');
+      } else if (pr.seconds_since_update > 45) {
+        warn.textContent = `⏳ Esperando la respuesta de Meta hace ${Math.round(pr.seconds_since_update)} s. Si se traba, el sistema reintenta solo.`;
+        warn.classList.remove('hidden');
+      } else {
+        warn.classList.add('hidden');
+      }
+    } catch { /* sondeo best-effort */ }
+  };
+  tick();
+  pollHandle = setInterval(tick, 2500);
+}
+
+function stopPolling() {
+  clearInterval(pollHandle);
+  pollHandle = null;
+  $('liveWarning').classList.add('hidden');
+}
+
+function phaseMessage(phase, state) {
+  if (phase === 1) {
+    const vids = state.videos || [];
+    const ok = vids.filter((v) => v.status === 'READY').length;
+    return `Fase 1: ${ok} de ${vids.length} video(s) listos.`;
+  }
+  if (phase === 2) return `Fase 2: ${(state.semantic_products || []).length} producto(s) detectados en el audio.`;
+  if (phase === 3) return `Fase 3: ${(state.grounded_products || []).length} producto(s) recortados con SAM 3.1.`;
+  if (phase === 4) { const s = state.phase4_summary || {}; return `Fase 4: ${s.images_generated_api ?? 0} imagen(es) nuevas (US$${Number(s.cost_usd ?? 0).toFixed(2)}).`; }
+  if (phase === 5) return `Fase 5: catálogo listo con ${(state.catalog_products || []).length} producto(s).`;
+  return '';
+}
+
+async function runPipeline(fromPhase) {
+  run.running = true;
+  $('btnProcess').disabled = true;
+  $('pipelineBox').classList.remove('hidden');
+  $('pipelineResult').classList.add('hidden');
+  $('pipelineError').classList.add('hidden');
+  const done = [];
+  for (let p = 1; p < fromPhase; p++) done.push(p);
+  startTimer();
+  let phase = fromPhase;
+  try {
+    if (phase === 1) {
+      renderStepper(1, done, null);
+      $('pipelineMessage').textContent = 'Subiendo videos y validando calidad…';
+      const form = new FormData();
+      selectedFiles.forEach((s) => form.append('files', s.file));
+      const state = await api('/api/v1/phase1/preprocess', { method: 'POST', body: form });
+      const ready = (state.videos || []).filter((v) => v.status === 'READY');
+      if (!ready.length) {
+        const reasons = (state.videos || []).map((v) => `${v.filename}: ${v.reason || v.status}`).join(' • ');
+        throw new Error(`Ningún video pasó la validación. ${reasons}`);
+      }
+      run.sid = state.session_id;
+      updateLive(state);
+      $('pipelineMessage').textContent = phaseMessage(1, state);
+      done.push(1); phase = 2;
+    }
+    let state = null;
+    let baseline = { saved: 0, images: 0 };
+    for (; phase <= 5; phase++) {
+      renderStepper(phase, done, null);
+      $('pipelineMessage').textContent = `Fase ${phase} en curso (${PHASES[phase].hint})…`;
+      startPolling(phase, baseline, done);
+      state = await api(PHASES[phase].url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: run.sid }) });
+      stopPolling();
+      updateLive(state);
+      const n = auditNumbers(state);
+      baseline = { saved: n.saved, images: n.images };
+      $('pipelineMessage').textContent = phaseMessage(phase, state);
+      done.push(phase);
+      if (phase === 2 && !(state.semantic_products || []).length) throw new Error('No se detectaron productos en el audio. Prueba diciendo “vendo esto a 10 dólares” mientras muestras cada objeto.');
+    }
+    renderStepper(null, done, null);
+    const products = buildProducts(state);
+    const uids = new Set(products.map((p) => p.uid));
+    pending = [...pending.filter((p) => !uids.has(p.uid)), ...products];
+    save(LS.pending, pending);
+    clearInterval(timerHandle);
+    $('pipelineResultText').textContent = `¡Listo! ${products.length} producto(s) llegaron a Pendientes de Aprobación en ${$('pipelineTimer').textContent}.`;
+    $('pipelineResult').classList.remove('hidden');
+    run = null;
+    renderAll();
+    toast(`${products.length} producto(s) nuevos en Pendientes`);
+  } catch (err) {
+    stopPolling();
+    clearInterval(timerHandle);
+    renderStepper(null, done, phase);
+    $('pipelineErrorText').textContent = `Falló la Fase ${phase}: ${err.message}`;
+    $('pipelineError').classList.remove('hidden');
+    run.nextPhase = phase;
+    run.running = false;
+    $('btnProcess').disabled = false;
+  }
+}
+
+/* ---------- Acciones ---------- */
+function publish(uids) {
+  const now = Date.now();
+  const moving = pending.filter((p) => uids.includes(p.uid)).map((p, i) => ({ ...p, published_at: now + i }));
+  approved = [...approved.filter((p) => !uids.includes(p.uid)), ...moving];
+  pending = pending.filter((p) => !uids.includes(p.uid));
+  save(LS.approved, approved); save(LS.pending, pending);
+}
+
+function animateOut(uids, then) {
+  uids.forEach((uid) => { const el = document.getElementById(`card-${uid}`); if (el) el.classList.add('leaving'); });
+  setTimeout(then, 330);
+}
+
+const actions = {
+  tab: (_, key) => { activeTab = key; renderAll(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+  category: (_, key) => { activeCategory = key; renderStore(); },
+  view: (uid, key) => { activeView[uid] = key; renderStore(); renderPending(); },
+  quick: (uid) => openQuick(uid),
+  'quick-view': (uid, key) => { activeView[uid] = key; openQuick(uid); renderStore(); },
+  'close-quick': closeQuick,
+  approve: (uid) => animateOut([uid], () => { publish([uid]); renderAll(); toast('Publicado en la tienda ✅'); }),
+  reject: (uid) => animateOut([uid], () => { pending = pending.filter((p) => p.uid !== uid); save(LS.pending, pending); renderAll(); toast('Producto rechazado'); }),
+  'approve-all': () => {
+    if (!pending.length) return toast('No hay pendientes');
+    const uids = pending.map((p) => p.uid);
+    animateOut(uids, () => { publish(uids); activeTab = 'store'; renderAll(); toast(`${uids.length} producto(s) publicados ✅`); });
+  },
+  'reject-all': () => {
+    if (!pending.length) return toast('No hay pendientes');
+    if (!confirm(`¿Rechazar los ${pending.length} productos pendientes?`)) return;
+    pending = []; save(LS.pending, pending); renderAll();
+  },
+  unpublish: (uid) => {
+    approved = approved.filter((p) => p.uid !== uid); cart = cart.filter((i) => i.uid !== uid);
+    save(LS.approved, approved); save(LS.cart, cart); closeQuick(); renderAll(); toast('Retirado de la tienda');
+  },
+  'add-cart': (uid) => {
+    const p = approved.find((x) => x.uid === uid);
+    if (!p || p.price == null) return;
+    const item = cart.find((i) => i.uid === uid);
+    if (item) item.qty += 1; else cart.push({ uid, qty: 1 });
+    save(LS.cart, cart); renderTabs(); toast('Agregado al carrito 🛒');
+  },
+  qty: (uid, key) => {
+    const item = cart.find((i) => i.uid === uid);
+    if (!item) return;
+    item.qty += Number(key);
+    cart = cart.filter((i) => i.qty > 0);
+    save(LS.cart, cart); renderCart(); renderTabs();
+  },
+  contact: (uid) => { const p = approved.find((x) => x.uid === uid); toast(`Consulta enviada por “${p ? p.title : ''}”`); },
+  'open-cart': () => { renderCart(); $('cartDrawer').classList.remove('hidden'); },
+  'close-cart': () => $('cartDrawer').classList.add('hidden'),
+  checkout: () => {
+    if (!cart.length) return toast('Tu carrito está vacío');
+    toast('¡Pedido confirmado! (demo)');
+    cart = []; save(LS.cart, cart); renderCart(); renderTabs();
+  },
+  'open-tokens': () => { $('tokenDrawer').classList.remove('hidden'); refreshTokens(); },
+  'close-tokens': () => $('tokenDrawer').classList.add('hidden'),
+  'open-upload': () => { $('uploadDrawer').classList.remove('hidden'); },
+  'close-upload': () => {
+    if (run && run.running && !confirm('El pipeline sigue procesando en el servidor. ¿Cerrar el panel? (seguirá corriendo, pero no verás el progreso)')) return;
+    $('uploadDrawer').classList.add('hidden');
+  },
+  process: () => {
+    if (run && run.running) return;
+    run = { sid: null, nextPhase: 1, running: false };
+    runPipeline(1);
+  },
+  retry: () => { if (run && !run.running) runPipeline(run.nextPhase); },
+  'go-pending': () => { $('uploadDrawer').classList.add('hidden'); activeTab = 'pending'; renderAll(); },
+};
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const fn = actions[el.dataset.action];
+  if (fn) fn(el.dataset.uid, el.dataset.key, el, e);
+});
+
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (!el.dataset || !el.dataset.field) return;
+  const p = pending.find((x) => x.uid === el.dataset.uid);
+  if (!p) return;
+  if (el.dataset.field === 'price') p.price = el.value === '' ? null : Math.max(0, Number(el.value));
+  else p[el.dataset.field] = el.value;
+  save(LS.pending, pending);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  closeQuick(); $('cartDrawer').classList.add('hidden'); $('tokenDrawer').classList.add('hidden');
+});
+
+$('videoInput').addEventListener('change', (e) => setFiles(e.target.files));
+['dragover', 'dragenter'].forEach((ev) => $('dropZone').addEventListener(ev, (e) => { e.preventDefault(); $('dropZone').classList.add('border-meta'); }));
+['dragleave', 'drop'].forEach((ev) => $('dropZone').addEventListener(ev, (e) => { e.preventDefault(); $('dropZone').classList.remove('border-meta'); }));
+$('dropZone').addEventListener('drop', (e) => setFiles(e.dataTransfer.files));
+$('searchInput').addEventListener('input', renderStore);
+$('sortSelect').addEventListener('change', renderStore);
+
+renderStepper(null, [], null);
+renderAll();
+refreshTokens();
+seedIfEmpty();
+</script>
 </body>
 </html>
