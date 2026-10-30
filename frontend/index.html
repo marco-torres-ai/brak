@@ -79,6 +79,17 @@
   @keyframes reveal { from { opacity: 0; filter: blur(10px); transform: scale(.94); } to { opacity: 1; filter: none; transform: none; } }
   .pulse-soft { animation: pulseSoft 1.8s ease-in-out infinite; }
   @keyframes pulseSoft { 0%, 100% { opacity: .45; } 50% { opacity: .9; } }
+  /* Grafo del flujo de agentes */
+  .flow-edge { fill: none; stroke: rgba(255,255,255,.10); stroke-width: 2; transition: stroke .4s; }
+  .flow-edge.done { stroke: rgba(52,211,153,.45); }
+  .flow-edge.active { stroke: url(#flowGrad); stroke-dasharray: 6 7; animation: flowDash .7s linear infinite; }
+  @keyframes flowDash { to { stroke-dashoffset: -13; } }
+  .flow-node { cursor: pointer; }
+  .flow-node .ring { transform-box: fill-box; transform-origin: center; }
+  .flow-node.active .ring { animation: flowPulse 1.6s ease-out infinite; }
+  @keyframes flowPulse { 0% { transform: scale(1); opacity: .75; } 100% { transform: scale(1.9); opacity: 0; } }
+  .flow-node .body { transition: transform .2s; transform-box: fill-box; transform-origin: center; }
+  .flow-node:hover .body { transform: scale(1.08); }
   ::selection { background: rgba(8,102,255,.35); }
   ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 8px; }
 </style>
@@ -105,6 +116,9 @@
       <span class="hidden lg:inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-medium bg-white/[0.04] hairline">
         <span id="iconSparkHeader"></span><span class="meta-ai-text">Powered by Meta Muse AI</span>
       </span>
+      <button data-action="open-flow" title="Ver el flujo de agentes" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
+        <span data-icon="workflow"></span><span class="hidden sm:inline font-medium">Flujo</span>
+      </button>
       <button data-action="open-agents" title="Configurar los prompts de los agentes" class="h-9 px-3 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition flex items-center gap-2">
         <span data-icon="sliders"></span><span class="hidden sm:inline font-medium">Agentes</span><span id="agentsDot" class="hidden w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
       </button>
@@ -268,12 +282,47 @@
           </div>
           <div id="canvasStats" class="flex items-center gap-2 text-[12px]"></div>
         </div>
+        <div class="mb-5 rounded-3xl surface p-3 overflow-x-auto"><div id="studioFlow" class="min-w-[980px]"></div></div>
         <div id="pipelineResult" class="hidden mb-5 rounded-2xl bg-emerald-500/10 hairline p-4 flex flex-wrap items-center justify-between gap-3">
           <div id="pipelineResultText" class="text-[14px] text-emerald-200 font-medium"></div>
           <button data-action="go-pending" class="h-10 px-5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[13px] font-semibold transition flex items-center gap-2">Revisar en pendientes <span data-icon="arrow"></span></button>
         </div>
         <div id="studioCanvas" class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-5"></div>
       </section>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FLUJO DE AGENTES (PANTALLA COMPLETA) ===================== -->
+<div id="flowDrawer" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+  <div class="absolute inset-0 bg-ink-900/95 backdrop-blur-xl"></div>
+  <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(99,102,241,.16), transparent 70%)"></div>
+  <div class="relative h-full flex flex-col fade-in">
+    <div class="px-6 h-16 border-b border-white/5 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl meta-ai-gradient flex items-center justify-center text-white" data-icon="workflow"></div>
+        <div>
+          <h3 class="text-[15px] font-semibold text-white">Flujo de agentes</h3>
+          <p class="text-[12px] text-slate-400">Así viaja tu video por los modelos de Meta. Toca una bolita para ver qué hace.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="flowProfileChip" data-action="open-agents" class="hidden sm:flex h-9 px-4 rounded-full bg-white/[0.04] hairline hover:bg-white/[0.08] text-[12px] text-slate-300 transition items-center gap-2"></button>
+        <button data-action="close-flow" class="w-9 h-9 rounded-full hover:bg-white/10 text-slate-300 flex items-center justify-center" aria-label="Cerrar" data-icon="x"></button>
+      </div>
+    </div>
+    <div class="flex-1 min-h-0 grid lg:grid-cols-[1fr_380px]">
+      <section class="min-h-0 overflow-auto p-6">
+        <div class="rounded-3xl surface p-5 overflow-x-auto"><div id="flowGraphBig" class="min-w-[1100px]"></div></div>
+        <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-slate-400">
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25"></span>Obligatoria</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 ring-2 ring-white/25 ring-offset-0" style="outline: 2px dashed rgba(255,255,255,.35); outline-offset: 1px"></span>Opcional</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full meta-ai-gradient"></span>Trabajando</span>
+          <span class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500/30 ring-2 ring-emerald-400"></span>Terminada</span>
+          <span class="flex items-center gap-2"><span class="text-indigo-300">●</span>Prompt personalizado</span>
+        </div>
+      </section>
+      <aside id="flowPanel" class="min-h-0 overflow-y-auto p-6 border-l border-white/5"></aside>
     </div>
   </div>
 </div>
@@ -448,6 +497,7 @@ const ICONS = {
   copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
+  workflow: '<circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M7.5 6h9"/><path d="M6.3 8.2 10.7 15.8"/><path d="M17.7 8.2 13.3 15.8"/>',
   pencil: '<path d="M21.17 6.81a1 1 0 0 0-3.98-3.98L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
   chevron: '<path d="m6 9 6 6 6-6"/>',
 };
@@ -734,6 +784,7 @@ function startStudioPoll() {
 function stopStudioPoll() { clearInterval(studioPoll); studioPoll = null; }
 
 function renderCanvas() {
+  renderFlowViews();
   const box = $('studioCanvas');
   if (!box) return;
   const imgs = canvas.items.reduce((a, it) => a + Object.keys(it.files).length, 0);
@@ -1082,6 +1133,8 @@ async function setFiles(fileList) {
 
 function renderStepper(activePhase, donePhases, errorPhase, activeStep = null) {
   // Dentro de la fase en curso, el progreso en vivo indica qué modelo está trabajando (activeStep).
+  Object.assign(flowLive, { activePhase, done: donePhases.slice(), error: errorPhase });
+  renderFlowViews();
   const firstOfPhase = STEPS.findIndex((s) => s.phase === activePhase);
   const current = activeStep != null && STEPS[activeStep] && STEPS[activeStep].phase === activePhase ? activeStep : firstOfPhase;
   $('stepper').innerHTML = STEPS.map((s, i) => {
@@ -1124,6 +1177,7 @@ function startPolling(phase, baseline, done) {
       const pr = await api(`/api/v1/progress?session_id=${encodeURIComponent(run.sid)}`);
       if (!pr || !pr.running) return;
       const model = (pr.message || '').split(':')[0];
+      flowNoteModel(phase, model, pr.events);
       const hit = STEP_BY_MODEL.find(([re]) => re.test(model));
       if (hit && STEPS[hit[1]].phase === phase && hit[1] !== step) { step = hit[1]; renderStepper(phase, done, null, step); }
       if (pr.tokens_total != null) $('liveTokens').textContent = fmtNum(pr.tokens_total);
@@ -1255,6 +1309,207 @@ function animateOut(uids, then) {
   setTimeout(then, 330);
 }
 
+/* ---------- Flujo de agentes: grafo de bolitas (orden fijo; se ilumina en vivo) ---------- */
+// kind: io = entrada/salida · req = obligatoria · opt = opcional. advance: su evento indica que ya terminó.
+const FLOW_Y = 175;
+const FLOW_NODES = [
+  { id: 'video', x: 50, y: FLOW_Y, g: ['Tus videos'], m: 'Entrada', label: 'Tus videos', model: 'Entrada', phase: 0, kind: 'io', icon: 'upload',
+    what: 'De 1 a 3 videos de hasta 60 s donde muestras cada objeto y dices su precio.', input: '—', output: 'Videos' },
+  { id: 'prep', x: 160, y: FLOW_Y, g: ['Validar', 'y audio'], m: 'OpenCV + FFmpeg', label: 'Validar y audio', model: 'OpenCV + FFmpeg', phase: 1, kind: 'req', icon: 'film', re: /OpenCV\+FFmpeg/,
+    what: 'Revisa duración, oscuridad y nitidez, descarta frames borrosos y separa el audio a 16 kHz. Corre en tu PC: 0 tokens.', input: 'Videos', output: 'Frames nítidos y audio', why: 'Sin audio ni frames válidos no hay nada que analizar.' },
+  { id: 'asr', x: 275, y: FLOW_Y, g: ['Escuchar'], m: 'Voice Transcribe', label: 'Escuchar', model: 'Muse Voice Transcribe', phase: 2, kind: 'req', icon: 'mic', re: /Voice Transcribe/, advance: true,
+    what: 'Transcribe tu voz con el tiempo de cada frase.', input: 'Audio', output: 'Transcripción por turnos', why: 'Los productos y precios salen de lo que dices.' },
+  { id: 'extract', x: 385, y: FLOW_Y, g: ['Detectar', 'productos'], m: 'Spark', label: 'Detectar productos', model: 'Muse Spark', phase: 2, kind: 'req', icon: 'sparkles', re: /^Muse Spark$/, advance: true, prompts: ['p2_extract'],
+    what: 'Lee la transcripción y mira el video para decidir qué productos ofreces, con nombre, precio, moneda y estado.', input: 'Transcripción y video', output: 'Lista de productos', why: 'Es quien decide qué productos existen.' },
+  { id: 'verify2', x: 495, y: FLOW_Y, g: ['Verificar', 'audio ↔ video'], m: 'Spark', label: 'Verificar audio ↔ video', model: 'Muse Spark', phase: 2, kind: 'opt', icon: 'check', re: /Verificador Fase 2|Spark \(Verificador\)/, prompts: ['p2_verify'],
+    what: 'Revisa los tramos dudosos (objetos mostrados sin precio, voz sin transcribir) y agrega o corrige productos.', input: 'Productos, audio y video', output: 'Productos corregidos' },
+  { id: 'vision', x: 610, y: FLOW_Y, g: ['Ver y', 'ubicar'], m: 'Spark visión', label: 'Ver y ubicar', model: 'Muse Spark · visión', phase: 3, kind: 'req', icon: 'eye', re: /Visi[oó]n|OpenCV Frame|^OpenCV$/, prompts: ['p3_vision'],
+    what: 'Elige el mejor fotograma de cada producto, lo nombra y marca la caja donde está.', input: 'Productos y frames', output: 'Mejor frame y caja', why: 'SAM necesita saber dónde está el objeto.' },
+  { id: 'sam', x: 720, y: FLOW_Y, g: ['Recortar'], m: 'SAM 3.1', label: 'Recortar', model: 'SAM 3.1', phase: 3, kind: 'req', icon: 'scissors', re: /SAM 3\.1/,
+    what: 'Recorta el producto al píxel y le quita el fondo.', input: 'Mejor frame y caja', output: 'Recorte PNG sin fondo', why: 'Sin recorte no hay foto de estudio.' },
+  { id: 'verify3', x: 830, y: FLOW_Y, g: ['Verificar', 'recortes'], m: 'Spark', label: 'Verificar recortes', model: 'Muse Spark', phase: 3, kind: 'opt', icon: 'check', re: /Verificador de recortes/, prompts: ['p3_cut_check', 'p3_cut_choice'],
+    what: 'Revisa cada recorte; si salió incompleto o con fondo, prueba alternativas con SAM y elige la mejor.', input: 'Recortes', output: 'Recortes revisados' },
+  { id: 'master', x: 950, y: FLOW_Y, g: ['Foto', 'máster'], m: 'Muse Image', label: 'Foto máster', model: 'Muse Image', phase: 4, kind: 'req', icon: 'image', canvasKey: 'master', prompts: ['p4_master'],
+    what: 'Completa lo que tapó la mano o cortó el borde y deja el producto sobre fondo blanco. Es la base de todas las vistas.', input: 'Recorte y frame', output: 'Foto máster', why: 'Todas las vistas parten de la máster.' },
+  { id: 'v_front', x: 1050, y: FLOW_Y - 100, label: 'Frente', model: 'Muse Image', phase: 4, kind: 'req', icon: 'image', canvasKey: 'front', view: true, prompts: ['p4_view_front'],
+    what: 'Foto de catálogo de frente, fondo blanco.', input: 'Foto máster', output: 'Foto frontal', why: 'Es la foto principal del producto.' },
+  { id: 'v_left', x: 1050, y: FLOW_Y - 50, label: 'Izq. IA', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'left', view: true, prompts: ['p4_view_left'],
+    what: 'Rota el producto ~90° para mostrar su lado izquierdo (deducido por IA).', input: 'Foto máster', output: 'Vista izquierda' },
+  { id: 'v_right', x: 1050, y: FLOW_Y, label: 'Der. IA', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'right', view: true, prompts: ['p4_view_right'],
+    what: 'Rota el producto ~90° para mostrar su lado derecho (deducido por IA).', input: 'Foto máster', output: 'Vista derecha' },
+  { id: 'v_back', x: 1050, y: FLOW_Y + 50, label: 'Atrás IA', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'back', view: true, prompts: ['p4_view_back'],
+    what: 'Rota el producto 180° para mostrar la parte de atrás (deducida por IA).', input: 'Foto máster', output: 'Vista trasera' },
+  { id: 'v_life', x: 1050, y: FLOW_Y + 100, label: 'Ambiente', model: 'Muse Image', phase: 4, kind: 'opt', icon: 'image', canvasKey: 'life', view: true, prompts: ['p4_view_lifestyle'],
+    what: 'Coloca el producto en un ambiente realista acorde a su categoría.', input: 'Foto máster', output: 'Foto de ambiente' },
+  { id: 'fidelity', x: 1185, y: FLOW_Y, g: ['Control de', 'fidelidad'], m: 'Spark', label: 'Control de fidelidad', model: 'Muse Spark', phase: 4, kind: 'opt', icon: 'eye', re: /Fidelidad/, prompts: ['p4_fidelity'],
+    what: 'Compara cada foto generada con el producto real y repite las que inventan partes, cambian colores o cortan el producto.', input: 'Fotos generadas y frame', output: 'Fotos aprobadas' },
+  { id: 'copy', x: 1300, y: FLOW_Y, g: ['Textos', 'de venta'], m: 'Spark', label: 'Textos de venta', model: 'Muse Spark', phase: 5, kind: 'req', icon: 'tag', re: /Textos/, advance: true, prompts: ['p5_copy'],
+    what: 'Escribe título, descripción, puntos destacados, categoría y etiquetas, y el nombre de la tienda.', input: 'Productos y fotos', output: 'Textos del catálogo', why: 'Sin textos no hay ficha de producto.' },
+  { id: 'catalog', x: 1395, y: FLOW_Y, g: ['Catálogo'], m: 'Tu tienda', label: 'Catálogo', model: 'Tu tienda', phase: 5, kind: 'io', icon: 'store', re: /Cat[aá]logo HTML/,
+    what: 'Los productos llegan a Pendientes para que los apruebes y publiques.', input: 'Todo lo anterior', output: 'Productos en Pendientes' },
+];
+const FLOW_EDGES = [['video', 'prep'], ['prep', 'asr'], ['asr', 'extract'], ['extract', 'verify2'], ['verify2', 'vision'], ['vision', 'sam'], ['sam', 'verify3'], ['verify3', 'master'],
+  ...['v_front', 'v_left', 'v_right', 'v_back', 'v_life'].flatMap((v) => [['master', v], [v, 'fidelity']]), ['fidelity', 'copy'], ['copy', 'catalog']];
+const FLOW_BANDS = [[1, 108, 212], [2, 222, 550], [3, 560, 885], [4, 895, 1245], [5, 1255, 1347]];
+const FLOW_ORDER = { 1: ['prep'], 2: ['asr', 'extract', 'verify2'], 3: ['vision', 'sam', 'verify3'], 5: ['copy', 'catalog'] };
+const flowNode = (id) => FLOW_NODES.find((n) => n.id === id);
+let flowLive = { activePhase: null, done: [], error: null, idx: {}, fidelitySeen: false };
+let flowSelected = 'extract';
+
+function flowResetLive() { flowLive = { activePhase: null, done: [], error: null, idx: {}, fidelitySeen: false }; }
+
+// Lo llama el sondeo de progreso: el último modelo que trabajó mueve la bolita activa (nunca hacia atrás).
+function flowNoteModel(phase, model, events) {
+  if (/Fidelidad/.test(model) || (events || []).some((e) => e.phase === 4 && /Fidelidad/.test(e.model || ''))) flowLive.fidelitySeen = true;
+  const order = FLOW_ORDER[phase];
+  const n = order && FLOW_NODES.find((x) => x.re && order.includes(x.id) && x.re.test(model));
+  if (n) flowLive.idx[phase] = Math.max(flowLive.idx[phase] || 0, order.indexOf(n.id) + (n.advance ? 1 : 0));
+  renderFlowViews();
+}
+
+function flowPhaseState(n, phase) {
+  if (phase === 4) {
+    const items = canvas.items.filter((it) => !it.lowQuality), total = items.length;
+    const has = (k) => total > 0 && items.every((it) => it.files[k]);
+    if (n.id === 'master') return has('master') ? 'done' : 'active';
+    if (n.view) return !has('master') ? 'idle' : has(n.canvasKey) ? 'done' : 'active';
+    if (n.id === 'fidelity') return flowLive.fidelitySeen ? 'active' : 'idle';
+    return 'idle';
+  }
+  const order = FLOW_ORDER[phase] || [];
+  const pos = order.indexOf(n.id), idx = Math.min(flowLive.idx[phase] || 0, order.length - 1);
+  return pos < idx ? 'done' : pos === idx ? 'active' : 'idle';
+}
+
+function flowNodeStates() {
+  const L = flowLive, st = {};
+  const finished = L.done.includes(5) && !L.activePhase;
+  FLOW_NODES.forEach((n) => {
+    let s = 'idle';
+    if (n.id === 'video') s = L.activePhase || L.done.length || L.error ? 'done' : 'idle';
+    else if (L.done.includes(n.phase) || (n.id === 'catalog' && finished)) s = 'done';
+    else if (L.activePhase === n.phase) s = flowPhaseState(n, n.phase);
+    else if (L.error === n.phase) { const p = flowPhaseState(n, n.phase); s = p === 'active' ? 'error' : p; }
+    st[n.id] = s;
+  });
+  return st;
+}
+
+function flowSvg({ compact = false } = {}) {
+  const st = flowNodeStates();
+  const customKeys = new Set(promptsState ? promptsState.agents.filter((a) => a.is_custom).map((a) => a.key) : []);
+  const R = (n) => (n.view ? 15 : 22);
+  const edges = FLOW_EDGES.map(([a, b]) => {
+    const A = flowNode(a), B = flowNode(b);
+    const x1 = A.x + R(A), x2 = B.x - R(B), mx = (x1 + x2) / 2;
+    const cls = st[a] === 'done' && st[b] === 'done' ? 'done' : (st[a] === 'done' || st[a] === 'active') && st[b] === 'active' ? 'active' : '';
+    return `<path class="flow-edge ${cls}" d="M${x1} ${A.y} C${mx} ${A.y}, ${mx} ${B.y}, ${x2} ${B.y}"/>`;
+  }).join('');
+  const bands = FLOW_BANDS.map(([p, x1, x2]) => `<rect x="${x1}" y="22" width="${x2 - x1}" height="${compact ? 300 : 316}" rx="18" fill="rgba(255,255,255,.018)" stroke="rgba(255,255,255,.05)"/>
+    <text x="${(x1 + x2) / 2}" y="44" text-anchor="middle" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1.2">FASE ${p}</text>`).join('');
+  const nodes = FLOW_NODES.map((n) => {
+    const s = st[n.id], r = R(n), sel = !compact && n.id === flowSelected;
+    const fill = s === 'active' ? 'url(#flowGrad)' : s === 'done' ? 'rgba(16,185,129,.18)' : s === 'error' ? 'rgba(244,63,94,.25)' : n.kind === 'io' ? 'rgba(255,255,255,.07)' : '#0f172a';
+    const stroke = s === 'done' ? '#34d399' : s === 'error' ? '#fb7185' : s === 'active' ? 'rgba(165,180,252,.9)' : 'rgba(255,255,255,.28)';
+    const color = s === 'done' ? '#6ee7b7' : s === 'error' ? '#fda4af' : s === 'active' ? '#ffffff' : '#cbd5e1';
+    const isz = n.view ? 14 : 20;
+    const custom = (n.prompts || []).some((k) => customKeys.has(k));
+    const label = n.view
+      ? `<text x="${n.x + r + 8}" y="${n.y + 4}" fill="${s === 'idle' ? '#cbd5e1' : color}" font-size="11.5" font-weight="500">${esc(n.label)}</text>`
+      : (n.g || [n.label]).map((line, i) => `<text x="${n.x}" y="${n.y + r + 19 + i * 15}" text-anchor="middle" fill="#f1f5f9" font-size="12" font-weight="600">${esc(line)}</text>`).join('')
+        + (compact ? '' : `<text x="${n.x}" y="${n.y + r + 19 + (n.g || [n.label]).length * 15 + 1}" text-anchor="middle" fill="#64748b" font-size="10.5">${esc(n.m || n.model)}</text>`);
+    return `<g class="flow-node ${s}" data-action="flow-node" data-key="${n.id}" role="button" aria-label="${esc(n.label)}">
+      ${s === 'active' ? `<circle class="ring" cx="${n.x}" cy="${n.y}" r="${r}" fill="none" stroke="#818cf8" stroke-width="2"/>` : ''}
+      ${sel ? `<circle cx="${n.x}" cy="${n.y}" r="${r + 7}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>` : ''}
+      <g class="body">
+        <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="2" ${n.kind === 'opt' && s === 'idle' ? 'stroke-dasharray="4 3"' : ''}/>
+        <svg x="${n.x - isz / 2}" y="${n.y - isz / 2}" width="${isz}" height="${isz}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${s === 'done' && !n.view ? ICONS.check : ICONS[n.icon] || ''}</svg>
+      </g>
+      ${custom ? `<circle cx="${n.x + r * 0.72}" cy="${n.y - r * 0.72}" r="4.5" fill="#818cf8" stroke="#0b1120" stroke-width="2"/>` : ''}
+      ${label}
+    </g>`;
+  }).join('');
+  return `<svg viewBox="0 ${compact ? 14 : 0} 1440 ${compact ? 312 : 345}" width="100%" class="block select-none" aria-label="Flujo de agentes">
+    <defs><linearGradient id="flowGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#0866FF"/><stop offset=".55" stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+    ${bands}${edges}${nodes}</svg>`;
+}
+
+function renderFlowPanel() {
+  const n = flowNode(flowSelected);
+  if (!n) return;
+  const st = flowNodeStates()[n.id];
+  const stateChip = { active: ['Trabajando ahora', 'bg-indigo-500/20 text-indigo-200'], done: ['Terminada', 'bg-emerald-500/15 text-emerald-300'], error: ['Falló', 'bg-rose-500/15 text-rose-200'] }[st];
+  const kindChip = n.kind === 'req' ? ['Obligatoria', 'bg-white/[0.06] text-slate-300'] : n.kind === 'opt' ? ['Opcional', 'bg-white/[0.06] text-slate-300'] : ['Entrada / salida', 'bg-white/[0.06] text-slate-400'];
+  const agents = (n.prompts || []).map((k) => agentOf(k)).filter(Boolean);
+  const promptBlock = (n.prompts || []).length ? `
+    <div class="mt-7">
+      <div class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Prompt${agents.length > 1 ? 's' : ''} · perfil "${esc(promptsState ? promptsState.active_profile_name : '…')}"</div>
+      <div class="mt-3 space-y-2">${agents.map((a) => `
+        <div class="rounded-2xl bg-white/[0.03] hairline p-4">
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-[13px] font-medium text-white">${esc(a.title)}</span>
+            ${a.is_custom ? '<span class="h-6 px-2.5 rounded-full bg-indigo-500/15 text-[11px] text-indigo-200 flex items-center">Personalizado</span>' : '<span class="text-[11px] text-slate-500">Original</span>'}
+          </div>
+          ${a.extra ? `<p class="mt-2 text-[12px] text-indigo-200/90 leading-relaxed">+ ${esc(a.extra)}</p>` : ''}
+          <p class="mt-2 text-[11.5px] text-slate-500 leading-relaxed line-clamp-3 font-mono">${esc((a.full_text ?? a.default_text).slice(0, 260))}…</p>
+          <button data-action="flow-edit-prompt" data-key="${a.key}" class="mt-3 h-9 px-4 rounded-full bg-white/[0.05] hairline hover:bg-white/[0.09] text-[12px] text-slate-200 transition flex items-center gap-2">${icon('sliders', 13)}Editar prompt</button>
+        </div>`).join('') || '<p class="text-[12px] text-slate-500">No se pudieron leer los prompts del backend.</p>'}</div>
+    </div>` : `<p class="mt-7 text-[12px] text-slate-500">${n.kind === 'io' ? '' : 'Este paso no usa un prompt de texto: trabaja con '}${n.kind === 'io' ? '' : n.id === 'sam' ? 'la caja que marcó Spark y las palabras que propuso.' : 'reglas fijas en tu PC.'}</p>`;
+  $('flowPanel').innerHTML = `
+    <div class="flex items-center gap-3">
+      <span class="w-12 h-12 rounded-2xl ${n.kind === 'io' ? 'bg-white/[0.06] text-slate-200' : 'meta-ai-gradient text-white shadow-lg shadow-indigo-600/30'} flex items-center justify-center">${icon(n.icon, 22)}</span>
+      <div class="min-w-0">
+        <h4 class="text-[17px] font-semibold text-white leading-tight">${esc(n.label)}</h4>
+        <div class="text-[12px] text-slate-400">${esc(n.model)}${n.phase ? ` · Fase ${n.phase}` : ''}</div>
+      </div>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <span class="h-7 px-3 rounded-full text-[11.5px] flex items-center ${kindChip[1]}">${kindChip[0]}</span>
+      ${stateChip ? `<span class="h-7 px-3 rounded-full text-[11.5px] flex items-center ${stateChip[1]}">${stateChip[0]}</span>` : ''}
+    </div>
+    <p class="mt-5 text-[14px] text-slate-300 leading-relaxed">${esc(n.what)}</p>
+    <dl class="mt-5 grid grid-cols-2 gap-2 text-[12px]">
+      <div class="rounded-xl bg-white/[0.03] hairline p-3"><dt class="text-slate-500">Recibe</dt><dd class="mt-1 text-slate-200">${esc(n.input)}</dd></div>
+      <div class="rounded-xl bg-white/[0.03] hairline p-3"><dt class="text-slate-500">Entrega</dt><dd class="mt-1 text-slate-200">${esc(n.output)}</dd></div>
+    </dl>
+    ${n.kind === 'req' ? `<p class="mt-4 text-[12px] text-slate-500 flex items-start gap-2">${icon('info', 14, 'shrink-0 mt-0.5')}No se puede quitar: ${esc(n.why || '')}</p>` : ''}
+    ${n.kind === 'opt' ? `<p class="mt-4 text-[12px] text-slate-500 flex items-start gap-2">${icon('info', 14, 'shrink-0 mt-0.5')}Paso opcional: en la próxima etapa podrás apagarlo desde aquí.</p>` : ''}
+    ${promptBlock}`;
+}
+
+function renderFlowViews() {
+  const mini = $('studioFlow');
+  if (mini) mini.innerHTML = flowSvg({ compact: true });
+  if (!$('flowDrawer').classList.contains('hidden')) {
+    $('flowGraphBig').innerHTML = flowSvg();
+    renderFlowPanel();
+    const chip = $('flowProfileChip');
+    chip.innerHTML = `${icon('sliders', 13)}<span>Perfil: <b class="text-slate-200 font-medium">${esc(promptsState ? promptsState.active_profile_name : '…')}</b></span>`;
+  }
+}
+
+async function openFlow(nodeId) {
+  if (nodeId) flowSelected = nodeId;
+  openDrawer('flowDrawer');
+  renderFlowViews();
+  await loadPrompts(false);
+  renderFlowViews();
+}
+
+async function editPromptFromFlow(key) {
+  const a = agentOf(key);
+  if (a && a.group === 'advanced') agentsAdvancedOpen = true;
+  const m = /^p4_view_(\w+)$/.exec(key);
+  if (m) agentViewTab = m[1];
+  await openAgents();
+  const card = $(`agent-${key}`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('ring-2', 'ring-indigo-400/60');
+    setTimeout(() => card.classList.remove('ring-2', 'ring-indigo-400/60'), 1800);
+  }
+}
+
 /* ---------- Configuración de agentes (GET/PUT/DELETE /api/v1/prompts) ---------- */
 const AGENT_VIEWS = [['front', 'Frente'], ['left', 'Izq.'], ['right', 'Der.'], ['back', 'Atrás'], ['lifestyle', 'Ambiente']];
 const AGENT_ICON = { 2: 'sparkles', 3: 'eye', 4: 'image', 5: 'tag' };
@@ -1281,6 +1536,7 @@ async function loadPrompts(resetDrafts = false) {
     if (resetDrafts) agentDraft = {};
   } catch (err) { promptsState = null; }
   renderProfileChip();
+  renderFlowViews();
   return promptsState;
 }
 
@@ -1326,7 +1582,7 @@ function agentFields(a) {
 }
 
 function agentCard(a, { title, description, tabs = '' } = {}) {
-  return `<article class="rounded-3xl surface p-6">
+  return `<article id="agent-${a.key}" class="rounded-3xl surface p-6 transition">
     <div class="flex items-start gap-4">
       <span class="shrink-0 w-11 h-11 rounded-2xl ${a.group === 'advanced' ? 'bg-white/[0.06] text-slate-300' : 'meta-ai-gradient text-white shadow-lg shadow-indigo-600/30'} flex items-center justify-center">${icon(AGENT_ICON[a.phase] || 'sparkles', 19)}</span>
       <div class="min-w-0 flex-1">
@@ -1407,6 +1663,7 @@ async function promptsWrite(path, req, okMsg) {
   try {
     promptsState = await api(path, req);
     renderProfileChip();
+    renderFlowViews();
     renderAgents();
     if (okMsg) toast(okMsg);
     return true;
@@ -1537,6 +1794,7 @@ const actions = {
   process: () => {
     if (run && run.running) return;
     run = { sid: null, nextPhase: 1, running: false };
+    flowResetLive();
     runPipeline(1);
   },
   retry: () => { if (run && !run.running) runPipeline(run.nextPhase); },
@@ -1545,6 +1803,13 @@ const actions = {
   'close-how': () => { $('howModal').classList.add('hidden'); $('howModal').classList.remove('flex'); },
   'how-to-upload': () => { actions['close-how'](); openDrawer('uploadDrawer'); },
   'open-agents': () => openAgents(),
+  'open-flow': () => openFlow(),
+  'close-flow': () => closeDrawer('flowDrawer'),
+  'flow-node': (_, key, el) => {
+    if (el.closest('#studioFlow')) return openFlow(key);
+    flowSelected = key; renderFlowViews();
+  },
+  'flow-edit-prompt': (_, key) => editPromptFromFlow(key),
   'close-agents': () => {
     const dirty = promptsState && promptsState.agents.some((a) => agentDraft[a.key] && agentDirty(a));
     if (dirty && !confirm('Tienes cambios sin guardar en los prompts. ¿Cerrar de todos modos?')) return;
@@ -1613,6 +1878,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (profileModal) { closeProfileModal(); return; }
   if (!$('agentsDrawer').classList.contains('hidden')) { actions['close-agents'](); return; }
+  if (!$('flowDrawer').classList.contains('hidden')) { closeDrawer('flowDrawer'); return; }
   closeQuick(); closeDrawer('cartDrawer'); closeDrawer('tokenDrawer'); actions['close-how']();
 });
 

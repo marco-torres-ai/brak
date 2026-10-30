@@ -363,3 +363,20 @@ Cada vez que el agente complete una fase o realice un ajuste solicitado por el u
   - Backend: nuevo `PUT /api/v1/prompts/profiles/{slug}` (renombrar) y slugs reservados `active` e `import` para que no choquen con las rutas.
   - Verificación: curl (crear "Active" da `active-2`, renombrar, nombre vacío da 400), capturas de las dos ventanitas y flujo completo en el navegador (escribir, Guardar, nombre, Crear: perfil creado, activo y con el cambio). Perfiles de prueba borrados.
 - **Estado:** `READY_FOR_USER_TEST`.
+
+## v0.3.0 (Etapa 1): grafo visual del flujo de agentes (rama `version-0.3`) (2026-10-30)
+- **Plan acordado con el usuario:**
+  - **Enfoque A:** grafo de orden fijo con interruptores. No hay reordenamiento libre porque cada fase depende del resultado de la anterior.
+  - **Selección separada:** Perfil (prompts) + Flujo (estructura).
+  - **Etapas:** 1 = grafo visual en vivo (solo frontend); 2 = flujos configurables (`backend/core/flows.py`, interruptores y parámetros por bolita); 3 = estimador de costo y tiempo, "Regenerar desde esta bolita" (memoización con la caché MD5) y pausa tras la Fase 2.
+- **Etapa 1 (solo `frontend/index.html`; backend sin cambios respecto a v0.2):**
+  - Botón **"Flujo"** en el encabezado. Abre la vista a pantalla completa "Flujo de agentes": un grafo SVG con 17 bolitas (videos → validar y audio → escuchar → detectar productos → verificar audio↔video → ver y ubicar → recortar → verificar recortes → foto máster → 5 vistas en abanico → control de fidelidad → textos → catálogo), agrupadas en bandas por fase.
+  - Bolitas **obligatorias** con borde sólido y **opcionales** con borde punteado. Un punto índigo marca un prompt personalizado en el perfil activo.
+  - **Panel lateral al tocar una bolita:** modelo, fase, qué hace, qué recibe y qué entrega, por qué es obligatoria (o "opcional: se podrá apagar en la Etapa 2") y sus prompts del perfil activo, con **"Editar prompt"** (abre Agentes en esa tarjeta, cambiando la pestaña de vista o abriendo "Avanzado" si hace falta).
+  - **En vivo:** el mismo grafo aparece en Meta Muse Studio, encima del lienzo.
+    - Terminadas en verde, la activa late y las líneas en curso se animan.
+    - En las Fases 1, 2, 3 y 5 la bolita activa sale del último modelo informado por `/api/v1/progress` y nunca retrocede.
+    - En la Fase 4 se usan las fotos que ya existen en el lienzo (máster, cada vista) y los eventos de "Fidelidad".
+- **Verificación:** sintaxis JS; capturas reales del grafo en reposo y de una simulación a mitad de la Fase 4 (vista grande y Studio). Se corrigió una superposición de etiquetas con una nueva distribución y etiquetas en dos líneas. No se ejecutó el pipeline real, porque el perfil activo del usuario tiene prompts personalizados y habría generado imágenes con costo.
+- **Costo:** 0 tokens.
+- **Estado:** `TESTED_OK` (confirmado por el usuario).

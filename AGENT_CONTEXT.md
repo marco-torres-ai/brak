@@ -112,3 +112,8 @@ muse-catalog-hackathon/
   - Endpoints `/api/v1/prompts*` y vista "Agentes" en el frontend.
   - Regla de oro: sin perfil activo, los prompts y las claves de caché quedan idénticos. Se verificó con las Fases 2→5 desde caché: 0 llamadas y catálogo idéntico.
   - Para agregar un prompt nuevo: definir la constante, llamar a `prompts.register(...)` junto a ella, usar `prompts.get(key)` y añadir `prompts.signature(key)` a la clave de caché.
+- **v0.3 (rama `version-0.3`): Flujo de agentes con bolitas.** Etapa 1: `TESTED_OK`.
+  - Grafo visual de orden fijo (vista "Flujo" y Studio en vivo), solo frontend.
+  - Etapa 2 pendiente: flujos configurables (`flows.py`, interruptores y parámetros, flujo "Completo" intocable).
+  - Etapa 3 pendiente: estimador de costo, "Regenerar desde esta bolita" y pausa tras la Fase 2.
+  - Base: commit `bdc0f9a` de la v0.2 (rama `version-0.2`).
